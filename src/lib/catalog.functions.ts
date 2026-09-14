@@ -66,10 +66,11 @@ join tier t on t.article_id = a.id
 left join weclapp.article_category c on c.id = a.article_category_id
 left join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
+  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ($2 = '' or c.name = $2)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(s.qty, 0) desc, a.article_number
-limit 60
+limit 400
 `;
 
 const COUNT_SQL = `
@@ -77,6 +78,7 @@ select count(*)::int as total
 from weclapp.article a
 left join weclapp.article_category c on c.id = a.article_category_id
 where a.active and a.available_in_sale
+  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and exists (
     select 1 from weclapp.article_price p
     where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
@@ -92,16 +94,22 @@ select coalesce(c.name, 'Ohne Kategorie') as name, count(*)::int as count
 from weclapp.article a
 left join weclapp.article_category c on c.id = a.article_category_id
 where a.active and a.available_in_sale
+  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
 group by 1
 order by count desc, name
 limit 18
 `;
 
 const STATS_SQL = `
-select (select count(*)::int from weclapp.article where active and available_in_sale) as articles,
+select (select count(*)::int from weclapp.article where active and available_in_sale
+          and (ca_de_webshop_on_off or ca_at_webshop_on_off)) as articles,
        (select count(distinct article_category_id)::int from weclapp.article
-         where active and available_in_sale and article_category_id is not null) as categories,
-       (select coalesce(sum(quantity), 0)::float8 from weclapp.warehouse_stock) as on_hand
+         where active and available_in_sale and article_category_id is not null
+           and (ca_de_webshop_on_off or ca_at_webshop_on_off)) as categories,
+       (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
+         join weclapp.article a on a.id = w.article_id
+         where a.active and a.available_in_sale
+           and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)) as on_hand
 `;
 
 export const getCatalog = createServerFn({ method: "GET" })
