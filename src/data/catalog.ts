@@ -134,7 +134,7 @@ export const stockLabel: Record<StockState, string> = {
 };
 
 export function priceForQty(product: Product, qty: number) {
-  let price = product.breaks[0].price;
+  let price = product.breaks[0]!.price;
   for (const b of product.breaks) if (qty >= b.from) price = b.price;
   return price;
 }

@@ -54,7 +54,7 @@ function Shop() {
     { sku: "MAW-PE-0771", qty: 100 },
   ]);
   const [quick, setQuick] = useState("");
-  const [detailSku, setDetailSku] = useState(products[0].sku);
+  const [detailSku, setDetailSku] = useState(products[0]!.sku);
 
   const visible = useMemo(
     () =>
@@ -64,7 +64,7 @@ function Shop() {
     [activeCategory],
   );
 
-  const detail = products.find((p) => p.sku === detailSku) ?? products[0];
+  const detail = products.find((p) => p.sku === detailSku) ?? products[0]!;
 
   const step = (sku: string, delta: number) =>
     setQty((prev) => {
