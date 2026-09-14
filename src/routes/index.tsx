@@ -402,7 +402,17 @@ function Shop() {
                         </button>
                       </td>
                     </tr>
+                    <tr>
+                      <td />
+                      <td colSpan={7} className="px-3 pb-3 pt-1">
+                        <span className="line-clamp-2 block text-xs text-muted-foreground">
+                          {spec || article.category}
+                        </span>
+                      </td>
+                    </tr>
+                    </Fragment>
                   );
+
                 })}
               </tbody>
             </table>
