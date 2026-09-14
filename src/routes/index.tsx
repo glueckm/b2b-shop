@@ -52,6 +52,35 @@ const eur = (value: number) =>
 
 const num = (value: number) => value.toLocaleString("de-DE");
 
+const entities: Record<string, string> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+};
+
+/** HTML-Beschreibung als einzeiliger Klartext (für die Tabelle). */
+function specText(html: string) {
+  return html
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, (m) => entities[m] ?? m)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Entfernt Skripte, Event-Handler und gefährliche URLs aus der HTML-Beschreibung. */
+function sanitizeSpec(html: string) {
+  return html
+    .replace(/<(script|style|iframe|object|embed|link|meta)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<(script|style|iframe|object|embed|link|meta)[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/(href|src)\s*=\s*("|')?\s*javascript:[^"'>]*("|')?/gi, "");
+}
+
+
 function priceForQty(article: CatalogArticle, qty: number) {
   let price = article.breaks[0]?.price ?? 0;
   for (const b of article.breaks) if (qty >= b.from) price = b.price;
