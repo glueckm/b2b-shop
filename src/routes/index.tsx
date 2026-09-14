@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
@@ -351,16 +351,16 @@ function Shop() {
                         <span className="block font-semibold">{article.name}</span>
                       </td>
 
-                      <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
+                      <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
                       </td>
-                      <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
+                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
                         {article.unit}
                       </td>
-                      <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
+                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
                         {article.moq}
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <span
                           className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}
                         >
@@ -374,7 +374,7 @@ function Shop() {
 
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <span className="flex w-max items-center rounded-sm border border-border">
                           <button
                             onClick={() => step(article, -1)}
@@ -393,7 +393,7 @@ function Shop() {
                           </button>
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <button
                           onClick={() => addLine(article.sku, q)}
                           className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
