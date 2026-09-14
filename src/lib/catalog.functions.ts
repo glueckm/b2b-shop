@@ -1,0 +1,150 @@
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+
+export const priceGroups = [
+  { channel: "NET1", label: "Silber" },
+  { channel: "NET2", label: "Gold" },
+  { channel: "NET3", label: "Platin" },
+  { channel: "NET13", label: "MAWA DE Bronze" },
+  { channel: "NET12", label: "MAWA AT Bronze" },
+  { channel: "NET14", label: "Sub-Distribution" },
+] as const;
+
+export type PriceBreak = { from: number; price: number };
+
+export type CatalogArticle = {
+  sku: string;
+  name: string;
+  spec: string;
+  category: string;
+  unit: string;
+  moq: number;
+  onHand: number;
+  breaks: PriceBreak[];
+};
+
+export type CatalogPayload = {
+  articles: CatalogArticle[];
+  total: number;
+  categories: { name: string; count: number }[];
+  stats: { articles: number; categories: number; onHand: number };
+};
+
+const inputSchema = z.object({
+  channel: z.string().default("NET1"),
+  category: z.string().default(""),
+  search: z.string().default(""),
+});
+
+const ARTICLES_SQL = `
+with tier as (
+  select article_id,
+         jsonb_agg(jsonb_build_object('from', price_scale_value, 'price', price)
+                   order by price_scale_value) as breaks
+  from weclapp.article_price
+  where sales_channel = $1
+    and price > 0
+    and (start_date is null or start_date <= now())
+    and (end_date is null or end_date > now())
+  group by article_id
+),
+stock as (
+  select article_id, sum(quantity) as qty
+  from weclapp.warehouse_stock
+  group by article_id
+)
+select a.article_number as sku,
+       a.name,
+       coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
+       coalesce(c.name, 'Ohne Kategorie') as category,
+       coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
+       greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
+       coalesce(s.qty, 0)::float8 as on_hand,
+       t.breaks
+from weclapp.article a
+join tier t on t.article_id = a.id
+left join weclapp.article_category c on c.id = a.article_category_id
+left join stock s on s.article_id = a.id
+where a.active and a.available_in_sale
+  and ($2 = '' or c.name = $2)
+  and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
+order by coalesce(s.qty, 0) desc, a.article_number
+limit 60
+`;
+
+const COUNT_SQL = `
+select count(*)::int as total
+from weclapp.article a
+left join weclapp.article_category c on c.id = a.article_category_id
+where a.active and a.available_in_sale
+  and exists (
+    select 1 from weclapp.article_price p
+    where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
+      and (p.start_date is null or p.start_date <= now())
+      and (p.end_date is null or p.end_date > now())
+  )
+  and ($2 = '' or c.name = $2)
+  and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
+`;
+
+const CATEGORIES_SQL = `
+select coalesce(c.name, 'Ohne Kategorie') as name, count(*)::int as count
+from weclapp.article a
+left join weclapp.article_category c on c.id = a.article_category_id
+where a.active and a.available_in_sale
+group by 1
+order by count desc, name
+limit 18
+`;
+
+const STATS_SQL = `
+select (select count(*)::int from weclapp.article where active and available_in_sale) as articles,
+       (select count(distinct article_category_id)::int from weclapp.article
+         where active and available_in_sale and article_category_id is not null) as categories,
+       (select coalesce(sum(quantity), 0)::float8 from weclapp.warehouse_stock) as on_hand
+`;
+
+export const getCatalog = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
+  .handler(async ({ data }): Promise<CatalogPayload> => {
+    const { query } = await import("./db.server");
+    const params = [data.channel, data.category, data.search];
+
+    const [articles, counts, categories, stats] = await Promise.all([
+      query<{
+        sku: string;
+        name: string;
+        spec: string;
+        category: string;
+        unit: string;
+        moq: number;
+        on_hand: number;
+        breaks: PriceBreak[];
+      }>(ARTICLES_SQL, params),
+      query<{ total: number }>(COUNT_SQL, params),
+      query<{ name: string; count: number }>(CATEGORIES_SQL),
+      query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
+    ]);
+
+    return {
+      articles: articles.map((row) => ({
+        sku: row.sku,
+        name: row.name,
+        spec: row.spec,
+        category: row.category,
+        unit: row.unit,
+        moq: Math.max(1, Math.round(row.moq)),
+        onHand: Math.round(row.on_hand),
+        breaks: (row.breaks ?? [])
+          .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
+          .sort((a, b) => a.from - b.from),
+      })),
+      total: counts[0]?.total ?? 0,
+      categories,
+      stats: {
+        articles: stats[0]?.articles ?? 0,
+        categories: stats[0]?.categories ?? 0,
+        onHand: Math.round(stats[0]?.on_hand ?? 0),
+      },
+    };
+  });
