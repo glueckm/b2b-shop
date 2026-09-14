@@ -343,9 +343,10 @@ function Shop() {
                       </td>
                       <td className="max-w-[320px] px-3 py-3 align-top">
                         <span className="block font-semibold">{article.name}</span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {article.spec || article.category}
+                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+                          {specText(article.spec) || article.category}
                         </span>
+
                       </td>
                       <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
