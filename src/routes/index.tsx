@@ -365,9 +365,10 @@ function Shop() {
                           {stockLabel[state]}
                           {article.onHand > 0 && (
                             <span className="font-mono text-muted-foreground">
-                              {num(article.onHand)}
+                              {stockDisplay(article.onHand)}
                             </span>
                           )}
+
                         </span>
                       </td>
                       <td className="px-3 py-3 align-top">
