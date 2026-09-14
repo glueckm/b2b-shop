@@ -428,6 +428,14 @@ function Shop() {
                 </span>
               </div>
 
+              {detail.spec && (
+                <div
+                  className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
+                />
+              )}
+
+
               <table className="mt-4 w-full text-left">
                 <thead>
                   <tr className="border-b border-border">
