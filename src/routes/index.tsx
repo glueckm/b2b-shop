@@ -413,10 +413,8 @@ function Shop() {
                   <h3 className="mt-1 text-xl font-semibold tracking-tight">
                     {detail.name} · {detail.sku}
                   </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {detail.category}
-                    {detail.spec ? ` · ${detail.spec}` : ""}
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{detail.category}</p>
+
                 </div>
                 <span
                   className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
