@@ -52,6 +52,10 @@ const eur = (value: number) =>
 
 const num = (value: number) => value.toLocaleString("de-DE");
 
+/** Lagerstand nur bis 10 ausweisen, darüber "10+". */
+const stockDisplay = (onHand: number) => (onHand > 10 ? "10+" : num(onHand));
+
+
 const entities: Record<string, string> = {
   "&nbsp;": " ",
   "&amp;": "&",
@@ -365,9 +369,10 @@ function Shop() {
                           {stockLabel[state]}
                           {article.onHand > 0 && (
                             <span className="font-mono text-muted-foreground">
-                              {num(article.onHand)}
+                              {stockDisplay(article.onHand)}
                             </span>
                           )}
+
                         </span>
                       </td>
                       <td className="px-3 py-3 align-top">
