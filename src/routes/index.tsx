@@ -335,9 +335,11 @@ function Shop() {
                   const q = getQty(article);
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
+                  const spec = specText(article.spec);
                   return (
-                    <tr key={article.sku} className="border-b border-border/70 last:border-0">
-                      <td className="px-3 py-3 align-top">
+                    <Fragment key={article.sku}>
+                    <tr className="border-t border-border/70">
+                      <td className="px-3 pt-3 align-top">
                         <button
                           onClick={() => setDetailSku(article.sku)}
                           className="font-mono text-[12px] text-muted-foreground hover:text-accent"
@@ -345,13 +347,10 @@ function Shop() {
                           {article.sku}
                         </button>
                       </td>
-                      <td className="max-w-[320px] px-3 py-3 align-top">
+                      <td className="max-w-[320px] px-3 pt-3 align-top">
                         <span className="block font-semibold">{article.name}</span>
-                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
-                          {specText(article.spec) || article.category}
-                        </span>
-
                       </td>
+
                       <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
                       </td>
