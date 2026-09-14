@@ -52,6 +52,35 @@ const eur = (value: number) =>
 
 const num = (value: number) => value.toLocaleString("de-DE");
 
+const entities: Record<string, string> = {
+  "&nbsp;": " ",
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+};
+
+/** HTML-Beschreibung als einzeiliger Klartext (für die Tabelle). */
+function specText(html: string) {
+  return html
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, (m) => entities[m] ?? m)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Entfernt Skripte, Event-Handler und gefährliche URLs aus der HTML-Beschreibung. */
+function sanitizeSpec(html: string) {
+  return html
+    .replace(/<(script|style|iframe|object|embed|link|meta)[\s\S]*?<\/\1>/gi, "")
+    .replace(/<(script|style|iframe|object|embed|link|meta)[^>]*>/gi, "")
+    .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+    .replace(/(href|src)\s*=\s*("|')?\s*javascript:[^"'>]*("|')?/gi, "");
+}
+
+
 function priceForQty(article: CatalogArticle, qty: number) {
   let price = article.breaks[0]?.price ?? 0;
   for (const b of article.breaks) if (qty >= b.from) price = b.price;
@@ -314,9 +343,10 @@ function Shop() {
                       </td>
                       <td className="max-w-[320px] px-3 py-3 align-top">
                         <span className="block font-semibold">{article.name}</span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {article.spec || article.category}
+                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
+                          {specText(article.spec) || article.category}
                         </span>
+
                       </td>
                       <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
@@ -384,10 +414,8 @@ function Shop() {
                   <h3 className="mt-1 text-xl font-semibold tracking-tight">
                     {detail.name} · {detail.sku}
                   </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {detail.category}
-                    {detail.spec ? ` · ${detail.spec}` : ""}
-                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">{detail.category}</p>
+
                 </div>
                 <span
                   className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
@@ -398,6 +426,14 @@ function Shop() {
                   {stockLabel[stockState(detail.onHand)]}
                 </span>
               </div>
+
+              {detail.spec && (
+                <div
+                  className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
+                />
+              )}
+
 
               <table className="mt-4 w-full text-left">
                 <thead>
