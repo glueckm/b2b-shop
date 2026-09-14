@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
@@ -335,9 +335,11 @@ function Shop() {
                   const q = getQty(article);
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
+                  const spec = specText(article.spec);
                   return (
-                    <tr key={article.sku} className="border-b border-border/70 last:border-0">
-                      <td className="px-3 py-3 align-top">
+                    <Fragment key={article.sku}>
+                    <tr className="border-t border-border/70">
+                      <td className="px-3 pt-3 align-top">
                         <button
                           onClick={() => setDetailSku(article.sku)}
                           className="font-mono text-[12px] text-muted-foreground hover:text-accent"
@@ -345,23 +347,20 @@ function Shop() {
                           {article.sku}
                         </button>
                       </td>
-                      <td className="max-w-[320px] px-3 py-3 align-top">
+                      <td className="max-w-[320px] px-3 pt-3 align-top">
                         <span className="block font-semibold">{article.name}</span>
-                        <span className="mt-0.5 line-clamp-2 block text-xs text-muted-foreground">
-                          {specText(article.spec) || article.category}
-                        </span>
-
                       </td>
-                      <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
+
+                      <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
                       </td>
-                      <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
+                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
                         {article.unit}
                       </td>
-                      <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
+                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
                         {article.moq}
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <span
                           className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}
                         >
@@ -375,7 +374,7 @@ function Shop() {
 
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <span className="flex w-max items-center rounded-sm border border-border">
                           <button
                             onClick={() => step(article, -1)}
@@ -394,7 +393,7 @@ function Shop() {
                           </button>
                         </span>
                       </td>
-                      <td className="px-3 py-3 align-top">
+                      <td className="px-3 pt-3 align-top">
                         <button
                           onClick={() => addLine(article.sku, q)}
                           className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -403,7 +402,17 @@ function Shop() {
                         </button>
                       </td>
                     </tr>
+                    <tr>
+                      <td />
+                      <td colSpan={7} className="px-3 pb-3 pt-1">
+                        <span className="line-clamp-2 block text-xs text-muted-foreground">
+                          {spec || article.category}
+                        </span>
+                      </td>
+                    </tr>
+                    </Fragment>
                   );
+
                 })}
               </tbody>
             </table>
