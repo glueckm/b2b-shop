@@ -1,77 +1,98 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
-import {
-  categories,
-  eur,
-  priceForQty,
-  products,
-  stockLabel,
-  type Product,
-} from "@/data/catalog";
+import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
+
+const searchSchema = z.object({
+  channel: z.string().default("NET1"),
+  category: z.string().default(""),
+  q: z.string().default(""),
+});
 
 export const Route = createFileRoute("/")({
+  validateSearch: searchSchema,
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }) =>
+    getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
   head: () => ({
     meta: [
-      { title: "MAWA B2B Shop — Wholesale Catalog & Trade Pricing" },
+      { title: "MAWA B2B Shop — Optik & Zubehör zu Händlerpreisen" },
       {
         name: "description",
         content:
-          "Order MAWA cleaning, packaging, safety and kitchen supplies at net trade prices with case quantities and volume price breaks.",
+          "MAWA Händlershop: Wärmebild- und Nachtsichttechnik, Montagen und Zubehör mit tagesaktuellen Lagerbeständen und Ihrer Preisgruppe.",
       },
-      { property: "og:title", content: "MAWA B2B Shop — Wholesale Catalog" },
+      { property: "og:title", content: "MAWA B2B Shop — Händlerkatalog" },
       {
         property: "og:description",
-        content: "Net trade pricing, case quantities and volume breaks for MAWA trade accounts.",
+        content: "Nettopreise, Preisgruppen und Lagerbestände für MAWA Händlerkonten.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  errorComponent: () => (
+    <div className="mx-auto max-w-xl px-5 py-24 text-center">
+      <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Die Verbindung zur Artikeldatenbank ist fehlgeschlagen. Bitte Seite neu laden.
+      </p>
+    </div>
+  ),
+  notFoundComponent: () => <div className="px-5 py-24 text-center">Nicht gefunden</div>,
   component: Shop,
 });
 
 type Line = { sku: string; qty: number };
 
-const stockTone: Record<Product["stock"], string> = {
-  in: "text-stock",
-  low: "text-low",
-  backorder: "text-muted-foreground",
-};
+const eur = (value: number) =>
+  new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
 
-const stockDot: Record<Product["stock"], string> = {
-  in: "bg-stock",
-  low: "bg-low",
-  backorder: "bg-muted-foreground",
-};
+const num = (value: number) => value.toLocaleString("de-DE");
+
+function priceForQty(article: CatalogArticle, qty: number) {
+  let price = article.breaks[0]?.price ?? 0;
+  for (const b of article.breaks) if (qty >= b.from) price = b.price;
+  return price;
+}
+
+function stockState(onHand: number) {
+  if (onHand <= 0) return "backorder" as const;
+  if (onHand < 5) return "low" as const;
+  return "in" as const;
+}
+
+const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nachbestellung" };
+const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-foreground" };
+const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
 
 function Shop() {
-  const [activeCategory, setActiveCategory] = useState("All products");
-  const [qty, setQty] = useState<Record<string, number>>(
-    Object.fromEntries(products.map((p) => [p.sku, p.moq])),
-  );
-  const [lines, setLines] = useState<Line[]>([
-    { sku: "MAW-CL-0142", qty: 12 },
-    { sku: "MAW-PE-0771", qty: 100 },
-  ]);
+  const data = Route.useLoaderData();
+  const search = Route.useSearch();
+  const navigate = useNavigate({ from: Route.fullPath });
+
+  const articles = data.articles;
+  const [qty, setQty] = useState<Record<string, number>>({});
+  const [lines, setLines] = useState<Line[]>([]);
   const [quick, setQuick] = useState("");
-  const [detailSku, setDetailSku] = useState(products[0]!.sku);
+  const [term, setTerm] = useState(search.q);
+  const [detailSku, setDetailSku] = useState<string | null>(null);
 
-  const visible = useMemo(
-    () =>
-      activeCategory === "All products"
-        ? products
-        : products.filter((p) => p.category === activeCategory),
-    [activeCategory],
-  );
+  const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
+  const detail = (detailSku ? bySku.get(detailSku) : undefined) ?? articles[0];
 
-  const detail = products.find((p) => p.sku === detailSku) ?? products[0]!;
+  const activeGroup =
+    priceGroups.find((g) => g.channel === search.channel) ?? priceGroups[0]!;
 
-  const step = (sku: string, delta: number) =>
-    setQty((prev) => {
-      const product = products.find((p) => p.sku === sku)!;
-      const next = Math.max(product.moq, (prev[sku] ?? product.moq) + delta * product.moq);
-      return { ...prev, [sku]: next };
-    });
+  const getQty = (article: CatalogArticle) => qty[article.sku] ?? article.moq;
+
+  const step = (article: CatalogArticle, delta: number) =>
+    setQty((prev) => ({
+      ...prev,
+      [article.sku]: Math.max(article.moq, getQty(article) + delta * article.moq),
+    }));
 
   const addLine = (sku: string, amount: number) =>
     setLines((prev) => {
@@ -82,26 +103,35 @@ function Shop() {
 
   const removeLine = (sku: string) => setLines((prev) => prev.filter((l) => l.sku !== sku));
 
+  const submitSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    void navigate({ search: (prev) => ({ ...prev, q: term.trim() }) });
+  };
+
   const submitQuick = (event: React.FormEvent) => {
     event.preventDefault();
     const [rawSku, rawQty] = quick.split(/[\s,]+/);
-    const product = products.find(
-      (p) => p.sku.toLowerCase() === (rawSku ?? "").trim().toLowerCase(),
+    const article = articles.find(
+      (a) => a.sku.toLowerCase() === (rawSku ?? "").trim().toLowerCase(),
     );
-    if (!product) return;
-    addLine(product.sku, Math.max(product.moq, Number(rawQty) || product.moq));
+    if (!article) return;
+    addLine(article.sku, Math.max(article.moq, Number(rawQty) || article.moq));
     setQuick("");
   };
 
-  const detailedLines = lines.map((line) => {
-    const product = products.find((p) => p.sku === line.sku)!;
-    const unit = priceForQty(product, line.qty);
-    return { ...line, product, unit, total: unit * line.qty };
+  const detailedLines = lines.flatMap((line) => {
+    const article = bySku.get(line.sku);
+    if (!article) return [];
+    const unit = priceForQty(article, line.qty);
+    return [{ ...line, article, unit, total: unit * line.qty }];
   });
 
   const subtotal = detailedLines.reduce((sum, l) => sum + l.total, 0);
-  const listTotal = detailedLines.reduce((sum, l) => sum + l.product.unitPrice * l.qty, 0);
-  const savings = listTotal - subtotal;
+  const listTotal = detailedLines.reduce(
+    (sum, l) => sum + (l.article.breaks[0]?.price ?? 0) * l.qty,
+    0,
+  );
+  const savings = Math.max(0, listTotal - subtotal);
 
   return (
     <div className="min-h-screen bg-background">
@@ -114,31 +144,34 @@ function Shop() {
             <span className="leading-none">
               <span className="block text-base font-bold uppercase tracking-[0.2em]">MAWA</span>
               <span className="label-mono mt-1 block text-primary-foreground/55">
-                Trade &amp; Wholesale
+                Händler &amp; Distribution
               </span>
             </span>
           </div>
-          <nav className="ml-4 hidden items-center gap-6 text-sm font-medium lg:flex">
-            <a className="text-primary-foreground" href="#catalog">
-              Catalog
-            </a>
-            <a className="text-primary-foreground/65 hover:text-primary-foreground" href="#detail">
-              Price breaks
-            </a>
-            <a className="text-primary-foreground/65 hover:text-primary-foreground" href="#order">
-              Order rail
-            </a>
-          </nav>
-          <div className="ml-auto flex items-center gap-5">
-            <span className="hidden text-right sm:block">
-              <span className="block text-xs font-medium">Nordwerk GmbH</span>
-              <span className="label-mono text-primary-foreground/50">Net 30 · Tier 2</span>
-            </span>
+          <div className="ml-auto flex items-center gap-4">
+            <label className="hidden items-center gap-2 sm:flex">
+              <span className="label-mono text-primary-foreground/55">Preisgruppe</span>
+              <select
+                value={activeGroup.channel}
+                onChange={(event) =>
+                  void navigate({
+                    search: (prev) => ({ ...prev, channel: event.target.value }),
+                  })
+                }
+                className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground outline-none"
+              >
+                {priceGroups.map((group) => (
+                  <option key={group.channel} value={group.channel} className="text-foreground">
+                    {group.label}
+                  </option>
+                ))}
+              </select>
+            </label>
             <a
               href="#order"
               className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
             >
-              Order rail
+              Warenkorb
               <span className="font-mono text-xs">{lines.length}</span>
             </a>
           </div>
@@ -148,29 +181,33 @@ function Shop() {
       <section className="relative isolate overflow-hidden border-b border-border">
         <img
           src={heroImage}
-          alt="MAWA distribution warehouse with palletised stock"
+          alt="MAWA Distributionslager mit palettierter Ware"
           width={1600}
           height={912}
           className="absolute inset-0 size-full object-cover"
         />
         <div className="absolute inset-0 bg-primary/80" />
         <div className="relative mx-auto max-w-[1440px] px-5 py-14">
-          <p className="label-mono text-accent">Trade portal · net pricing</p>
+          <p className="label-mono text-accent">Händlerportal · Nettopreise</p>
           <h1 className="mt-3 max-w-[26ch] text-4xl font-bold leading-[1.05] tracking-tight text-primary-foreground text-balance">
-            Order MAWA stock by the case, at your contract price.
+            Der komplette MAWA Katalog zu Ihrem Konditionspreis.
           </h1>
           <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-4 font-mono text-primary-foreground">
             <div>
-              <dt className="label-mono text-primary-foreground/55">SKUs live</dt>
-              <dd className="text-xl font-semibold">1,284</dd>
+              <dt className="label-mono text-primary-foreground/55">Artikel verfügbar</dt>
+              <dd className="text-xl font-semibold">{num(data.stats.articles)}</dd>
             </div>
             <div>
-              <dt className="label-mono text-primary-foreground/55">Cut-off</dt>
-              <dd className="text-xl font-semibold">16:00 CET</dd>
+              <dt className="label-mono text-primary-foreground/55">Kategorien</dt>
+              <dd className="text-xl font-semibold">{num(data.stats.categories)}</dd>
             </div>
             <div>
-              <dt className="label-mono text-primary-foreground/55">Delivery</dt>
-              <dd className="text-xl font-semibold">24–48 h</dd>
+              <dt className="label-mono text-primary-foreground/55">Lagerstück</dt>
+              <dd className="text-xl font-semibold">{num(data.stats.onHand)}</dd>
+            </div>
+            <div>
+              <dt className="label-mono text-primary-foreground/55">Preisgruppe</dt>
+              <dd className="text-xl font-semibold">{activeGroup.label}</dd>
             </div>
           </dl>
         </div>
@@ -178,19 +215,21 @@ function Shop() {
 
       <nav className="border-b border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5">
-          {categories.map((category) => {
-            const active = category.name === activeCategory;
+          {[{ name: "", count: data.stats.articles }, ...data.categories].map((category) => {
+            const active = category.name === search.category;
             return (
               <button
-                key={category.name}
-                onClick={() => setActiveCategory(category.name)}
+                key={category.name || "all"}
+                onClick={() =>
+                  void navigate({ search: (prev) => ({ ...prev, category: category.name }) })
+                }
                 className={`whitespace-nowrap border-b-2 px-3 py-3 text-[13px] transition-colors ${
                   active
                     ? "border-accent font-semibold text-foreground"
                     : "border-transparent font-medium text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {category.name}
+                {category.name || "Alle Artikel"}
                 <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                   {category.count}
                 </span>
@@ -205,67 +244,98 @@ function Shop() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
-                {activeCategory}
+                {search.category || "Alle Artikel"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {visible.length} items shown · prices net of VAT · case quantities apply
+                {num(data.total)} Treffer · {articles.length} angezeigt · Preise netto ohne USt.
               </p>
             </div>
-            <span className="label-mono text-muted-foreground">Stock updated 06:40</span>
+            <form onSubmit={submitSearch} className="flex items-center gap-2">
+              <input
+                value={term}
+                onChange={(event) => setTerm(event.target.value)}
+                placeholder="Artikelnummer oder Name"
+                aria-label="Katalog durchsuchen"
+                className="w-56 rounded-sm border border-border bg-card px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground"
+              />
+              <button
+                type="submit"
+                className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
+              >
+                Suchen
+              </button>
+            </form>
           </div>
 
           <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
-            <table className="w-full min-w-[860px] border-collapse text-left">
+            <table className="w-full min-w-[900px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-muted/60">
-                  {["SKU", "Product", "Unit net", "Case", "MOQ", "Stock", "Quantity", ""].map(
-                    (heading) => (
-                      <th key={heading} className="label-mono px-3 py-2.5 font-medium text-muted-foreground">
-                        {heading}
-                      </th>
-                    ),
-                  )}
+                  {[
+                    "Artikelnr.",
+                    "Artikel",
+                    "Netto/Einheit",
+                    "Einheit",
+                    "Mind.",
+                    "Bestand",
+                    "Menge",
+                    "",
+                  ].map((heading) => (
+                    <th
+                      key={heading}
+                      className="label-mono px-3 py-2.5 font-medium text-muted-foreground"
+                    >
+                      {heading}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody className="text-sm">
-                {visible.map((product) => {
-                  const q = qty[product.sku] ?? product.moq;
-                  const unit = priceForQty(product, q);
-                  const disabled = product.stock === "backorder";
+                {articles.length === 0 && (
+                  <tr>
+                    <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
+                      Keine Artikel für diese Auswahl.
+                    </td>
+                  </tr>
+                )}
+                {articles.map((article) => {
+                  const q = getQty(article);
+                  const unit = priceForQty(article, q);
+                  const state = stockState(article.onHand);
                   return (
-                    <tr key={product.sku} className="border-b border-border/70 last:border-0">
+                    <tr key={article.sku} className="border-b border-border/70 last:border-0">
                       <td className="px-3 py-3 align-top">
                         <button
-                          onClick={() => setDetailSku(product.sku)}
+                          onClick={() => setDetailSku(article.sku)}
                           className="font-mono text-[12px] text-muted-foreground hover:text-accent"
                         >
-                          {product.sku}
+                          {article.sku}
                         </button>
                       </td>
-                      <td className="px-3 py-3 align-top">
-                        <span className="block font-semibold">{product.name}</span>
+                      <td className="max-w-[320px] px-3 py-3 align-top">
+                        <span className="block font-semibold">{article.name}</span>
                         <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {product.spec}
+                          {article.spec || article.category}
                         </span>
                       </td>
                       <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
                         {eur(unit)}
                       </td>
                       <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
-                        {product.caseSize} / case
+                        {article.unit}
                       </td>
                       <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
-                        {product.moq}
+                        {article.moq}
                       </td>
                       <td className="px-3 py-3 align-top">
                         <span
-                          className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[product.stock]}`}
+                          className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}
                         >
-                          <span className={`size-1.5 rounded-full ${stockDot[product.stock]}`} />
-                          {stockLabel[product.stock]}
-                          {product.onHand > 0 && (
+                          <span className={`size-1.5 rounded-full ${stockDot[state]}`} />
+                          {stockLabel[state]}
+                          {article.onHand > 0 && (
                             <span className="font-mono text-muted-foreground">
-                              {product.onHand.toLocaleString("de-DE")}
+                              {num(article.onHand)}
                             </span>
                           )}
                         </span>
@@ -273,16 +343,16 @@ function Shop() {
                       <td className="px-3 py-3 align-top">
                         <span className="flex w-max items-center rounded-sm border border-border">
                           <button
-                            onClick={() => step(product.sku, -1)}
-                            aria-label={`Decrease ${product.sku}`}
+                            onClick={() => step(article, -1)}
+                            aria-label={`Menge verringern ${article.sku}`}
                             className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
                           >
                             −
                           </button>
                           <span className="w-12 text-center font-mono text-[13px]">{q}</span>
                           <button
-                            onClick={() => step(product.sku, 1)}
-                            aria-label={`Increase ${product.sku}`}
+                            onClick={() => step(article, 1)}
+                            aria-label={`Menge erhöhen ${article.sku}`}
                             className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
                           >
                             +
@@ -291,11 +361,10 @@ function Shop() {
                       </td>
                       <td className="px-3 py-3 align-top">
                         <button
-                          disabled={disabled}
-                          onClick={() => addLine(product.sku, q)}
-                          className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+                          onClick={() => addLine(article.sku, q)}
+                          className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
                         >
-                          {disabled ? "Unavailable" : "Add"}
+                          Hinzufügen
                         </button>
                       </td>
                     </tr>
@@ -305,74 +374,86 @@ function Shop() {
             </table>
           </div>
 
-          <section id="detail" className="mt-7 rounded-lg border border-border bg-card p-5">
-            <div className="flex flex-wrap items-end justify-between gap-3">
-              <div>
-                <p className="label-mono text-muted-foreground">Volume price breaks</p>
-                <h3 className="mt-1 text-xl font-semibold tracking-tight">
-                  {detail.name} · {detail.sku}
-                </h3>
-                <p className="mt-1 text-sm text-muted-foreground">{detail.spec}</p>
+          {detail && (
+            <section id="detail" className="mt-7 rounded-lg border border-border bg-card p-5">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="label-mono text-muted-foreground">
+                    Staffelpreise · {activeGroup.label}
+                  </p>
+                  <h3 className="mt-1 text-xl font-semibold tracking-tight">
+                    {detail.name} · {detail.sku}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {detail.category}
+                    {detail.spec ? ` · ${detail.spec}` : ""}
+                  </p>
+                </div>
+                <span
+                  className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
+                >
+                  <span
+                    className={`size-2 rounded-full ${stockDot[stockState(detail.onHand)]}`}
+                  />
+                  {stockLabel[stockState(detail.onHand)]}
+                </span>
               </div>
-              <span
-                className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[detail.stock]}`}
-              >
-                <span className={`size-2 rounded-full ${stockDot[detail.stock]}`} />
-                {stockLabel[detail.stock]}
-              </span>
-            </div>
 
-            <table className="mt-4 w-full text-left">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="label-mono py-2 font-medium text-muted-foreground">Quantity from</th>
-                  <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                    Unit net
-                  </th>
-                  <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                    Line at tier
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="font-mono text-[13px]">
-                {detail.breaks.map((tier, index) => {
-                  const best = index === detail.breaks.length - 1;
-                  return (
-                    <tr key={tier.from} className="border-b border-border/70 last:border-0">
-                      <td className="py-2.5">{tier.from} units</td>
-                      <td
-                        className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}
-                      >
-                        {eur(tier.price)}
-                      </td>
-                      <td className="py-2.5 text-right text-muted-foreground">
-                        {eur(tier.price * tier.from)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </section>
+              <table className="mt-4 w-full text-left">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
+                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
+                      Netto/Einheit
+                    </th>
+                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
+                      Position ab Staffel
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-[13px]">
+                  {detail.breaks.map((tier, index) => {
+                    const best = index === detail.breaks.length - 1 && detail.breaks.length > 1;
+                    const from = Math.max(tier.from, detail.moq);
+                    return (
+                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
+                        <td className="py-2.5">
+                          {from} {detail.unit}
+                        </td>
+                        <td className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
+                          {eur(tier.price)}
+                        </td>
+                        <td className="py-2.5 text-right text-muted-foreground">
+                          {eur(tier.price * from)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </section>
+          )}
         </main>
 
         <aside id="order" className="lg:sticky lg:top-5 lg:self-start">
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <span className="label-mono text-muted-foreground">Order rail</span>
-              <span className="font-mono text-[11px] text-accent">{lines.length} lines</span>
+              <span className="label-mono text-muted-foreground">Warenkorb</span>
+              <span className="font-mono text-[11px] text-accent">
+                {detailedLines.length} Positionen
+              </span>
             </div>
 
             <form onSubmit={submitQuick} className="border-b border-border px-4 py-3">
               <label className="block text-xs font-medium text-muted-foreground" htmlFor="quick">
-                Quick order — SKU + quantity
+                Schnellerfassung — Artikelnr. + Menge
               </label>
               <div className="mt-1.5 flex items-center gap-2 rounded-sm border border-border bg-card px-3 py-2">
                 <input
                   id="quick"
                   value={quick}
                   onChange={(event) => setQuick(event.target.value)}
-                  placeholder="MAW-PK-0512 250"
+                  placeholder="200-200-022 10"
                   className="min-w-0 flex-1 bg-transparent font-mono text-[13px] outline-none placeholder:text-muted-foreground"
                 />
                 <button type="submit" className="text-sm font-semibold text-accent">
@@ -384,7 +465,7 @@ function Shop() {
             <ul>
               {detailedLines.length === 0 && (
                 <li className="px-4 py-6 text-sm text-muted-foreground">
-                  No lines yet. Add products from the catalog.
+                  Noch keine Positionen. Artikel aus dem Katalog hinzufügen.
                 </li>
               )}
               {detailedLines.map((line) => (
@@ -401,14 +482,14 @@ function Shop() {
                         {line.qty} × {eur(line.unit)}
                       </span>
                     </div>
-                    <p className="truncate text-[13px] font-medium">{line.product.name}</p>
+                    <p className="truncate text-[13px] font-medium">{line.article.name}</p>
                     <p className="mt-0.5 font-mono text-[13px] font-semibold text-accent">
                       {eur(line.total)}
                     </p>
                   </div>
                   <button
                     onClick={() => removeLine(line.sku)}
-                    aria-label={`Remove ${line.sku}`}
+                    aria-label={`${line.sku} entfernen`}
                     className="font-mono text-muted-foreground hover:text-foreground"
                   >
                     ×
@@ -419,21 +500,21 @@ function Shop() {
 
             <div className="px-4 py-4">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Subtotal (net)</span>
+                <span className="text-muted-foreground">Zwischensumme (netto)</span>
                 <span className="font-mono font-semibold">{eur(subtotal)}</span>
               </div>
               <div className="mt-1 flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Volume saving</span>
+                <span className="text-muted-foreground">Staffelvorteil</span>
                 <span className="font-mono font-semibold text-stock">−{eur(savings)}</span>
               </div>
               <button className="mt-4 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-                Submit trade order
+                Bestellung absenden
               </button>
               <button className="mt-2 w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
-                Request quote instead
+                Stattdessen Angebot anfragen
               </button>
               <p className="label-mono mt-3 text-muted-foreground">
-                Net 30 · freight free above €750
+                Preise gemäß Preisgruppe {activeGroup.label} · netto
               </p>
             </div>
           </div>
@@ -442,8 +523,8 @@ function Shop() {
 
       <footer className="border-t border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground">
-          <span>MAWA Wholesale · trade accounts only</span>
-          <span className="font-mono text-[12px]">Support +49 30 000 000 · orders@mawa.example</span>
+          <span>MAWA · nur für Händler und Wiederverkäufer</span>
+          <span className="font-mono text-[12px]">Bestände und Preise live aus dem ERP</span>
         </div>
       </footer>
     </div>
