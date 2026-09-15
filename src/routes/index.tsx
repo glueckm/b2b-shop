@@ -172,14 +172,15 @@ function Shop() {
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1440px] items-center gap-6 px-5 py-3">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-sm bg-accent font-mono text-sm font-semibold text-accent-foreground">
-              M
-            </span>
-            <span className="leading-none">
-              <span className="block text-base font-bold uppercase tracking-[0.2em]">MAWA</span>
-              <span className="label-mono mt-1 block text-primary-foreground/55">
-                Händler &amp; Distribution
-              </span>
+            <img
+              src={mawaLogo}
+              alt="MAWA Trading"
+              width={369}
+              height={77}
+              className="h-8 w-auto"
+            />
+            <span className="label-mono hidden text-primary-foreground/55 sm:block">
+              Distribution B2B
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
