@@ -13,6 +13,7 @@ export const priceGroups = [
 export type PriceBreak = { from: number; price: number };
 
 export type CatalogArticle = {
+  id: string;
   sku: string;
   name: string;
   spec: string;
@@ -53,7 +54,8 @@ stock as (
   from weclapp.warehouse_stock
   group by article_id
 )
-select a.article_number as sku,
+select a.id as id,
+       a.article_number as sku,
        a.name,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
        coalesce(c.name, 'Ohne Kategorie') as category,
@@ -120,6 +122,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
     const [articles, counts, categories, stats] = await Promise.all([
       query<{
+        id: string;
         sku: string;
         name: string;
         spec: string;
@@ -136,6 +139,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
     return {
       articles: articles.map((row) => ({
+        id: String(row.id),
         sku: row.sku,
         name: row.name,
         spec: row.spec,

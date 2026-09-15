@@ -3,6 +3,7 @@ import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
+import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 
 const searchSchema = z.object({
@@ -336,6 +337,7 @@ function Shop() {
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
                   const spec = specText(article.spec);
+                  const thumb = articleImages(article.id, article.sku)[0];
                   return (
                     <Fragment key={article.sku}>
                     <tr className="border-t border-border/70">
@@ -348,7 +350,21 @@ function Shop() {
                         </button>
                       </td>
                       <td className="max-w-[320px] px-3 pt-3 align-top">
-                        <span className="block font-semibold">{article.name}</span>
+                        <span className="flex items-start gap-3">
+                          {thumb ? (
+                            <img
+                              src={thumb}
+                              alt={article.name}
+                              loading="lazy"
+                              className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
+                            />
+                          ) : (
+                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
+                              —
+                            </span>
+                          )}
+                          <span className="block font-semibold">{article.name}</span>
+                        </span>
                       </td>
 
                       <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">
@@ -440,6 +456,20 @@ function Shop() {
                   {stockLabel[stockState(detail.onHand)]}
                 </span>
               </div>
+
+              {articleImages(detail.id, detail.sku).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
+                  {articleImages(detail.id, detail.sku).map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${detail.name} — Bild ${index + 1}`}
+                      loading="lazy"
+                      className="h-40 w-40 rounded-sm border border-border bg-panel object-contain p-1"
+                    />
+                  ))}
+                </div>
+              )}
 
               {detail.spec && (
                 <div
