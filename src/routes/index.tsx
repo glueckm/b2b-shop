@@ -349,7 +349,21 @@ function Shop() {
                         </button>
                       </td>
                       <td className="max-w-[320px] px-3 pt-3 align-top">
-                        <span className="block font-semibold">{article.name}</span>
+                        <span className="flex items-start gap-3">
+                          {thumb ? (
+                            <img
+                              src={thumb}
+                              alt={article.name}
+                              loading="lazy"
+                              className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
+                            />
+                          ) : (
+                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
+                              —
+                            </span>
+                          )}
+                          <span className="block font-semibold">{article.name}</span>
+                        </span>
                       </td>
 
                       <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">
