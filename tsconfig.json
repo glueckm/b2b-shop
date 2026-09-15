@@ -23,6 +23,7 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noUncheckedSideEffectImports": true,
+    "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"]
     }
