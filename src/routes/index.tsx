@@ -442,6 +442,20 @@ function Shop() {
                 </span>
               </div>
 
+              {articleImages(detail.id, detail.sku).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
+                  {articleImages(detail.id, detail.sku).map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${detail.name} — Bild ${index + 1}`}
+                      loading="lazy"
+                      className="h-40 w-40 rounded-sm border border-border bg-panel object-contain p-1"
+                    />
+                  ))}
+                </div>
+              )}
+
               {detail.spec && (
                 <div
                   className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
