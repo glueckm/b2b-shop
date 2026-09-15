@@ -3,6 +3,7 @@ import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
+import mawaLogo from "@/assets/mawa-logo.png";
 import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 
@@ -19,16 +20,16 @@ export const Route = createFileRoute("/")({
     getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
   head: () => ({
     meta: [
-      { title: "MAWA B2B Shop — Optik & Zubehör zu Händlerpreisen" },
+      { title: "MAWA Trading B2B Shop — Distribution Optik & Zubehör" },
       {
         name: "description",
         content:
-          "MAWA Händlershop: Wärmebild- und Nachtsichttechnik, Montagen und Zubehör mit tagesaktuellen Lagerbeständen und Ihrer Preisgruppe.",
+          "MAWA Trading Distribution: Wärmebild- und Nachtsichttechnik, Montagen und Zubehör mit tagesaktuellen Lagerbeständen und Ihrer Preisgruppe.",
       },
-      { property: "og:title", content: "MAWA B2B Shop — Händlerkatalog" },
+      { property: "og:title", content: "MAWA Trading B2B Shop — Distributionskatalog" },
       {
         property: "og:description",
-        content: "Nettopreise, Preisgruppen und Lagerbestände für MAWA Händlerkonten.",
+        content: "Nettopreise, Preisgruppen und Lagerbestände für Partner der MAWA Distribution.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -172,14 +173,15 @@ function Shop() {
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1440px] items-center gap-6 px-5 py-3">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-sm bg-accent font-mono text-sm font-semibold text-accent-foreground">
-              M
-            </span>
-            <span className="leading-none">
-              <span className="block text-base font-bold uppercase tracking-[0.2em]">MAWA</span>
-              <span className="label-mono mt-1 block text-primary-foreground/55">
-                Händler &amp; Distribution
-              </span>
+            <img
+              src={mawaLogo}
+              alt="MAWA Trading"
+              width={369}
+              height={77}
+              className="h-8 w-auto"
+            />
+            <span className="label-mono hidden text-primary-foreground/55 sm:block">
+              Distribution B2B
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
@@ -222,9 +224,9 @@ function Shop() {
         />
         <div className="absolute inset-0 bg-primary/80" />
         <div className="relative mx-auto max-w-[1440px] px-5 py-14">
-          <p className="label-mono text-accent">Händlerportal · Nettopreise</p>
+          <p className="label-mono text-accent">Distributionsportal · Nettopreise</p>
           <h1 className="mt-3 max-w-[26ch] text-4xl font-bold leading-[1.05] tracking-tight text-primary-foreground text-balance">
-            Der komplette MAWA Katalog zu Ihrem Konditionspreis.
+            Das komplette MAWA Distributionsprogramm zu Ihrem Konditionspreis.
           </h1>
           <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-4 font-mono text-primary-foreground">
             <div>
@@ -603,7 +605,7 @@ function Shop() {
 
       <footer className="border-t border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground">
-          <span>MAWA · nur für Händler und Wiederverkäufer</span>
+          <span>MAWA Trading · Distributor · Belieferung ausschließlich B2B</span>
           <span className="font-mono text-[12px]">Bestände und Preise live aus dem ERP</span>
         </div>
       </footer>
