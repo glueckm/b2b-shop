@@ -605,7 +605,7 @@ function Shop() {
 
       <footer className="border-t border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground">
-          <span>MAWA · nur für Händler und Wiederverkäufer</span>
+          <span>MAWA Trading · Distributor · Belieferung ausschließlich B2B</span>
           <span className="font-mono text-[12px]">Bestände und Preise live aus dem ERP</span>
         </div>
       </footer>
