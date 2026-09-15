@@ -167,21 +167,38 @@ export const getCatalog = createServerFn({ method: "GET" })
       query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
     ]);
 
+    let mapped: CatalogArticle[] = articles.map((row) => ({
+      id: String(row.id),
+      sku: row.sku,
+      name: row.name,
+      spec: row.spec,
+      category: row.category,
+      unit: row.unit,
+      moq: Math.max(1, Math.round(row.moq)),
+      onHand: Math.round(row.on_hand),
+      breaks: (row.breaks ?? [])
+        .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
+        .sort((a, b) => a.from - b.from),
+    }));
+
+    const term = normalizeTerm(data.search);
+    if (term) {
+      mapped = mapped
+        .map((article) => {
+          const score = Math.max(
+            similarity(term, normalizeTerm(article.name)),
+            similarity(term, normalizeTerm(article.sku)),
+          );
+          return { article, score };
+        })
+        .filter((entry) => entry.score >= SIMILARITY_THRESHOLD)
+        .sort((a, b) => b.score - a.score || a.article.name.localeCompare(b.article.name))
+        .map((entry) => entry.article);
+    }
+
     return {
-      articles: articles.map((row) => ({
-        id: String(row.id),
-        sku: row.sku,
-        name: row.name,
-        spec: row.spec,
-        category: row.category,
-        unit: row.unit,
-        moq: Math.max(1, Math.round(row.moq)),
-        onHand: Math.round(row.on_hand),
-        breaks: (row.breaks ?? [])
-          .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
-          .sort((a, b) => a.from - b.from),
-      })),
-      total: counts[0]?.total ?? 0,
+      articles: mapped,
+      total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
       stats: {
         articles: stats[0]?.articles ?? 0,
