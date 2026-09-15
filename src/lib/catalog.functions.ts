@@ -13,6 +13,7 @@ export const priceGroups = [
 export type PriceBreak = { from: number; price: number };
 
 export type CatalogArticle = {
+  id: string;
   sku: string;
   name: string;
   spec: string;
