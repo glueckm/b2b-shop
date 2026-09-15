@@ -139,6 +139,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
     return {
       articles: articles.map((row) => ({
+        id: String(row.id),
         sku: row.sku,
         name: row.name,
         spec: row.spec,
