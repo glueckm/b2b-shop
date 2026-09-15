@@ -114,11 +114,41 @@ select (select count(*)::int from weclapp.article where active and available_in_
            and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)) as on_hand
 `;
 
+// --- Fuzzy Search (Trigramm-Ähnlichkeit, da pg_trgm auf der Replica nicht verfügbar ist) ---
+function normalizeTerm(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\s\-_.]/g, "");
+}
+
+function trigrams(value: string): Set<string> {
+  const padded = `  ${value} `;
+  const out = new Set<string>();
+  for (let i = 0; i < padded.length - 2; i += 1) out.add(padded.slice(i, i + 3));
+  return out;
+}
+
+function similarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (Math.min(a.length, b.length) >= 3 && (b.includes(a) || a.includes(b))) return 1;
+  const ta = trigrams(a);
+  const tb = trigrams(b);
+  let shared = 0;
+  for (const t of ta) if (tb.has(t)) shared += 1;
+  const union = ta.size + tb.size - shared;
+  return union === 0 ? 0 : shared / union;
+}
+
+const SIMILARITY_THRESHOLD = 0.3;
+
 export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    const params = [data.channel, data.category, data.search];
+    const params = [data.channel, data.category, ""];
 
     const [articles, counts, categories, stats] = await Promise.all([
       query<{
@@ -137,21 +167,43 @@ export const getCatalog = createServerFn({ method: "GET" })
       query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
     ]);
 
+    let mapped: CatalogArticle[] = articles.map((row) => ({
+      id: String(row.id),
+      sku: row.sku,
+      name: row.name,
+      spec: row.spec,
+      category: row.category,
+      unit: row.unit,
+      moq: Math.max(1, Math.round(row.moq)),
+      onHand: Math.round(row.on_hand),
+      breaks: (row.breaks ?? [])
+        .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
+        .sort((a, b) => a.from - b.from),
+    }));
+
+    const term = normalizeTerm(data.search);
+    if (term) {
+      mapped = mapped
+        .map((article) => {
+          const targets = [
+            normalizeTerm(article.name),
+            normalizeTerm(article.sku),
+            ...`${article.name} ${article.sku}`
+              .split(/[^\p{L}\p{N}]+/u)
+              .map(normalizeTerm)
+              .filter(Boolean),
+          ];
+          const score = targets.reduce((best, target) => Math.max(best, similarity(term, target)), 0);
+          return { article, score };
+        })
+        .filter((entry) => entry.score >= SIMILARITY_THRESHOLD)
+        .sort((a, b) => b.score - a.score || a.article.name.localeCompare(b.article.name))
+        .map((entry) => entry.article);
+    }
+
     return {
-      articles: articles.map((row) => ({
-        id: String(row.id),
-        sku: row.sku,
-        name: row.name,
-        spec: row.spec,
-        category: row.category,
-        unit: row.unit,
-        moq: Math.max(1, Math.round(row.moq)),
-        onHand: Math.round(row.on_hand),
-        breaks: (row.breaks ?? [])
-          .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
-          .sort((a, b) => a.from - b.from),
-      })),
-      total: counts[0]?.total ?? 0,
+      articles: mapped,
+      total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
       stats: {
         articles: stats[0]?.articles ?? 0,
