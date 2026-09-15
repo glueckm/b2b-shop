@@ -54,7 +54,8 @@ stock as (
   from weclapp.warehouse_stock
   group by article_id
 )
-select a.article_number as sku,
+select a.id as id,
+       a.article_number as sku,
        a.name,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
        coalesce(c.name, 'Ohne Kategorie') as category,
