@@ -122,6 +122,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
     const [articles, counts, categories, stats] = await Promise.all([
       query<{
+        id: string;
         sku: string;
         name: string;
         spec: string;
