@@ -20,16 +20,16 @@ export const Route = createFileRoute("/")({
     getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
   head: () => ({
     meta: [
-      { title: "MAWA B2B Shop — Optik & Zubehör zu Händlerpreisen" },
+      { title: "MAWA Trading B2B Shop — Distribution Optik & Zubehör" },
       {
         name: "description",
         content:
-          "MAWA Händlershop: Wärmebild- und Nachtsichttechnik, Montagen und Zubehör mit tagesaktuellen Lagerbeständen und Ihrer Preisgruppe.",
+          "MAWA Trading Distribution: Wärmebild- und Nachtsichttechnik, Montagen und Zubehör mit tagesaktuellen Lagerbeständen und Ihrer Preisgruppe.",
       },
-      { property: "og:title", content: "MAWA B2B Shop — Händlerkatalog" },
+      { property: "og:title", content: "MAWA Trading B2B Shop — Distributionskatalog" },
       {
         property: "og:description",
-        content: "Nettopreise, Preisgruppen und Lagerbestände für MAWA Händlerkonten.",
+        content: "Nettopreise, Preisgruppen und Lagerbestände für Partner der MAWA Distribution.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
