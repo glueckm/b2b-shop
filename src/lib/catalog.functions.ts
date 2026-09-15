@@ -133,7 +133,7 @@ function trigrams(value: string): Set<string> {
 function similarity(a: string, b: string): number {
   if (!a || !b) return 0;
   if (a === b) return 1;
-  if (b.includes(a) || a.includes(b)) return 1;
+  if (Math.min(a.length, b.length) >= 3 && (b.includes(a) || a.includes(b))) return 1;
   const ta = trigrams(a);
   const tb = trigrams(b);
   let shared = 0;
