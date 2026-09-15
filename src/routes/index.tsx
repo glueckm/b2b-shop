@@ -3,6 +3,7 @@ import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/warehouse-hero.jpg";
+import mawaLogo from "@/assets/mawa-logo.png";
 import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 
