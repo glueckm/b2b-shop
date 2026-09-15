@@ -185,10 +185,15 @@ export const getCatalog = createServerFn({ method: "GET" })
     if (term) {
       mapped = mapped
         .map((article) => {
-          const score = Math.max(
-            similarity(term, normalizeTerm(article.name)),
-            similarity(term, normalizeTerm(article.sku)),
-          );
+          const targets = [
+            normalizeTerm(article.name),
+            normalizeTerm(article.sku),
+            ...`${article.name} ${article.sku}`
+              .split(/[^\p{L}\p{N}]+/u)
+              .map(normalizeTerm)
+              .filter(Boolean),
+          ];
+          const score = targets.reduce((best, target) => Math.max(best, similarity(term, target)), 0);
           return { article, score };
         })
         .filter((entry) => entry.score >= SIMILARITY_THRESHOLD)
