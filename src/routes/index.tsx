@@ -337,6 +337,7 @@ function Shop() {
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
                   const spec = specText(article.spec);
+                  const thumb = articleImages(article.id, article.sku)[0];
                   return (
                     <Fragment key={article.sku}>
                     <tr className="border-t border-border/70">
