@@ -26,6 +26,8 @@ export type CatalogArticle = {
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
+  /** Rabatt des Vertriebswegs (Preisgruppe) für die Warengruppe des Artikels, in Prozent. */
+  rebatePct: number;
   /** Variantenartikel (Mutter) — leer, wenn der Artikel keine Variante ist. */
   groupId: string;
   groupSku: string;
