@@ -51,13 +51,20 @@ async function serviceToken(): Promise<string> {
 }
 
 /**
- * Zuerst das Token des angemeldeten Kunden verwenden; ohne Anmeldung
- * ersatzweise das Servicekonto (falls hinterlegt).
+ * Artikelbilder sind allgemeine Shop-Daten: sie gehören dem Shop-Servicekonto,
+ * damit alle Kunden (auch ohne Anmeldung) dieselben Bilder sehen.
+ * Nur wenn kein Servicekonto hinterlegt ist, wird ersatzweise das Token des
+ * angemeldeten Kunden verwendet.
  */
 async function authHeaders(): Promise<Record<string, string>> {
-  const { readToken } = await import("./shop-auth.server");
-  const userToken = readToken();
-  const token = userToken ?? (await serviceToken());
+  let token: string | null = null;
+  try {
+    token = await serviceToken();
+  } catch {
+    const { readToken } = await import("./shop-auth.server");
+    token = readToken();
+  }
+  if (!token) throw new Error("MAWA_API_CREDENTIALS_MISSING");
   return { authorization: `Bearer ${token}`, origin: appOrigin() };
 }
 
