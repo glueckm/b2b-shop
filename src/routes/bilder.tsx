@@ -73,19 +73,24 @@ function ImageAdmin() {
     for (const file of Array.from(fileList)) {
       setStatuses((prev) => [{ file: file.name, state: "läuft" }, ...prev]);
       try {
+        // Marketingbilder sind oft sehr groß — vor dem Upload verkleinern.
+        const prepared = await resizeForShop(file);
+        const note = prepared.resized
+          ? `${formatBytes(prepared.originalBytes)} → ${formatBytes(prepared.bytes.byteLength)} (${prepared.width}×${prepared.height})`
+          : `${formatBytes(prepared.originalBytes)} (unverändert)`;
         const result = await uploadArticleImageFn({
           data: {
             articleId: selected.id,
-            fileName: file.name,
-            mimeType: file.type || "image/jpeg",
-            contentBase64: toBase64(await file.arrayBuffer()),
+            fileName: prepared.fileName,
+            mimeType: prepared.mimeType,
+            contentBase64: toBase64(prepared.bytes),
           },
         });
         setStatuses((prev) =>
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
               ? result.ok
-                ? { file: file.name, state: "fertig" }
+                ? { file: file.name, state: "fertig", message: note }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
           ),
