@@ -280,7 +280,11 @@ export const getCatalog = createServerFn({ method: "GET" })
       breaks: (row.breaks ?? [])
         .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
         .sort((a, b) => a.from - b.from),
+      groupId: row.group_id ?? "",
+      groupSku: row.group_sku ?? "",
+      groupName: row.group_name ?? "",
     }));
+
 
     const term = normalizeTerm(data.search);
     if (term) {
