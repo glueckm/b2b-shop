@@ -4,7 +4,13 @@ import { useMemo, useState } from "react";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { uploadArticleImageFn } from "@/lib/article-images.functions";
 import { getShopUser } from "@/lib/shop-auth.functions";
-import { formatBytes, MAX_EDGE, resizeForShop } from "@/lib/resize-image";
+import {
+  formatBytes,
+  MAX_EDGE,
+  resizeForShop,
+  THUMB_EDGE,
+  thumbFileName,
+} from "@/lib/resize-image";
 
 export const Route = createFileRoute("/bilder")({
   // Bildpflege nur für angemeldete Kunden/Mitarbeiter.
