@@ -161,7 +161,7 @@ for article_id, group in sorted(by_article.items()):
         except Exception as exc:
             print(f"  ! Vorschau {src['filename']}: {exc}")
             continue
-        new, mime, ext, size = encode(img, src["filename"], THUMB_EDGE)
+        new, mime, ext, size = encode(img, src["filename"], THUMB_EDGE, force_webp=True)
         name = thumb_name(src["filename"].rsplit(".", 1)[0] + ext)
         print(f"  + Vorschaubild {name}: {size} {len(new)}B")
         if not DRY:
