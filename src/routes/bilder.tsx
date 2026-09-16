@@ -5,6 +5,11 @@ import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { uploadArticleImageFn } from "@/lib/article-images.functions";
 
 export const Route = createFileRoute("/bilder")({
+  // Bildpflege nur für angemeldete Kunden/Mitarbeiter.
+  beforeLoad: async () => {
+    const user = await getShopUser().catch(() => null);
+    if (!user) throw redirect({ to: "/anmelden" });
+  },
   loader: () => getCatalog({ data: { channel: "NET1", category: "", search: "" } }),
   head: () => ({
     meta: [
