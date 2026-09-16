@@ -26,7 +26,12 @@ export type CatalogArticle = {
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
+  /** Variantenartikel (Mutter) — leer, wenn der Artikel keine Variante ist. */
+  groupId: string;
+  groupSku: string;
+  groupName: string;
 };
+
 
 export type CategoryNode = {
   name: string;
@@ -87,6 +92,15 @@ stock as (
   where warehouse_id = '3566' -- nur Hauptlager
   group by article_id
 ),
+-- Variantenartikel (Mutter) je Einzelartikel
+variant as (
+  select vv.article_id,
+         v.id as group_id,
+         v.variant_article_number as group_sku,
+         v.variant_article_name as group_name
+  from weclapp.variant_article_variant vv
+  join weclapp.variant_article v on v.id = vv.variant_article_id
+),
 ${CATEGORY_PATH_CTE}
 select a.id as id,
        a.article_number as sku,
@@ -98,10 +112,14 @@ select a.id as id,
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
        coalesce(s.qty, 0)::float8 as on_hand,
-       t.breaks
+       t.breaks,
+       coalesce(vr.group_id, '') as group_id,
+       coalesce(vr.group_sku, '') as group_sku,
+       coalesce(vr.group_name, '') as group_name
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
+left join variant vr on vr.article_id = a.id
 join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
@@ -110,15 +128,20 @@ where a.active and a.available_in_sale
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
-order by coalesce(s.qty, 0) desc, a.article_number
+order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
 limit 400
+
 `;
 
 const COUNT_SQL = `
 with ${CATEGORY_PATH_CTE}
-select count(*)::int as total
+-- Variantenartikel zählen als eine Position
+select count(distinct coalesce(
+         (select vv.variant_article_id from weclapp.variant_article_variant vv
+           where vv.article_id = a.id limit 1), a.id))::int as total
 from weclapp.article a
 left join cat on cat.id = a.article_category_id
+
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
@@ -218,6 +241,10 @@ export const getCatalog = createServerFn({ method: "GET" })
         moq: number;
         on_hand: number;
         breaks: PriceBreak[];
+        group_id: string;
+        group_sku: string;
+        group_name: string;
+
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
       query<{ level1: string; level2: string; count: number }>(CATEGORY_TREE_SQL),
@@ -253,7 +280,11 @@ export const getCatalog = createServerFn({ method: "GET" })
       breaks: (row.breaks ?? [])
         .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
         .sort((a, b) => a.from - b.from),
+      groupId: row.group_id ?? "",
+      groupSku: row.group_sku ?? "",
+      groupName: row.group_name ?? "",
     }));
+
 
     const term = normalizeTerm(data.search);
     if (term) {
@@ -262,11 +293,14 @@ export const getCatalog = createServerFn({ method: "GET" })
           const targets = [
             normalizeTerm(article.name),
             normalizeTerm(article.sku),
-            ...`${article.name} ${article.sku}`
+            normalizeTerm(article.groupName),
+            normalizeTerm(article.groupSku),
+            ...`${article.name} ${article.sku} ${article.groupName}`
               .split(/[^\p{L}\p{N}]+/u)
               .map(normalizeTerm)
               .filter(Boolean),
           ];
+
           const score = targets.reduce((best, target) => Math.max(best, similarity(term, target)), 0);
           return { article, score };
         })
