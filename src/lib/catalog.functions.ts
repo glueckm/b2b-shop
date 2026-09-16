@@ -64,6 +64,8 @@ const inputSchema = z.object({
 const CATEGORY_PATH_CTE = `
 cat as (
   select c.id,
+         p.id as pid,
+         pp.id as ppid,
          c.name as leaf,
          coalesce(pp.name, p.name, c.name) as level1,
          coalesce(case when pp.id is not null then p.name
@@ -72,6 +74,24 @@ cat as (
   left join weclapp.article_category p on p.id = c.parent_category_id
   left join weclapp.article_category pp on pp.id = p.parent_category_id
 )
+`;
+
+/** Vertriebsweg-Rabatte (weclapp „rebate"): Prozent je Warengruppe, aktuell gültig. */
+const REBATE_CTE = `
+reb_all as (
+  select rc.id as category_id,
+         r.value as pct,
+         row_number() over (partition by rc.id
+           order by r.start_date desc nulls last, r.last_modified_date desc) as rn
+  from weclapp.rebate r
+  join weclapp.rebate_article_category rc on rc._parent_rid = r._rid
+  where r.sales_channel = $1
+    and r.type = 'REDUCTION_PERCENT'
+    and coalesce(r.customer_id, '') = ''
+    and (r.start_date is null or r.start_date <= now())
+    and (r.end_date is null or r.end_date > now())
+),
+reb as (select category_id, pct from reb_all where rn = 1)
 `;
 
 const ARTICLES_SQL = `
@@ -101,7 +121,9 @@ variant as (
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
+${REBATE_CTE},
 ${CATEGORY_PATH_CTE}
+
 select a.id as id,
        a.article_number as sku,
        a.name,
