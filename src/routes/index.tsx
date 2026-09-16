@@ -137,7 +137,7 @@ function Shop() {
   const [detailSku, setDetailSku] = useState<string | null>(null);
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
-  const detail = (detailSku ? bySku.get(detailSku) : undefined) ?? articles[0];
+
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
   const subCategories = useMemo(
