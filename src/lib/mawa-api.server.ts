@@ -126,13 +126,41 @@ export async function fetchFileBytes(
   };
 }
 
+/** Datei im Backend löschen. */
+export async function deleteFile(fileId: string): Promise<void> {
+  await fetch(`${apiBase()}/v1/files/${encodeURIComponent(fileId)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+    signal: AbortSignal.timeout(20_000),
+  });
+}
+
+/** Dateiname ohne Endung, normalisiert — erkennt dasselbe Bild erneut. */
+function nameKey(fileName: string): string {
+  return fileName.replace(/\.[^.]+$/, "").trim().toLowerCase();
+}
+
 /** Bild an einen Artikel hängen (entity=article, entity_id=<Artikel-ID>). */
 export async function uploadArticleImage(input: {
   articleId: string;
   fileName: string;
   mimeType: string;
   bytes: Uint8Array;
-}): Promise<BackendFile> {
+}): Promise<BackendFile & { replaced: boolean }> {
+  // Gleicher Dateiname beim selben Artikel: altes Bild wird ersetzt.
+  let replaced = false;
+  try {
+    const existing = (await listArticleImages())[input.articleId] ?? [];
+    const key = nameKey(input.fileName);
+    for (const file of existing) {
+      if (nameKey(file.filename) !== key) continue;
+      await deleteFile(file.id);
+      replaced = true;
+    }
+  } catch {
+    /* Ersetzen ist optional — Upload läuft trotzdem weiter. */
+  }
+
   const form = new FormData();
   form.append(
     "file",
@@ -153,5 +181,5 @@ export async function uploadArticleImage(input: {
     throw new Error(`MAWA_API_UPLOAD_FAILED_${res.status}: ${detail}`);
   }
   const raw = (await res.json()) as Record<string, unknown>;
-  return mapFile(raw);
+  return { ...mapFile(raw), replaced };
 }

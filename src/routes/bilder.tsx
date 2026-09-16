@@ -141,7 +141,11 @@ function ImageAdmin() {
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
               ? result.ok
-                ? { file: file.name, state: "fertig", message: `${target.sku} · ${note}` }
+                ? {
+                    file: file.name,
+                    state: "fertig",
+                    message: `${target.sku} · ${note}${result.replaced ? " · vorhandenes Bild ersetzt" : ""}`,
+                  }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
           ),
