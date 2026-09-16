@@ -172,7 +172,7 @@ function ImageAdmin() {
                 ? {
                     file: file.name,
                     state: "fertig",
-                    message: `${target.sku} · ${note}${result.replaced ? " · vorhandenes Bild ersetzt" : ""}`,
+                    message: `${target.sku} · ${note}${result.replaced ? " · vorhandenes Bild ersetzt" : ""}${thumbNote}`,
                   }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
