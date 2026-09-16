@@ -204,24 +204,40 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    const params = [data.channel, data.category, ""];
+    const params = [data.channel, data.category, "", data.subcategory];
 
-    const [articles, counts, categories, stats] = await Promise.all([
+    const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
         id: string;
         sku: string;
         name: string;
         spec: string;
         category: string;
+        level1: string;
+        level2: string;
         unit: string;
         moq: number;
         on_hand: number;
         breaks: PriceBreak[];
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
-      query<{ name: string; count: number }>(CATEGORIES_SQL),
+      query<{ level1: string; level2: string; count: number }>(CATEGORY_TREE_SQL),
       query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
     ]);
+
+    const treeMap = new Map<string, CategoryNode>();
+    for (const row of treeRows) {
+      const node = treeMap.get(row.level1) ?? { name: row.level1, count: 0, children: [] };
+      node.count += row.count;
+      if (row.level2) node.children.push({ name: row.level2, count: row.count });
+      treeMap.set(row.level1, node);
+    }
+    const categoryTree = [...treeMap.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    for (const node of categoryTree) {
+      node.children.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    }
+    const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
+
 
     let mapped: CatalogArticle[] = articles.map((row) => ({
       id: String(row.id),
