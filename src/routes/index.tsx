@@ -214,12 +214,35 @@ function Shop() {
                 ))}
               </select>
             </label>
-            <Link
-              to="/bilder"
-              className="label-mono text-primary-foreground/70 hover:text-accent"
-            >
-              Bilder
-            </Link>
+            {data.user ? (
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/bilder"
+                  className="label-mono text-primary-foreground/70 hover:text-accent"
+                >
+                  Bilder
+                </Link>
+                <span className="label-mono text-primary-foreground/70">
+                  {data.user.firstName ?? data.user.email}
+                </span>
+                <button
+                  onClick={async () => {
+                    await shopLogout({});
+                    await router.invalidate();
+                  }}
+                  className="label-mono text-primary-foreground/70 hover:text-accent"
+                >
+                  Abmelden
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/anmelden"
+                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground hover:border-accent hover:text-accent"
+              >
+                Anmelden
+              </Link>
+            )}
             <a
               href="#order"
               className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
