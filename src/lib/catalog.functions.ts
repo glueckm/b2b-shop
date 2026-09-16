@@ -203,7 +203,23 @@ export const getCatalog = createServerFn({ method: "GET" })
         .map((entry) => entry.article);
     }
 
+    let images: Record<string, string[]> = {};
+    try {
+      const { listArticleImages } = await import("./mawa-api.server");
+      const { articleImageUrl } = await import("./article-images.functions");
+      const grouped = await listArticleImages();
+      images = Object.fromEntries(
+        Object.entries(grouped).map(([articleId, files]) => [
+          articleId,
+          files.map((file) => articleImageUrl(file.id)),
+        ]),
+      );
+    } catch {
+      images = {};
+    }
+
     return {
+      images,
       articles: mapped,
       total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
