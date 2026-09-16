@@ -92,8 +92,9 @@ left join weclapp.article_category c on c.id = a.article_category_id
 left join weclapp.article_status st on st.id = a.status_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-  and not (coalesce(st.name, '') = 'EOL' and coalesce(
-    (select sum(w.quantity) from weclapp.warehouse_stock w where w.article_id = a.id), 0) <= 0)
+  and coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
+    where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
+
   and exists (
     select 1 from weclapp.article_price p
     where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
