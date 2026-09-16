@@ -171,7 +171,8 @@ function ImageAdmin() {
             className="mt-3 block w-full text-sm"
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP.
+            Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP. Große Bilder werden vor dem Upload
+            automatisch auf max. {MAX_EDGE} px Kantenlänge verkleinert und komprimiert.
           </p>
         </div>
       )}
