@@ -25,6 +25,8 @@ export type CatalogArticle = {
 };
 
 export type CatalogPayload = {
+  /** Bild-URLs je Artikel-ID (aus dem MAWA-Backend). */
+  images: Record<string, string[]>;
   articles: CatalogArticle[];
   total: number;
   categories: { name: string; count: number }[];
