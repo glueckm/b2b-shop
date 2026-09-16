@@ -109,6 +109,11 @@ function Shop() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const articles = data.articles;
+  /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
+  const imagesOf = (article: { id: string; sku: string }) => {
+    const remote = data.images[article.id] ?? [];
+    return remote.length > 0 ? remote : articleImages(article.id, article.sku);
+  };
   const [qty, setQty] = useState<Record<string, number>>({});
   const [lines, setLines] = useState<Line[]>([]);
   const [quick, setQuick] = useState("");
