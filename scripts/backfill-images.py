@@ -149,7 +149,10 @@ for article_id, group in sorted(by_article.items()):
                 print(f"  ~ {f['filename']}: {img.size} {len(data)}B -> {size} {len(new)}B")
                 if not DRY:
                     delete(f["id"])
-                    upload(article_id, name, mime, new)
+                    created = upload(article_id, name, mime, new) or {}
+                    f["id"] = str(created.get("id") or f["id"])
+                    f["filename"] = name
+                    f["_bytes"] = new
                 shrunk += 1
 
     if main and not has_thumb:
