@@ -93,8 +93,8 @@ select a.id as id,
        a.name,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
        coalesce(cat.leaf, 'Ohne Kategorie') as category,
-       coalesce(cat.level1, 'Ohne Kategorie') as level1,
-       coalesce(cat.level2, '') as level2,
+       coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
+       coalesce(a.ca_level2, '') as level2,
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
        coalesce(s.qty, 0)::float8 as on_hand,
@@ -107,8 +107,8 @@ where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- nur Artikel mit Bestand im Hauptlager
   and s.qty > 0
-  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
-  and ($4 = '' or coalesce(cat.level2, '') = $4)
+  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
+  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(s.qty, 0) desc, a.article_number
 limit 400
@@ -129,8 +129,8 @@ where a.active and a.available_in_sale
       and (p.start_date is null or p.start_date <= now())
       and (p.end_date is null or p.end_date > now())
   )
-  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
-  and ($4 = '' or coalesce(cat.level2, '') = $4)
+  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
+  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 `;
 
@@ -141,18 +141,17 @@ const MAIN_STOCK_EXISTS = `
 
 /** Ebene 1 und Ebene 2 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
 const CATEGORY_TREE_SQL = `
-with ${CATEGORY_PATH_CTE}
-select coalesce(cat.level1, 'Ohne Kategorie') as level1,
-       coalesce(cat.level2, '') as level2,
+select coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
+       coalesce(a.ca_level2, '') as level2,
        count(*)::int as count
 from weclapp.article a
-left join cat on cat.id = a.article_category_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
 group by 1, 2
 order by 1, 2
 `;
+
 
 
 const STATS_SQL = `
