@@ -141,18 +141,17 @@ const MAIN_STOCK_EXISTS = `
 
 /** Ebene 1 und Ebene 2 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
 const CATEGORY_TREE_SQL = `
-with ${CATEGORY_PATH_CTE}
-select coalesce(cat.level1, 'Ohne Kategorie') as level1,
-       coalesce(cat.level2, '') as level2,
+select coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
+       coalesce(a.ca_level2, '') as level2,
        count(*)::int as count
 from weclapp.article a
-left join cat on cat.id = a.article_category_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
 group by 1, 2
 order by 1, 2
 `;
+
 
 
 const STATS_SQL = `
