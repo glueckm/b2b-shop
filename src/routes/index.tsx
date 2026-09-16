@@ -568,20 +568,17 @@ function Shop() {
           {detail && (
             <section
               id="detail"
-              className="sticky top-0 z-20 mt-4 max-h-[58vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.6)]"
+              className="sticky top-0 z-20 mt-4 max-h-[34vh] overflow-y-auto rounded-lg border border-border bg-card p-3 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.6)]"
             >
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <p className="label-mono text-muted-foreground">
-                    Staffelpreise · {activeGroup.label}
-                  </p>
-                  <h3 className="mt-1 text-xl font-semibold tracking-tight">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-[13px] font-semibold tracking-tight">
                     {detail.name} · {detail.sku}
                   </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{detail.category}</p>
+                  <span className="text-xs text-muted-foreground">{detail.category}</span>
                 </div>
                 <span
-                  className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
+                  className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[stockState(detail.onHand)]}`}
                 >
                   <span className={`size-2 rounded-full ${stockDot[stockState(detail.onHand)]}`} />
                   {stockLabel[stockState(detail.onHand)]}
@@ -589,14 +586,14 @@ function Shop() {
               </div>
 
               {imagesOf(detail).length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
+                <div className="mt-2 flex flex-wrap gap-2 border-t border-border pt-2">
                   {imagesOf(detail).map((src, index) => (
                     <img
                       key={src}
                       src={src}
                       alt={`${detail.name} — Bild ${index + 1}`}
                       loading="lazy"
-                      className="h-40 w-40 rounded-sm border border-border bg-panel object-contain p-1"
+                      className="h-16 w-16 rounded-sm border border-border bg-panel object-contain p-0.5"
                     />
                   ))}
                 </div>
@@ -604,12 +601,13 @@ function Shop() {
 
               {detail.spec && (
                 <div
-                  className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
+                  className="spec-html mt-2 border-t border-border pt-2 text-[13px] text-muted-foreground"
                   dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
                 />
               )}
 
-              <table className="mt-4 w-full text-left">
+
+              <table className="mt-2 w-full text-left">
                 <thead>
                   <tr className="border-b border-border">
                     <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
@@ -627,13 +625,13 @@ function Shop() {
                     const from = Math.max(tier.from, detail.moq);
                     return (
                       <tr key={tier.from} className="border-b border-border/70 last:border-0">
-                        <td className="py-2.5">
+                        <td className="py-1.5">
                           {from} {detail.unit}
                         </td>
-                        <td className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
+                        <td className={`py-1.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
                           {eur(tier.price)}
                         </td>
-                        <td className="py-2.5 text-right text-muted-foreground">
+                        <td className="py-1.5 text-right text-muted-foreground">
                           {eur(tier.price * from)}
                         </td>
                       </tr>
@@ -819,7 +817,7 @@ function Shop() {
               <button className="mt-4 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
                 Bestellung absenden
               </button>
-              <button className="mt-2 w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+              <button className="mt-2 w-full rounded-sm border border-border px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-muted">
                 Stattdessen Angebot anfragen
               </button>
               <p className="label-mono mt-3 text-muted-foreground">
