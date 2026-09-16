@@ -41,6 +41,26 @@ export const Route = createFileRoute("/bilder")({
 
 type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: string | undefined };
 
+// Vergleichsform: nur Buchstaben/Zahlen, klein.
+const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Artikel aus dem Dateinamen ermitteln (Artikelnummer oder interne ID am Anfang). */
+function articleFromFileName(fileName: string, articles: CatalogArticle[]) {
+  const base = fileName.replace(/\.[^.]+$/, "");
+  const parts = base.split(/[\s_\-–.]+/).filter(Boolean);
+  // Kandidaten: erstes Wort, erste zwei Wörter, ganzer Name (ohne Trenner).
+  const candidates = [parts[0], parts.slice(0, 2).join(""), base].filter(
+    (c): c is string => Boolean(c),
+  );
+  for (const candidate of candidates) {
+    const needle = norm(candidate);
+    if (!needle) continue;
+    const hit = articles.find((a) => norm(a.sku) === needle || a.id === candidate);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 const toBase64 = (buffer: ArrayBuffer) => {
   const bytes = new Uint8Array(buffer);
   let binary = "";
