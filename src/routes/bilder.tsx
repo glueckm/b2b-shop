@@ -92,11 +92,28 @@ function ImageAdmin() {
       .slice(0, 12);
   }, [articles, term]);
 
-  async function handleFiles(fileList: FileList | null) {
-    if (!fileList || !selected) return;
+  async function handleFiles(fileList: FileList | null, auto = false) {
+    if (!fileList) return;
+    if (!auto && !selected) return;
     setBusy(true);
     for (const file of Array.from(fileList)) {
       setStatuses((prev) => [{ file: file.name, state: "läuft" }, ...prev]);
+      // Bei automatischer Zuordnung den Artikel aus dem Dateinamen lesen.
+      const target = auto ? articleFromFileName(file.name, articles) : selected;
+      if (!target) {
+        setStatuses((prev) =>
+          prev.map((entry) =>
+            entry.file === file.name && entry.state === "läuft"
+              ? {
+                  file: file.name,
+                  state: "fehler",
+                  message: "Kein Artikel zum Dateinamen gefunden",
+                }
+              : entry,
+          ),
+        );
+        continue;
+      }
       try {
         // Marketingbilder sind oft sehr groß — vor dem Upload verkleinern.
         const prepared = await resizeForShop(file);
