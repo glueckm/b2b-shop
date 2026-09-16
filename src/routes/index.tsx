@@ -658,7 +658,7 @@ function Shop() {
                   ].map((heading) => (
                     <th
                       key={heading}
-                      className="label-mono px-3 py-1.5 font-medium text-muted-foreground"
+                      className="label-mono px-3 py-2.5 font-medium text-muted-foreground"
                     >
                       {heading}
                     </th>
