@@ -139,8 +139,16 @@ function Shop() {
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
   const detail = (detailSku ? bySku.get(detailSku) : undefined) ?? articles[0];
 
+  /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
+  const subCategories = useMemo(
+    () =>
+      (data.categoryTree ?? []).find((node) => node.name === search.category)?.children ?? [],
+    [data.categoryTree, search.category],
+  );
+
   const activeGroup =
     priceGroups.find((g) => g.channel === search.channel) ?? priceGroups[0]!;
+
 
   const getQty = (article: CatalogArticle) => qty[article.sku] ?? article.moq;
 
