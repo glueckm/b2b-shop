@@ -90,17 +90,19 @@ def upload(article_id, filename, mime, data):
                    headers={**AUTH, "content-type": f"multipart/form-data; boundary={boundary}"})
 
 
-def encode(img, filename, max_edge):
+def encode(img, filename, max_edge, force_webp=False):
     w, h = img.size
     scale = min(1.0, max_edge / max(w, h))
     if scale < 1.0:
         img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))), Image.LANCZOS)
-    png = filename.lower().endswith(".png")
+    png = filename.lower().endswith(".png") and not force_webp
     buf = io.BytesIO()
     if png:
         img.save(buf, format="PNG", optimize=True)
         return buf.getvalue(), "image/png", ".png", img.size
-    img.convert("RGB").save(buf, format="WEBP", quality=QUALITY, method=6)
+    if img.mode not in ("RGB", "RGBA"):
+        img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+    img.save(buf, format="WEBP", quality=QUALITY, method=6)
     return buf.getvalue(), "image/webp", ".webp", img.size
 
 
