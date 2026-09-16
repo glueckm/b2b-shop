@@ -51,7 +51,10 @@ const toBase64 = (buffer: ArrayBuffer) => {
 };
 
 function ImageAdmin() {
-  const { articles } = Route.useLoaderData();
+  const { articles, images } = Route.useLoaderData() as {
+    articles: CatalogArticle[];
+    images?: Record<string, string[]>;
+  };
   const [term, setTerm] = useState("");
   const [selected, setSelected] = useState<CatalogArticle | null>(null);
   const [statuses, setStatuses] = useState<Status[]>([]);
