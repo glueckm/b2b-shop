@@ -55,6 +55,20 @@ const inputSchema = z.object({
 });
 
 
+/** Kategoriepfad: Ebene 1 (Wurzel) und Ebene 2 (zweite Stufe). */
+const CATEGORY_PATH_CTE = `
+cat as (
+  select c.id,
+         c.name as leaf,
+         coalesce(pp.name, p.name, c.name) as level1,
+         coalesce(case when pp.id is not null then p.name
+                       when p.id is not null then c.name end, '') as level2
+  from weclapp.article_category c
+  left join weclapp.article_category p on p.id = c.parent_category_id
+  left join weclapp.article_category pp on pp.id = p.parent_category_id
+)
+`;
+
 const ARTICLES_SQL = `
 with tier as (
   select article_id,
@@ -72,50 +86,51 @@ stock as (
   from weclapp.warehouse_stock
   where warehouse_id = '3566' -- nur Hauptlager
   group by article_id
-)
+),
+${CATEGORY_PATH_CTE}
 select a.id as id,
        a.article_number as sku,
        a.name,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
-       coalesce(c.name, 'Ohne Kategorie') as category,
+       coalesce(cat.leaf, 'Ohne Kategorie') as category,
+       coalesce(cat.level1, 'Ohne Kategorie') as level1,
+       coalesce(cat.level2, '') as level2,
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
        coalesce(s.qty, 0)::float8 as on_hand,
        t.breaks
 from weclapp.article a
 join tier t on t.article_id = a.id
-left join weclapp.article_category c on c.id = a.article_category_id
+left join cat on cat.id = a.article_category_id
 join stock s on s.article_id = a.id
-left join weclapp.article_status st on st.id = a.status_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- nur Artikel mit Bestand im Hauptlager
   and s.qty > 0
-  and ($2 = '' or c.name = $2)
+  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
+  and ($4 = '' or coalesce(cat.level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(s.qty, 0) desc, a.article_number
 limit 400
-
-
 `;
 
 const COUNT_SQL = `
+with ${CATEGORY_PATH_CTE}
 select count(*)::int as total
 from weclapp.article a
-left join weclapp.article_category c on c.id = a.article_category_id
-left join weclapp.article_status st on st.id = a.status_id
+left join cat on cat.id = a.article_category_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
     where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
-
   and exists (
     select 1 from weclapp.article_price p
     where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
       and (p.start_date is null or p.start_date <= now())
       and (p.end_date is null or p.end_date > now())
   )
-  and ($2 = '' or c.name = $2)
+  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
+  and ($4 = '' or coalesce(cat.level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 `;
 
@@ -124,17 +139,21 @@ const MAIN_STOCK_EXISTS = `
     where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
 `;
 
-const CATEGORIES_SQL = `
-select coalesce(c.name, 'Ohne Kategorie') as name, count(*)::int as count
+/** Ebene 1 und Ebene 2 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
+const CATEGORY_TREE_SQL = `
+with ${CATEGORY_PATH_CTE}
+select coalesce(cat.level1, 'Ohne Kategorie') as level1,
+       coalesce(cat.level2, '') as level2,
+       count(*)::int as count
 from weclapp.article a
-left join weclapp.article_category c on c.id = a.article_category_id
+left join cat on cat.id = a.article_category_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
-group by 1
-order by count desc, name
-limit 18
+group by 1, 2
+order by 1, 2
 `;
+
 
 const STATS_SQL = `
 select (select count(*)::int from weclapp.article a where a.active and a.available_in_sale
