@@ -88,7 +88,7 @@ reb_all as (
            order by r.start_date desc nulls last, r.last_modified_date desc) as rn
   from weclapp.rebate r
   join weclapp.rebate_article_category rc on rc._parent_rid = r._rid
-  where r.sales_channel = $1
+  where r.sales_channel = $5
     and r.type = 'REDUCTION_PERCENT'
     and coalesce(r.customer_id, '') = ''
     and (r.start_date is null or r.start_date <= now())
