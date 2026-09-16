@@ -314,15 +314,19 @@ function Shop() {
             return (
               <button
                 key={category.name || "all"}
-                onClick={() =>
+                onClick={() => {
+                  // Suchbegriff zurücksetzen, damit die Kategorie vollständig angezeigt wird.
+                  setTerm("");
                   void navigate({
                     search: (prev) => ({
                       ...prev,
                       category: active ? "" : category.name,
                       subcategory: "",
+                      q: "",
                     }),
-                  })
-                }
+                  });
+                }}
+
                 className={`whitespace-nowrap border-b-2 px-3 py-3 text-[13px] transition-colors ${
                   active
                     ? "border-accent font-semibold text-foreground"
