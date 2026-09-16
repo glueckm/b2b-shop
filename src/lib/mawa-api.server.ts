@@ -146,7 +146,21 @@ export async function uploadArticleImage(input: {
   fileName: string;
   mimeType: string;
   bytes: Uint8Array;
-}): Promise<BackendFile> {
+}): Promise<BackendFile & { replaced: boolean }> {
+  // Gleicher Dateiname beim selben Artikel: altes Bild wird ersetzt.
+  let replaced = false;
+  try {
+    const existing = (await listArticleImages())[input.articleId] ?? [];
+    const key = nameKey(input.fileName);
+    for (const file of existing) {
+      if (nameKey(file.filename) !== key) continue;
+      await deleteFile(file.id);
+      replaced = true;
+    }
+  } catch {
+    /* Ersetzen ist optional — Upload läuft trotzdem weiter. */
+  }
+
   const form = new FormData();
   form.append(
     "file",
