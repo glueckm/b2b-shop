@@ -18,7 +18,7 @@ export const Route = createFileRoute("/bilder")({
     const user = await getShopUser().catch(() => null);
     if (!user) throw redirect({ to: "/anmelden" });
   },
-  loader: () => getCatalog({ data: { channel: "NET1", category: "", search: "" } }),
+  loader: () => getCatalog({ data: { channel: "NET1", category: "", subcategory: "", search: "" } }),
   head: () => ({
     meta: [
       { title: "Artikelbilder verwalten — MAWA Trading B2B" },
