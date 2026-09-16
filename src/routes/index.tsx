@@ -706,7 +706,7 @@ function Shop() {
                         <td className="px-3 py-3 align-top">
                           <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
                             <span className="size-1.5 rounded-full bg-stock" />
-                            {row.variants.filter((v) => v.onHand > 0).length} auf Lager
+                            {row.variants.filter((v) => v.onHand > 0).length} Varianten auf Lager
                           </span>
                         </td>
                         <td className="px-3 py-3" />
