@@ -7,6 +7,22 @@
 
 export const MAX_EDGE = 1200;
 
+/** Kantenlänge des Vorschaubilds für die Katalogliste. */
+export const THUMB_EDGE = 320;
+
+/** Dateiname des Vorschaubilds: <name>_thumb.<endung>. */
+export function thumbFileName(fileName: string): string {
+  const dot = fileName.lastIndexOf(".");
+  return dot > 0
+    ? `${fileName.slice(0, dot)}_thumb${fileName.slice(dot)}`
+    : `${fileName}_thumb`;
+}
+
+/** Erkennt Vorschaubilder anhand des Dateinamens. */
+export function isThumbFileName(fileName: string): boolean {
+  return /_thumb\.[^.]+$/i.test(fileName) || /_thumb$/i.test(fileName);
+}
+
 export type ResizedImage = {
   fileName: string;
   mimeType: string;

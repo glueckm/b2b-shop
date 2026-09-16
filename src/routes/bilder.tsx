@@ -4,7 +4,13 @@ import { useMemo, useState } from "react";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { uploadArticleImageFn } from "@/lib/article-images.functions";
 import { getShopUser } from "@/lib/shop-auth.functions";
-import { formatBytes, MAX_EDGE, resizeForShop } from "@/lib/resize-image";
+import {
+  formatBytes,
+  MAX_EDGE,
+  resizeForShop,
+  THUMB_EDGE,
+  thumbFileName,
+} from "@/lib/resize-image";
 
 export const Route = createFileRoute("/bilder")({
   // Bildpflege nur für angemeldete Kunden/Mitarbeiter.
@@ -137,6 +143,28 @@ function ImageAdmin() {
             contentBase64: toBase64(prepared.bytes),
           },
         });
+
+        // Vom ersten Bild (_1) zusätzlich ein kleines Vorschaubild für die Liste ablegen.
+        let thumbNote = "";
+        if (result.ok && articleNumberFromFileName(file.name).imageNo === "1") {
+          try {
+            const small = await resizeForShop(file, THUMB_EDGE);
+            const thumbResult = await uploadArticleImageFn({
+              data: {
+                articleId: target.id,
+                fileName: thumbFileName(small.fileName),
+                mimeType: small.mimeType,
+                contentBase64: toBase64(small.bytes),
+              },
+            });
+            if (thumbResult.ok) {
+              thumbNote = ` · Vorschaubild ${formatBytes(small.bytes.byteLength)} (${small.width}×${small.height})`;
+            }
+          } catch {
+            /* Vorschaubild ist optional. */
+          }
+        }
+
         setStatuses((prev) =>
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
@@ -144,7 +172,7 @@ function ImageAdmin() {
                 ? {
                     file: file.name,
                     state: "fertig",
-                    message: `${target.sku} · ${note}${result.replaced ? " · vorhandenes Bild ersetzt" : ""}`,
+                    message: `${target.sku} · ${note}${result.replaced ? " · vorhandenes Bild ersetzt" : ""}${thumbNote}`,
                   }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
