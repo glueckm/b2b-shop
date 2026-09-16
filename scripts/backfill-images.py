@@ -157,7 +157,7 @@ for article_id, group in sorted(by_article.items()):
 
     if main and not has_thumb:
         src = main[0]
-        data = download(src["id"])
+        data = src.get("_bytes") or download(src["id"])
         try:
             img = Image.open(io.BytesIO(data))
             img.load()
