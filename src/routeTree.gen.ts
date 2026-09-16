@@ -10,33 +10,54 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BilderRouteImport } from './routes/bilder'
+import { Route as ApiPublicArtikelBildFileIdRouteImport } from './routes/api/public/artikel-bild.$fileId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BilderRoute = BilderRouteImport.update({
+  id: '/bilder',
+  path: '/bilder',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicArtikelBildFileIdRoute =
+  ApiPublicArtikelBildFileIdRouteImport.update({
+    id: '/api/public/artikel-bild/$fileId',
+    path: '/api/public/artikel-bild/$fileId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bilder': typeof BilderRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bilder': typeof BilderRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bilder': typeof BilderRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/bilder' | '/api/public/artikel-bild/$fileId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/bilder' | '/api/public/artikel-bild/$fileId'
+  id: '__root__' | '/' | '/bilder' | '/api/public/artikel-bild/$fileId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BilderRoute: typeof BilderRoute
+  ApiPublicArtikelBildFileIdRoute: typeof ApiPublicArtikelBildFileIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +69,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bilder': {
+      id: '/bilder'
+      path: '/bilder'
+      fullPath: '/bilder'
+      preLoaderRoute: typeof BilderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/artikel-bild/$fileId': {
+      id: '/api/public/artikel-bild/$fileId'
+      path: '/api/public/artikel-bild/$fileId'
+      fullPath: '/api/public/artikel-bild/$fileId'
+      preLoaderRoute: typeof ApiPublicArtikelBildFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BilderRoute: BilderRoute,
+  ApiPublicArtikelBildFileIdRoute: ApiPublicArtikelBildFileIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

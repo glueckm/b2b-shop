@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
@@ -109,6 +109,11 @@ function Shop() {
   const navigate = useNavigate({ from: Route.fullPath });
 
   const articles = data.articles;
+  /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
+  const imagesOf = (article: { id: string; sku: string }) => {
+    const remote = data.images[article.id] ?? [];
+    return remote.length > 0 ? remote : articleImages(article.id, article.sku);
+  };
   const [qty, setQty] = useState<Record<string, number>>({});
   const [lines, setLines] = useState<Line[]>([]);
   const [quick, setQuick] = useState("");
@@ -203,6 +208,12 @@ function Shop() {
                 ))}
               </select>
             </label>
+            <Link
+              to="/bilder"
+              className="label-mono text-primary-foreground/70 hover:text-accent"
+            >
+              Bilder
+            </Link>
             <a
               href="#order"
               className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
@@ -339,7 +350,7 @@ function Shop() {
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
                   const spec = specText(article.spec);
-                  const thumb = articleImages(article.id, article.sku)[0];
+                  const thumb = imagesOf(article)[0];
                   return (
                     <Fragment key={article.sku}>
                     <tr className="border-t border-border/70">
@@ -459,9 +470,9 @@ function Shop() {
                 </span>
               </div>
 
-              {articleImages(detail.id, detail.sku).length > 0 && (
+              {imagesOf(detail).length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
-                  {articleImages(detail.id, detail.sku).map((src, index) => (
+                  {imagesOf(detail).map((src, index) => (
                     <img
                       key={src}
                       src={src}
