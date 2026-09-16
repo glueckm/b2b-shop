@@ -50,8 +50,15 @@ async function serviceToken(): Promise<string> {
   return cached.token;
 }
 
+/**
+ * Zuerst das Token des angemeldeten Kunden verwenden; ohne Anmeldung
+ * ersatzweise das Servicekonto (falls hinterlegt).
+ */
 async function authHeaders(): Promise<Record<string, string>> {
-  return { authorization: `Bearer ${await serviceToken()}`, origin: appOrigin() };
+  const { readToken } = await import("./shop-auth.server");
+  const userToken = readToken();
+  const token = userToken ?? (await serviceToken());
+  return { authorization: `Bearer ${token}`, origin: appOrigin() };
 }
 
 const str = (v: unknown) => (v === null || v === undefined ? null : String(v));
