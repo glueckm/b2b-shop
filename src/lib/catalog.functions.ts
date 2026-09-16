@@ -129,8 +129,8 @@ where a.active and a.available_in_sale
       and (p.start_date is null or p.start_date <= now())
       and (p.end_date is null or p.end_date > now())
   )
-  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
-  and ($4 = '' or coalesce(cat.level2, '') = $4)
+  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
+  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 `;
 
