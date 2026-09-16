@@ -536,105 +536,67 @@ function Shop() {
 
                   </tr>
                 )}
-                {articles.map((article) => {
-                  const q = getQty(article);
-                  const unit = priceForQty(article, q);
-                  const state = stockState(article.onHand);
-                  const spec = specText(article.spec);
-                  // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
-                  const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
-                  return (
-                    <Fragment key={article.sku}>
-                    <tr className="border-t border-border/70">
-                      <td className="px-3 pt-3 align-top">
-                        <button
-                          onClick={() => setDetailSku(article.sku)}
-                          className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-                        >
-                          {article.sku}
-                        </button>
-                      </td>
-                      <td className="max-w-[320px] px-3 pt-3 align-top">
-                        <span className="flex items-start gap-3">
-                          {thumb ? (
-                            <img
-                              src={thumb}
-                              alt={article.name}
-                              loading="lazy"
-                              className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
-                            />
-                          ) : (
-                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
-                              —
-                            </span>
-                          )}
-                          <span className="block font-semibold">{article.name}</span>
-                        </span>
-                      </td>
-
-                      <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">
-                        {eur(unit)}
-                      </td>
-                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-                        {article.unit}
-                      </td>
-                      <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-                        {article.moq}
-                      </td>
-                      <td className="px-3 pt-3 align-top">
-                        <span
-                          className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}
-                        >
-                          <span className={`size-1.5 rounded-full ${stockDot[state]}`} />
-                          {stockLabel[state]}
-                          {article.onHand > 0 && (
-                            <span className="font-mono text-muted-foreground">
-                              {stockDisplay(article.onHand)}
-                            </span>
-                          )}
-
-                        </span>
-                      </td>
-                      <td className="px-3 pt-3 align-top">
-                        <span className="flex w-max items-center rounded-sm border border-border">
+                {rows.map((row) =>
+                  row.kind === "single" ? (
+                    <ArticleRow key={row.article.sku} article={row.article} />
+                  ) : (
+                    <Fragment key={`g-${row.id}`}>
+                      <tr className="border-t border-border/70 bg-muted/30">
+                        <td className="px-3 py-3 align-top">
                           <button
-                            onClick={() => step(article, -1)}
-                            aria-label={`Menge verringern ${article.sku}`}
-                            className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
+                            onClick={() => toggleGroup(row.id)}
+                            className="font-mono text-[12px] text-muted-foreground hover:text-accent"
                           >
-                            −
+                            {row.sku}
                           </button>
-                          <span className="w-12 text-center font-mono text-[13px]">{q}</span>
+                        </td>
+                        <td className="max-w-[320px] px-3 py-3 align-top">
                           <button
-                            onClick={() => step(article, 1)}
-                            aria-label={`Menge erhöhen ${article.sku}`}
-                            className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
+                            onClick={() => toggleGroup(row.id)}
+                            className="flex items-start gap-3 text-left"
                           >
-                            +
+                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-border bg-panel font-mono text-[13px] text-muted-foreground">
+                              {openGroups[row.id] ? "−" : "+"}
+                            </span>
+                            <span>
+                              <span className="block font-semibold">{row.name}</span>
+                              <span className="label-mono text-muted-foreground">
+                                {row.variants.length} Varianten
+                              </span>
+                            </span>
                           </button>
-                        </span>
-                      </td>
-                      <td className="px-3 pt-3 align-top">
-                        <button
-                          onClick={() => addLine(article.sku, q)}
-                          className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                        >
-                          Hinzufügen
-                        </button>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td />
-                      <td colSpan={7} className="px-3 pb-3 pt-1">
-                        <span className="line-clamp-2 block text-xs text-muted-foreground">
-                          {spec || article.category}
-                        </span>
-                      </td>
-                    </tr>
+                        </td>
+                        <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
+                          ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
+                        </td>
+                        <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
+                          {row.variants[0]?.unit}
+                        </td>
+                        <td className="px-3 py-3" />
+                        <td className="px-3 py-3 align-top">
+                          <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
+                            <span className="size-1.5 rounded-full bg-stock" />
+                            {row.variants.filter((v) => v.onHand > 0).length} auf Lager
+                          </span>
+                        </td>
+                        <td className="px-3 py-3" />
+                        <td className="px-3 py-3 align-top">
+                          <button
+                            onClick={() => toggleGroup(row.id)}
+                            className="rounded-sm border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+                          >
+                            {openGroups[row.id] ? "Schließen" : "Varianten"}
+                          </button>
+                        </td>
+                      </tr>
+                      {openGroups[row.id] &&
+                        row.variants.map((variant) => (
+                          <ArticleRow key={variant.sku} article={variant} nested />
+                        ))}
                     </Fragment>
-                  );
+                  ),
+                )}
 
-                })}
               </tbody>
             </table>
           </div>
