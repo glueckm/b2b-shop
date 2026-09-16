@@ -181,5 +181,5 @@ export async function uploadArticleImage(input: {
     throw new Error(`MAWA_API_UPLOAD_FAILED_${res.status}: ${detail}`);
   }
   const raw = (await res.json()) as Record<string, unknown>;
-  return mapFile(raw);
+  return { ...mapFile(raw), replaced };
 }
