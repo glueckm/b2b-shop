@@ -44,18 +44,22 @@ type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: s
 // Vergleichsform: nur Buchstaben/Zahlen, klein.
 const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
-/** Artikel aus dem Dateinamen ermitteln (Artikelnummer oder interne ID am Anfang). */
+/**
+ * Artikel aus dem Dateinamen ermitteln: die Artikelnummer steht am Anfang und darf
+ * selbst Trennzeichen enthalten (z. B. "600-441-139-nx4m-25-lrf_4.png" → 600-441-139).
+ * Es wird die längste passende Artikelnummer gewählt.
+ */
 function articleFromFileName(fileName: string, articles: CatalogArticle[]) {
   const base = fileName.replace(/\.[^.]+$/, "");
   const parts = base.split(/[\s_\-–.]+/).filter(Boolean);
-  // Kandidaten: erstes Wort, erste zwei Wörter, ganzer Name (ohne Trenner).
-  const candidates = [parts[0], parts.slice(0, 2).join(""), base].filter(
-    (c): c is string => Boolean(c),
-  );
-  for (const candidate of candidates) {
-    const needle = norm(candidate);
+  // Von der längsten Kombination am Anfang zur kürzesten prüfen.
+  for (let take = parts.length; take >= 1; take -= 1) {
+    const prefix = parts.slice(0, take);
+    const needle = norm(prefix.join(""));
     if (!needle) continue;
-    const hit = articles.find((a) => norm(a.sku) === needle || a.id === candidate);
+    const hit = articles.find(
+      (a) => norm(a.sku) === needle || norm(a.id) === needle,
+    );
     if (hit) return hit;
   }
   return null;
