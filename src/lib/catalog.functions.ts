@@ -107,8 +107,8 @@ where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- nur Artikel mit Bestand im Hauptlager
   and s.qty > 0
-  and ($2 = '' or coalesce(cat.level1, 'Ohne Kategorie') = $2)
-  and ($4 = '' or coalesce(cat.level2, '') = $4)
+  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
+  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(s.qty, 0) desc, a.article_number
 limit 400
