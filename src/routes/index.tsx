@@ -6,6 +6,7 @@ import heroImage from "@/assets/warehouse-hero.jpg";
 import mawaLogo from "@/assets/mawa-logo.png";
 import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
+import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
