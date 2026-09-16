@@ -1,11 +1,11 @@
 /**
  * Bilder im Browser verkleinern, bevor sie ins MAWA-Backend hochgeladen werden.
  * Marketingmaterial ist oft mehrere Tausend Pixel breit; für den Shop reicht
- * eine Kante von 1600 px. Transparente PNGs bleiben PNG, alles andere wird
+ * eine Kante von 1200 px. Transparente PNGs bleiben PNG, alles andere wird
  * als WebP (bzw. JPEG als Rückfall) gespeichert.
  */
 
-export const MAX_EDGE = 1600;
+export const MAX_EDGE = 1200;
 
 export type ResizedImage = {
   fileName: string;
