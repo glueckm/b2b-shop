@@ -41,6 +41,26 @@ export const Route = createFileRoute("/bilder")({
 
 type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: string | undefined };
 
+// Vergleichsform: nur Buchstaben/Zahlen, klein.
+const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+/** Artikel aus dem Dateinamen ermitteln (Artikelnummer oder interne ID am Anfang). */
+function articleFromFileName(fileName: string, articles: CatalogArticle[]) {
+  const base = fileName.replace(/\.[^.]+$/, "");
+  const parts = base.split(/[\s_\-–.]+/).filter(Boolean);
+  // Kandidaten: erstes Wort, erste zwei Wörter, ganzer Name (ohne Trenner).
+  const candidates = [parts[0], parts.slice(0, 2).join(""), base].filter(
+    (c): c is string => Boolean(c),
+  );
+  for (const candidate of candidates) {
+    const needle = norm(candidate);
+    if (!needle) continue;
+    const hit = articles.find((a) => norm(a.sku) === needle || a.id === candidate);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 const toBase64 = (buffer: ArrayBuffer) => {
   const bytes = new Uint8Array(buffer);
   let binary = "";
@@ -72,11 +92,28 @@ function ImageAdmin() {
       .slice(0, 12);
   }, [articles, term]);
 
-  async function handleFiles(fileList: FileList | null) {
-    if (!fileList || !selected) return;
+  async function handleFiles(fileList: FileList | null, auto = false) {
+    if (!fileList) return;
+    if (!auto && !selected) return;
     setBusy(true);
     for (const file of Array.from(fileList)) {
       setStatuses((prev) => [{ file: file.name, state: "läuft" }, ...prev]);
+      // Bei automatischer Zuordnung den Artikel aus dem Dateinamen lesen.
+      const target = auto ? articleFromFileName(file.name, articles) : selected;
+      if (!target) {
+        setStatuses((prev) =>
+          prev.map((entry) =>
+            entry.file === file.name && entry.state === "läuft"
+              ? {
+                  file: file.name,
+                  state: "fehler",
+                  message: "Kein Artikel zum Dateinamen gefunden",
+                }
+              : entry,
+          ),
+        );
+        continue;
+      }
       try {
         // Marketingbilder sind oft sehr groß — vor dem Upload verkleinern.
         const prepared = await resizeForShop(file);
@@ -85,7 +122,7 @@ function ImageAdmin() {
           : `${formatBytes(prepared.originalBytes)} (unverändert)`;
         const result = await uploadArticleImageFn({
           data: {
-            articleId: selected.id,
+            articleId: target.id,
             fileName: prepared.fileName,
             mimeType: prepared.mimeType,
             contentBase64: toBase64(prepared.bytes),
@@ -95,7 +132,7 @@ function ImageAdmin() {
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
               ? result.ok
-                ? { file: file.name, state: "fertig", message: note }
+                ? { file: file.name, state: "fertig", message: `${target.sku} · ${note}` }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
           ),
@@ -125,8 +162,26 @@ function ImageAdmin() {
         Artikel gespeichert und erscheinen danach im Katalog.
       </p>
 
-      <label className="label-mono mt-8 block text-muted-foreground" htmlFor="article-search">
-        Schritt 1 — Artikel auswählen (Nummer oder Name)
+      <section className="mt-8 rounded-sm border border-accent/40 bg-accent/5 p-4">
+        <p className="label-mono text-accent">Schnellweg — Zuordnung über den Dateinamen</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Beginnt der Dateiname mit der Artikelnummer, wird der Artikel automatisch erkannt —
+          z. B. <span className="font-mono">6046-1.jpg</span>,{" "}
+          <span className="font-mono">6046_2.png</span>. Mehrere Fotos für verschiedene Artikel
+          können gemeinsam hochgeladen werden.
+        </p>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          disabled={busy}
+          onChange={(event) => void handleFiles(event.target.files, true)}
+          className="mt-3 block w-full text-sm"
+        />
+      </section>
+
+      <label className="label-mono mt-10 block text-muted-foreground" htmlFor="article-search">
+        Alternativ: Artikel manuell auswählen (Nummer oder Name)
       </label>
       <input
         id="article-search"
@@ -158,7 +213,7 @@ function ImageAdmin() {
         </ul>
       )}
 
-      <p className="label-mono mt-8 text-muted-foreground">Schritt 2 — Fotos hochladen</p>
+      <p className="label-mono mt-8 text-muted-foreground">Fotos zum gewählten Artikel</p>
       <div className="mt-2 rounded-sm border border-border bg-panel p-4">
         {selected ? (
           <>
