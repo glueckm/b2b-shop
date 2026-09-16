@@ -298,7 +298,13 @@ function Shop() {
               <button
                 key={category.name || "all"}
                 onClick={() =>
-                  void navigate({ search: (prev) => ({ ...prev, category: category.name }) })
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      category: active ? "" : category.name,
+                      subcategory: "",
+                    }),
+                  })
                 }
                 className={`whitespace-nowrap border-b-2 px-3 py-3 text-[13px] transition-colors ${
                   active
@@ -314,6 +320,49 @@ function Shop() {
             );
           })}
         </div>
+
+        {subCategories.length > 0 && (
+          <div className="border-t border-border bg-card">
+            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
+              <span className="label-mono whitespace-nowrap text-muted-foreground">
+                {search.category}
+              </span>
+              <button
+                onClick={() =>
+                  void navigate({ search: (prev) => ({ ...prev, subcategory: "" }) })
+                }
+                className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                  search.subcategory === ""
+                    ? "bg-accent font-semibold text-accent-foreground"
+                    : "bg-panel font-medium text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Alle
+              </button>
+              {subCategories.map((sub) => {
+                const active = sub.name === search.subcategory;
+                return (
+                  <button
+                    key={sub.name}
+                    onClick={() =>
+                      void navigate({
+                        search: (prev) => ({ ...prev, subcategory: active ? "" : sub.name }),
+                      })
+                    }
+                    className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                      active
+                        ? "bg-accent font-semibold text-accent-foreground"
+                        : "bg-panel font-medium text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {sub.name}
+                    <span className="ml-2 font-mono text-[11px] opacity-70">{sub.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </nav>
 
       <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
@@ -321,8 +370,9 @@ function Shop() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
-                {search.category || "Alle Artikel"}
+                {search.subcategory || search.category || "Alle Artikel"}
               </h2>
+
               <p className="mt-1 text-sm text-muted-foreground">
                 {num(data.total)} Treffer · {articles.length} angezeigt · Preise netto ohne USt.
               </p>
