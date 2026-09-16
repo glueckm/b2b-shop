@@ -10,33 +10,44 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiPublicArtikelBildFileIdRouteImport } from './routes/api/public/artikel-bild.$fileId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicArtikelBildFileIdRoute =
+  ApiPublicArtikelBildFileIdRouteImport.update({
+    id: '/api/public/artikel-bild/$fileId',
+    path: '/api/public/artikel-bild/$fileId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/api/public/artikel-bild/$fileId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/api/public/artikel-bild/$fileId'
+  id: '__root__' | '/' | '/api/public/artikel-bild/$fileId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiPublicArtikelBildFileIdRoute: typeof ApiPublicArtikelBildFileIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +59,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/artikel-bild/$fileId': {
+      id: '/api/public/artikel-bild/$fileId'
+      path: '/api/public/artikel-bild/$fileId'
+      fullPath: '/api/public/artikel-bild/$fileId'
+      preLoaderRoute: typeof ApiPublicArtikelBildFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiPublicArtikelBildFileIdRoute: ApiPublicArtikelBildFileIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
