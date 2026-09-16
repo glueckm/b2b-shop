@@ -62,7 +62,8 @@ function ImageAdmin() {
 
   const matches = useMemo(() => {
     const needle = term.trim().toLowerCase();
-    if (!needle) return [];
+    // Ohne Suchbegriff die ersten Artikel zeigen, damit die Auswahl sofort sichtbar ist.
+    if (!needle) return articles.slice(0, 12);
     return articles
       .filter(
         (a) =>
