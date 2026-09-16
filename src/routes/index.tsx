@@ -360,6 +360,13 @@ function Shop() {
                 />
               )}
 
+              {article.rebatePct > 0 && (
+                <p className="mt-3 text-[12px] text-stock">
+                  Preise inkl. {article.rebatePct} % Konditionsrabatt Ihrer Preisgruppe für die
+                  Warengruppe {article.category}
+                </p>
+              )}
+
               <table className="mt-3 w-full max-w-[520px] text-left">
                 <thead>
                   <tr className="border-b border-border">
