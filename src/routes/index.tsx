@@ -235,6 +235,110 @@ function Shop() {
   );
   const savings = Math.max(0, listTotal - subtotal);
 
+  /** Artikelzeile — `nested` für Varianten innerhalb eines Variantenartikels. */
+  const ArticleRow = ({
+    article,
+    nested = false,
+  }: {
+    article: CatalogArticle;
+    nested?: boolean;
+  }) => {
+    const q = getQty(article);
+    const unit = priceForQty(article, q);
+    const state = stockState(article.onHand);
+    const spec = specText(article.spec);
+    // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
+    const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
+    return (
+      <Fragment>
+        <tr className={`border-t border-border/70 ${nested ? "bg-card" : ""}`}>
+          <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
+            <button
+              onClick={() => setDetailSku(article.sku)}
+              className="font-mono text-[12px] text-muted-foreground hover:text-accent"
+            >
+              {article.sku}
+            </button>
+          </td>
+          <td className="max-w-[320px] px-3 pt-3 align-top">
+            <span className="flex items-start gap-3">
+              {thumb ? (
+                <img
+                  src={thumb}
+                  alt={article.name}
+                  loading="lazy"
+                  className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
+                />
+              ) : (
+                <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
+                  —
+                </span>
+              )}
+              <button onClick={() => setDetailSku(article.sku)} className="text-left">
+                <span className="block font-semibold">{article.name}</span>
+              </button>
+            </span>
+          </td>
+          <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">{eur(unit)}</td>
+          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
+            {article.unit}
+          </td>
+          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
+            {article.moq}
+          </td>
+          <td className="px-3 pt-3 align-top">
+            <span className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
+              <span className={`size-1.5 rounded-full ${stockDot[state]}`} />
+              {stockLabel[state]}
+              {article.onHand > 0 && (
+                <span className="font-mono text-muted-foreground">
+                  {stockDisplay(article.onHand)}
+                </span>
+              )}
+            </span>
+          </td>
+          <td className="px-3 pt-3 align-top">
+            <span className="flex w-max items-center rounded-sm border border-border">
+              <button
+                onClick={() => step(article, -1)}
+                aria-label={`Menge verringern ${article.sku}`}
+                className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
+              >
+                −
+              </button>
+              <span className="w-12 text-center font-mono text-[13px]">{q}</span>
+              <button
+                onClick={() => step(article, 1)}
+                aria-label={`Menge erhöhen ${article.sku}`}
+                className="grid size-8 place-items-center font-mono text-muted-foreground hover:text-foreground"
+              >
+                +
+              </button>
+            </span>
+          </td>
+          <td className="px-3 pt-3 align-top">
+            <button
+              onClick={() => addLine(article.sku, q)}
+              className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              Hinzufügen
+            </button>
+          </td>
+        </tr>
+        <tr className={nested ? "bg-card" : ""}>
+          <td />
+          <td colSpan={7} className="px-3 pb-3 pt-1">
+            <span className="line-clamp-2 block text-xs text-muted-foreground">
+              {spec || article.category}
+            </span>
+          </td>
+        </tr>
+      </Fragment>
+    );
+  };
+
+
+
   return (
     <div className="min-h-screen bg-background">
       <header className="bg-primary text-primary-foreground">
