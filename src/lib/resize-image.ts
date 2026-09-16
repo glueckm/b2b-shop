@@ -5,7 +5,7 @@
  * als WebP (bzw. JPEG als Rückfall) gespeichert.
  */
 
-export const MAX_EDGE = 1600;
+export const MAX_EDGE = 1200;
 
 export type ResizedImage = {
   fileName: string;
