@@ -137,7 +137,7 @@ function Shop() {
   const [detailSku, setDetailSku] = useState<string | null>(null);
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
-  const detail = (detailSku ? bySku.get(detailSku) : undefined) ?? articles[0];
+
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
   const subCategories = useMemo(
@@ -249,12 +249,14 @@ function Shop() {
     const spec = specText(article.spec);
     // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
     const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
+    const open = detailSku === article.sku;
+    const toggleDetail = () => setDetailSku(open ? null : article.sku);
     return (
       <Fragment>
         <tr className={`border-t border-border/70 ${nested ? "bg-card" : ""}`}>
           <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
             <button
-              onClick={() => setDetailSku(article.sku)}
+              onClick={toggleDetail}
               className="font-mono text-[12px] text-muted-foreground hover:text-accent"
             >
               {article.sku}
@@ -274,7 +276,7 @@ function Shop() {
                   —
                 </span>
               )}
-              <button onClick={() => setDetailSku(article.sku)} className="text-left">
+              <button onClick={toggleDetail} className="text-left">
                 <span className="block font-semibold">{article.name}</span>
               </button>
             </span>
@@ -333,6 +335,71 @@ function Shop() {
             </span>
           </td>
         </tr>
+        {open && (
+          <tr className="bg-muted/30">
+            <td />
+            <td colSpan={7} className="px-3 pb-4 pt-1">
+              {imagesOf(article).length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {imagesOf(article).map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${article.name} — Bild ${index + 1}`}
+                      loading="lazy"
+                      className="h-20 w-20 rounded-sm border border-border bg-panel object-contain p-0.5"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {article.spec && (
+                <div
+                  className="spec-html mt-2 text-[13px] text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(article.spec) }}
+                />
+              )}
+
+              <table className="mt-3 w-full max-w-[520px] text-left">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="label-mono py-1.5 font-medium text-muted-foreground">
+                      Ab Menge
+                    </th>
+                    <th className="label-mono py-1.5 text-right font-medium text-muted-foreground">
+                      Netto/Einheit
+                    </th>
+                    <th className="label-mono py-1.5 text-right font-medium text-muted-foreground">
+                      Position ab Staffel
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-[13px]">
+                  {article.breaks.map((tier, index) => {
+                    const best = index === article.breaks.length - 1 && article.breaks.length > 1;
+                    const from = Math.max(tier.from, article.moq);
+                    return (
+                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
+                        <td className="py-1.5">
+                          {from} {article.unit}
+                        </td>
+                        <td
+                          className={`py-1.5 text-right ${best ? "font-semibold text-stock" : ""}`}
+                        >
+                          {eur(tier.price)}
+                        </td>
+                        <td className="py-1.5 text-right text-muted-foreground">
+                          {eur(tier.price * from)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        )}
+
       </Fragment>
     );
   };
@@ -564,83 +631,6 @@ function Shop() {
               </button>
             </form>
           </div>
-
-          {detail && (
-            <section
-              id="detail"
-              className="sticky top-0 z-20 mt-4 max-h-[34vh] overflow-y-auto rounded-lg border border-border bg-card p-3 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.6)]"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="text-[13px] font-semibold tracking-tight">
-                    {detail.name} · {detail.sku}
-                  </h3>
-                  <span className="text-xs text-muted-foreground">{detail.category}</span>
-                </div>
-                <span
-                  className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[stockState(detail.onHand)]}`}
-                >
-                  <span className={`size-2 rounded-full ${stockDot[stockState(detail.onHand)]}`} />
-                  {stockLabel[stockState(detail.onHand)]}
-                </span>
-              </div>
-
-              {imagesOf(detail).length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2 border-t border-border pt-2">
-                  {imagesOf(detail).map((src, index) => (
-                    <img
-                      key={src}
-                      src={src}
-                      alt={`${detail.name} — Bild ${index + 1}`}
-                      loading="lazy"
-                      className="h-16 w-16 rounded-sm border border-border bg-panel object-contain p-0.5"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {detail.spec && (
-                <div
-                  className="spec-html mt-2 border-t border-border pt-2 text-[13px] text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
-                />
-              )}
-
-
-              <table className="mt-2 w-full text-left">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
-                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                      Netto/Einheit
-                    </th>
-                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                      Position ab Staffel
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono text-[13px]">
-                  {detail.breaks.map((tier, index) => {
-                    const best = index === detail.breaks.length - 1 && detail.breaks.length > 1;
-                    const from = Math.max(tier.from, detail.moq);
-                    return (
-                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
-                        <td className="py-1.5">
-                          {from} {detail.unit}
-                        </td>
-                        <td className={`py-1.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
-                          {eur(tier.price)}
-                        </td>
-                        <td className="py-1.5 text-right text-muted-foreground">
-                          {eur(tier.price * from)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          )}
 
           <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
             <table className="w-full min-w-[900px] border-collapse text-left">
