@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export const priceGroups = [
+  { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
   { channel: "NET1", label: "Silber" },
   { channel: "NET2", label: "Gold" },
   { channel: "NET3", label: "Platin" },
@@ -87,7 +88,7 @@ reb_all as (
            order by r.start_date desc nulls last, r.last_modified_date desc) as rn
   from weclapp.rebate r
   join weclapp.rebate_article_category rc on rc._parent_rid = r._rid
-  where r.sales_channel = $1
+  where r.sales_channel = $5
     and r.type = 'REDUCTION_PERCENT'
     and coalesce(r.customer_id, '') = ''
     and (r.start_date is null or r.start_date <= now())
@@ -183,6 +184,7 @@ where a.active and a.available_in_sale
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
+  and ($5::text is not null or true) -- $5 = Vertriebsweg für Rabatte (hier ungenutzt)
 `;
 
 const MAIN_STOCK_EXISTS = `
@@ -254,7 +256,9 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    const params = [data.channel, data.category, "", data.subcategory];
+    // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
+    const priceChannel = data.channel || "NET1";
+    const params = [priceChannel, data.category, "", data.subcategory, data.channel];
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
