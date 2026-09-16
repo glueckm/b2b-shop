@@ -464,9 +464,9 @@ function Shop() {
                 </span>
               </div>
 
-              {articleImages(detail.id, detail.sku).length > 0 && (
+              {imagesOf(detail).length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
-                  {articleImages(detail.id, detail.sku).map((src, index) => (
+                  {imagesOf(detail).map((src, index) => (
                     <img
                       key={src}
                       src={src}
