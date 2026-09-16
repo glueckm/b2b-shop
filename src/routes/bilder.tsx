@@ -175,8 +175,9 @@ function ImageAdmin() {
         <p className="label-mono text-accent">Schnellweg — Zuordnung über den Dateinamen</p>
         <p className="mt-2 text-sm text-muted-foreground">
           Beginnt der Dateiname mit der Artikelnummer, wird der Artikel automatisch erkannt —
-          z. B. <span className="font-mono">6046-1.jpg</span>,{" "}
-          <span className="font-mono">6046_2.png</span>. Mehrere Fotos für verschiedene Artikel
+          z. B. <span className="font-mono">600-441-139-nx4m-25-lrf_4.png</span> → Artikel
+          600-441-139, oder <span className="font-mono">6046-lampe_2.jpg</span> → Artikel 6046.
+          Die Zahl nach dem letzten „_" ist die Bildnummer. Mehrere Fotos für verschiedene Artikel
           können gemeinsam hochgeladen werden.
         </p>
         <input
