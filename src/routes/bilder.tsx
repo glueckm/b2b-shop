@@ -122,7 +122,7 @@ function ImageAdmin() {
           : `${formatBytes(prepared.originalBytes)} (unverändert)`;
         const result = await uploadArticleImageFn({
           data: {
-            articleId: selected.id,
+            articleId: target.id,
             fileName: prepared.fileName,
             mimeType: prepared.mimeType,
             contentBase64: toBase64(prepared.bytes),
