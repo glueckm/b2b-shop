@@ -16,8 +16,13 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
-  loader: ({ deps }) =>
-    getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
+  loader: async ({ deps }) => {
+    const [catalog, user] = await Promise.all([
+      getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
+      getShopUser().catch(() => null),
+    ]);
+    return { ...catalog, user };
+  },
   head: () => ({
     meta: [
       { title: "MAWA Trading B2B Shop — Distribution Optik & Zubehör" },
