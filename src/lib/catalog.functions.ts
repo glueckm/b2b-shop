@@ -269,9 +269,11 @@ export const getCatalog = createServerFn({ method: "GET" })
         moq: number;
         on_hand: number;
         breaks: PriceBreak[];
+        rebate_pct: number;
         group_id: string;
         group_sku: string;
         group_name: string;
+
 
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
