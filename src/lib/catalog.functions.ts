@@ -256,7 +256,9 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    const params = [data.channel, data.category, "", data.subcategory];
+    // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
+    const priceChannel = data.channel || "NET1";
+    const params = [priceChannel, data.category, "", data.subcategory, data.channel];
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
