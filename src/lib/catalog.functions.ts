@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export const priceGroups = [
+  { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
   { channel: "NET1", label: "Silber" },
   { channel: "NET2", label: "Gold" },
   { channel: "NET3", label: "Platin" },
