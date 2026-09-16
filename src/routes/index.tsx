@@ -349,9 +349,11 @@ function Shop() {
                 {search.category}
               </span>
               <button
-                onClick={() =>
-                  void navigate({ search: (prev) => ({ ...prev, subcategory: "" }) })
-                }
+                onClick={() => {
+                  setTerm("");
+                  void navigate({ search: (prev) => ({ ...prev, subcategory: "", q: "" }) });
+                }}
+
                 className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
                   search.subcategory === ""
                     ? "bg-accent font-semibold text-accent-foreground"
