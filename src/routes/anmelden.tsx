@@ -40,7 +40,7 @@ function LoginPage() {
       const result = await shopLogin({ data: { email, password } });
       if (result.ok) {
         await router.invalidate();
-        void navigate({ to: "/", search: { channel: "NET1", category: "", q: "" } });
+        void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
       } else {
         setError(result.error);
       }
