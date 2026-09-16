@@ -293,11 +293,14 @@ export const getCatalog = createServerFn({ method: "GET" })
           const targets = [
             normalizeTerm(article.name),
             normalizeTerm(article.sku),
-            ...`${article.name} ${article.sku}`
+            normalizeTerm(article.groupName),
+            normalizeTerm(article.groupSku),
+            ...`${article.name} ${article.sku} ${article.groupName}`
               .split(/[^\p{L}\p{N}]+/u)
               .map(normalizeTerm)
               .filter(Boolean),
           ];
+
           const score = targets.reduce((best, target) => Math.max(best, similarity(term, target)), 0);
           return { article, score };
         })
