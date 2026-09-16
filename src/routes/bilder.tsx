@@ -143,6 +143,28 @@ function ImageAdmin() {
             contentBase64: toBase64(prepared.bytes),
           },
         });
+
+        // Vom ersten Bild (_1) zusätzlich ein kleines Vorschaubild für die Liste ablegen.
+        let thumbNote = "";
+        if (result.ok && articleNumberFromFileName(file.name).imageNo === "1") {
+          try {
+            const small = await resizeForShop(file, THUMB_EDGE);
+            const thumbResult = await uploadArticleImageFn({
+              data: {
+                articleId: target.id,
+                fileName: thumbFileName(small.fileName),
+                mimeType: small.mimeType,
+                contentBase64: toBase64(small.bytes),
+              },
+            });
+            if (thumbResult.ok) {
+              thumbNote = ` · Vorschaubild ${formatBytes(small.bytes.byteLength)} (${small.width}×${small.height})`;
+            }
+          } catch {
+            /* Vorschaubild ist optional. */
+          }
+        }
+
         setStatuses((prev) =>
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
