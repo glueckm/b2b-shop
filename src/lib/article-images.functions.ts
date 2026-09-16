@@ -33,7 +33,7 @@ const uploadInput = z.object({
 
 export const uploadArticleImageFn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => uploadInput.parse(raw ?? {}))
-  .handler(async ({ data }): Promise<{ ok: boolean; url?: string; error?: string }> => {
+  .handler(async ({ data }): Promise<{ ok: boolean; url?: string; replaced?: boolean; error?: string }> => {
     try {
       const { uploadArticleImage } = await import("./mawa-api.server");
       const bytes = Uint8Array.from(atob(data.contentBase64), (c) => c.charCodeAt(0));
