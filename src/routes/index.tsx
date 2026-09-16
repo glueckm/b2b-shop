@@ -344,6 +344,85 @@ function Shop() {
             </form>
           </div>
 
+          {detail && (
+            <section
+              id="detail"
+              className="sticky top-0 z-20 mt-4 max-h-[58vh] overflow-y-auto rounded-lg border border-border bg-card p-5 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.6)]"
+            >
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="label-mono text-muted-foreground">
+                    Staffelpreise · {activeGroup.label}
+                  </p>
+                  <h3 className="mt-1 text-xl font-semibold tracking-tight">
+                    {detail.name} · {detail.sku}
+                  </h3>
+                  <p className="mt-1 text-sm text-muted-foreground">{detail.category}</p>
+                </div>
+                <span
+                  className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
+                >
+                  <span className={`size-2 rounded-full ${stockDot[stockState(detail.onHand)]}`} />
+                  {stockLabel[stockState(detail.onHand)]}
+                </span>
+              </div>
+
+              {imagesOf(detail).length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
+                  {imagesOf(detail).map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${detail.name} — Bild ${index + 1}`}
+                      loading="lazy"
+                      className="h-40 w-40 rounded-sm border border-border bg-panel object-contain p-1"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {detail.spec && (
+                <div
+                  className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
+                />
+              )}
+
+              <table className="mt-4 w-full text-left">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
+                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
+                      Netto/Einheit
+                    </th>
+                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
+                      Position ab Staffel
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-[13px]">
+                  {detail.breaks.map((tier, index) => {
+                    const best = index === detail.breaks.length - 1 && detail.breaks.length > 1;
+                    const from = Math.max(tier.from, detail.moq);
+                    return (
+                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
+                        <td className="py-2.5">
+                          {from} {detail.unit}
+                        </td>
+                        <td className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
+                          {eur(tier.price)}
+                        </td>
+                        <td className="py-2.5 text-right text-muted-foreground">
+                          {eur(tier.price * from)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </section>
+          )}
+
           <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
             <table className="w-full min-w-[900px] border-collapse text-left">
               <thead>
@@ -477,86 +556,6 @@ function Shop() {
               </tbody>
             </table>
           </div>
-
-          {detail && (
-            <section id="detail" className="mt-7 rounded-lg border border-border bg-card p-5">
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <p className="label-mono text-muted-foreground">
-                    Staffelpreise · {activeGroup.label}
-                  </p>
-                  <h3 className="mt-1 text-xl font-semibold tracking-tight">
-                    {detail.name} · {detail.sku}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{detail.category}</p>
-
-                </div>
-                <span
-                  className={`flex items-center gap-1.5 text-sm font-medium ${stockTone[stockState(detail.onHand)]}`}
-                >
-                  <span
-                    className={`size-2 rounded-full ${stockDot[stockState(detail.onHand)]}`}
-                  />
-                  {stockLabel[stockState(detail.onHand)]}
-                </span>
-              </div>
-
-              {imagesOf(detail).length > 0 && (
-                <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-4">
-                  {imagesOf(detail).map((src, index) => (
-                    <img
-                      key={src}
-                      src={src}
-                      alt={`${detail.name} — Bild ${index + 1}`}
-                      loading="lazy"
-                      className="h-40 w-40 rounded-sm border border-border bg-panel object-contain p-1"
-                    />
-                  ))}
-                </div>
-              )}
-
-              {detail.spec && (
-                <div
-                  className="spec-html mt-4 border-t border-border pt-4 text-sm text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(detail.spec) }}
-                />
-              )}
-
-
-              <table className="mt-4 w-full text-left">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
-                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                      Netto/Einheit
-                    </th>
-                    <th className="label-mono py-2 text-right font-medium text-muted-foreground">
-                      Position ab Staffel
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="font-mono text-[13px]">
-                  {detail.breaks.map((tier, index) => {
-                    const best = index === detail.breaks.length - 1 && detail.breaks.length > 1;
-                    const from = Math.max(tier.from, detail.moq);
-                    return (
-                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
-                        <td className="py-2.5">
-                          {from} {detail.unit}
-                        </td>
-                        <td className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
-                          {eur(tier.price)}
-                        </td>
-                        <td className="py-2.5 text-right text-muted-foreground">
-                          {eur(tier.price * from)}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
-          )}
         </main>
 
         <aside id="order" className="lg:sticky lg:top-5 lg:self-start">
