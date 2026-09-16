@@ -249,12 +249,14 @@ function Shop() {
     const spec = specText(article.spec);
     // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
     const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
+    const open = detailSku === article.sku;
+    const toggleDetail = () => setDetailSku(open ? null : article.sku);
     return (
       <Fragment>
         <tr className={`border-t border-border/70 ${nested ? "bg-card" : ""}`}>
           <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
             <button
-              onClick={() => setDetailSku(article.sku)}
+              onClick={toggleDetail}
               className="font-mono text-[12px] text-muted-foreground hover:text-accent"
             >
               {article.sku}
@@ -274,7 +276,7 @@ function Shop() {
                   —
                 </span>
               )}
-              <button onClick={() => setDetailSku(article.sku)} className="text-left">
+              <button onClick={toggleDetail} className="text-left">
                 <span className="block font-semibold">{article.name}</span>
               </button>
             </span>
