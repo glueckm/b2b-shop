@@ -158,28 +158,60 @@ function ImageAdmin() {
         </ul>
       )}
 
-      {selected && (
-        <div className="mt-6 rounded-sm border border-border bg-panel p-4">
-          <p className="text-sm">
-            Ausgewählt: <strong>{selected.name}</strong>{" "}
-            <span className="font-mono text-[12px] text-muted-foreground">
-              ({selected.sku} · ID {selected.id})
-            </span>
+      <p className="label-mono mt-8 text-muted-foreground">Schritt 2 — Fotos hochladen</p>
+      <div className="mt-2 rounded-sm border border-border bg-panel p-4">
+        {selected ? (
+          <>
+            <p className="flex flex-wrap items-baseline gap-2 text-sm">
+              <span>
+                Ausgewählt: <strong>{selected.name}</strong>
+              </span>
+              <span className="font-mono text-[12px] text-muted-foreground">
+                ({selected.sku} · ID {selected.id})
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelected(null);
+                  setTerm("");
+                }}
+                className="label-mono text-accent hover:underline"
+              >
+                Auswahl ändern
+              </button>
+            </p>
+            {(images?.[selected.id]?.length ?? 0) > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {images?.[selected.id]?.map((src) => (
+                  <img
+                    key={src}
+                    src={src}
+                    alt={`Vorhandenes Foto zu ${selected.name}`}
+                    className="h-16 w-16 rounded-sm border border-border object-cover"
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Bitte oben zuerst einen Artikel aus der Liste anklicken.
           </p>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            disabled={busy}
-            onChange={(event) => void handleFiles(event.target.files)}
-            className="mt-3 block w-full text-sm"
-          />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP. Große Bilder werden vor dem Upload
-            automatisch auf max. {MAX_EDGE} px Kantenlänge verkleinert und komprimiert.
-          </p>
-        </div>
-      )}
+        )}
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          disabled={busy || !selected}
+          onChange={(event) => void handleFiles(event.target.files)}
+          className="mt-3 block w-full text-sm disabled:opacity-40"
+        />
+        <p className="mt-2 text-xs text-muted-foreground">
+          Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP. Große Bilder werden vor dem Upload
+          automatisch auf max. {MAX_EDGE} px Kantenlänge verkleinert und komprimiert.
+        </p>
+      </div>
 
       {statuses.length > 0 && (
         <ul className="mt-6 space-y-1 text-sm">
