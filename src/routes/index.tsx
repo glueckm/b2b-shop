@@ -545,7 +545,7 @@ function Shop() {
               </h2>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                {num(data.total)} Treffer · {articles.length} angezeigt · Preise netto ohne USt.
+                {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
               </p>
             </div>
             <form onSubmit={submitSearch} className="flex items-center gap-2">
