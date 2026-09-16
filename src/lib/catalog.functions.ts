@@ -137,10 +137,14 @@ select a.id as id,
        t.breaks,
        coalesce(vr.group_id, '') as group_id,
        coalesce(vr.group_sku, '') as group_sku,
-       coalesce(vr.group_name, '') as group_name
+       coalesce(vr.group_name, '') as group_name,
+       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
+left join reb r1 on r1.category_id = cat.id
+left join reb r2 on r2.category_id = cat.pid
+left join reb r3 on r3.category_id = cat.ppid
 left join variant vr on vr.article_id = a.id
 join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
