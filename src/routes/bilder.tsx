@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { uploadArticleImageFn } from "@/lib/article-images.functions";
 import { getShopUser } from "@/lib/shop-auth.functions";
+import { formatBytes, MAX_EDGE, resizeForShop } from "@/lib/resize-image";
 
 export const Route = createFileRoute("/bilder")({
   // Bildpflege nur für angemeldete Kunden/Mitarbeiter.
@@ -73,19 +74,24 @@ function ImageAdmin() {
     for (const file of Array.from(fileList)) {
       setStatuses((prev) => [{ file: file.name, state: "läuft" }, ...prev]);
       try {
+        // Marketingbilder sind oft sehr groß — vor dem Upload verkleinern.
+        const prepared = await resizeForShop(file);
+        const note = prepared.resized
+          ? `${formatBytes(prepared.originalBytes)} → ${formatBytes(prepared.bytes.byteLength)} (${prepared.width}×${prepared.height})`
+          : `${formatBytes(prepared.originalBytes)} (unverändert)`;
         const result = await uploadArticleImageFn({
           data: {
             articleId: selected.id,
-            fileName: file.name,
-            mimeType: file.type || "image/jpeg",
-            contentBase64: toBase64(await file.arrayBuffer()),
+            fileName: prepared.fileName,
+            mimeType: prepared.mimeType,
+            contentBase64: toBase64(prepared.bytes),
           },
         });
         setStatuses((prev) =>
           prev.map((entry) =>
             entry.file === file.name && entry.state === "läuft"
               ? result.ok
-                ? { file: file.name, state: "fertig" }
+                ? { file: file.name, state: "fertig", message: note }
                 : { file: file.name, state: "fehler", message: result.error }
               : entry,
           ),
@@ -165,7 +171,8 @@ function ImageAdmin() {
             className="mt-3 block w-full text-sm"
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP.
+            Mehrere Fotos gleichzeitig möglich, JPG/PNG/WebP. Große Bilder werden vor dem Upload
+            automatisch auf max. {MAX_EDGE} px Kantenlänge verkleinert und komprimiert.
           </p>
         </div>
       )}
