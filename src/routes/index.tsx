@@ -335,6 +335,71 @@ function Shop() {
             </span>
           </td>
         </tr>
+        {open && (
+          <tr className="bg-muted/30">
+            <td />
+            <td colSpan={7} className="px-3 pb-4 pt-1">
+              {imagesOf(article).length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {imagesOf(article).map((src, index) => (
+                    <img
+                      key={src}
+                      src={src}
+                      alt={`${article.name} — Bild ${index + 1}`}
+                      loading="lazy"
+                      className="h-20 w-20 rounded-sm border border-border bg-panel object-contain p-0.5"
+                    />
+                  ))}
+                </div>
+              )}
+
+              {article.spec && (
+                <div
+                  className="spec-html mt-2 text-[13px] text-muted-foreground"
+                  dangerouslySetInnerHTML={{ __html: sanitizeSpec(article.spec) }}
+                />
+              )}
+
+              <table className="mt-3 w-full max-w-[520px] text-left">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="label-mono py-1.5 font-medium text-muted-foreground">
+                      Ab Menge
+                    </th>
+                    <th className="label-mono py-1.5 text-right font-medium text-muted-foreground">
+                      Netto/Einheit
+                    </th>
+                    <th className="label-mono py-1.5 text-right font-medium text-muted-foreground">
+                      Position ab Staffel
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono text-[13px]">
+                  {article.breaks.map((tier, index) => {
+                    const best = index === article.breaks.length - 1 && article.breaks.length > 1;
+                    const from = Math.max(tier.from, article.moq);
+                    return (
+                      <tr key={tier.from} className="border-b border-border/70 last:border-0">
+                        <td className="py-1.5">
+                          {from} {article.unit}
+                        </td>
+                        <td
+                          className={`py-1.5 text-right ${best ? "font-semibold text-stock" : ""}`}
+                        >
+                          {eur(tier.price)}
+                        </td>
+                        <td className="py-1.5 text-right text-muted-foreground">
+                          {eur(tier.price * from)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        )}
+
       </Fragment>
     );
   };
