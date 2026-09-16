@@ -162,8 +162,26 @@ function ImageAdmin() {
         Artikel gespeichert und erscheinen danach im Katalog.
       </p>
 
-      <label className="label-mono mt-8 block text-muted-foreground" htmlFor="article-search">
-        Schritt 1 — Artikel auswählen (Nummer oder Name)
+      <section className="mt-8 rounded-sm border border-accent/40 bg-accent/5 p-4">
+        <p className="label-mono text-accent">Schnellweg — Zuordnung über den Dateinamen</p>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Beginnt der Dateiname mit der Artikelnummer, wird der Artikel automatisch erkannt —
+          z. B. <span className="font-mono">6046-1.jpg</span>,{" "}
+          <span className="font-mono">6046_2.png</span>. Mehrere Fotos für verschiedene Artikel
+          können gemeinsam hochgeladen werden.
+        </p>
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          disabled={busy}
+          onChange={(event) => void handleFiles(event.target.files, true)}
+          className="mt-3 block w-full text-sm"
+        />
+      </section>
+
+      <label className="label-mono mt-10 block text-muted-foreground" htmlFor="article-search">
+        Alternativ: Artikel manuell auswählen (Nummer oder Name)
       </label>
       <input
         id="article-search"
