@@ -146,6 +146,44 @@ function Shop() {
     [data.categoryTree, search.category],
   );
 
+  /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
+  const rows = useMemo(() => {
+    type Row =
+      | { kind: "single"; article: CatalogArticle }
+      | { kind: "group"; id: string; sku: string; name: string; variants: CatalogArticle[] };
+    const out: Row[] = [];
+    const groups = new Map<string, Extract<Row, { kind: "group" }>>();
+    for (const article of articles) {
+      if (!article.groupId) {
+        out.push({ kind: "single", article });
+        continue;
+      }
+      let group = groups.get(article.groupId);
+      if (!group) {
+        group = {
+          kind: "group",
+          id: article.groupId,
+          sku: article.groupSku || article.groupId,
+          name: article.groupName || article.name,
+          variants: [],
+        };
+        groups.set(article.groupId, group);
+        out.push(group);
+      }
+      group.variants.push(article);
+    }
+    for (const group of groups.values()) {
+      group.variants.sort((a, b) => a.sku.localeCompare(b.sku));
+    }
+    return out;
+  }, [articles]);
+
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const toggleGroup = (id: string) =>
+    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+
+
+
   const activeGroup =
     priceGroups.find((g) => g.channel === search.channel) ?? priceGroups[0]!;
 
