@@ -625,13 +625,13 @@ function Shop() {
                     const from = Math.max(tier.from, detail.moq);
                     return (
                       <tr key={tier.from} className="border-b border-border/70 last:border-0">
-                        <td className="py-2.5">
+                        <td className="py-1.5">
                           {from} {detail.unit}
                         </td>
-                        <td className={`py-2.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
+                        <td className={`py-1.5 text-right ${best ? "font-semibold text-stock" : ""}`}>
                           {eur(tier.price)}
                         </td>
-                        <td className="py-2.5 text-right text-muted-foreground">
+                        <td className="py-1.5 text-right text-muted-foreground">
                           {eur(tier.price * from)}
                         </td>
                       </tr>
@@ -658,7 +658,7 @@ function Shop() {
                   ].map((heading) => (
                     <th
                       key={heading}
-                      className="label-mono px-3 py-2.5 font-medium text-muted-foreground"
+                      className="label-mono px-3 py-1.5 font-medium text-muted-foreground"
                     >
                       {heading}
                     </th>
@@ -817,7 +817,7 @@ function Shop() {
               <button className="mt-4 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
                 Bestellung absenden
               </button>
-              <button className="mt-2 w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted">
+              <button className="mt-2 w-full rounded-sm border border-border px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-muted">
                 Stattdessen Angebot anfragen
               </button>
               <p className="label-mono mt-3 text-muted-foreground">
