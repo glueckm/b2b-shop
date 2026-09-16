@@ -126,6 +126,20 @@ export async function fetchFileBytes(
   };
 }
 
+/** Datei im Backend löschen. */
+export async function deleteFile(fileId: string): Promise<void> {
+  await fetch(`${apiBase()}/v1/files/${encodeURIComponent(fileId)}`, {
+    method: "DELETE",
+    headers: await authHeaders(),
+    signal: AbortSignal.timeout(20_000),
+  });
+}
+
+/** Dateiname ohne Endung, normalisiert — erkennt dasselbe Bild erneut. */
+function nameKey(fileName: string): string {
+  return fileName.replace(/\.[^.]+$/, "").trim().toLowerCase();
+}
+
 /** Bild an einen Artikel hängen (entity=article, entity_id=<Artikel-ID>). */
 export async function uploadArticleImage(input: {
   articleId: string;
