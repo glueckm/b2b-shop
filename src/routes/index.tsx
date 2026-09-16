@@ -11,6 +11,7 @@ import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
   category: z.string().default(""),
+  subcategory: z.string().default(""),
   q: z.string().default(""),
 });
 
@@ -19,11 +20,19 @@ export const Route = createFileRoute("/")({
   loaderDeps: ({ search }) => search,
   loader: async ({ deps }) => {
     const [catalog, user] = await Promise.all([
-      getCatalog({ data: { channel: deps.channel, category: deps.category, search: deps.q } }),
+      getCatalog({
+        data: {
+          channel: deps.channel,
+          category: deps.category,
+          subcategory: deps.subcategory,
+          search: deps.q,
+        },
+      }),
       getShopUser().catch(() => null),
     ]);
     return { ...catalog, user };
   },
+
   head: () => ({
     meta: [
       { title: "MAWA Trading B2B Shop — Distribution Optik & Zubehör" },
