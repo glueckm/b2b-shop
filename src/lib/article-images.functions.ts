@@ -43,7 +43,7 @@ export const uploadArticleImageFn = createServerFn({ method: "POST" })
         mimeType: data.mimeType,
         bytes,
       });
-      return { ok: true, url: articleImageUrl(file.id) };
+      return { ok: true, url: articleImageUrl(file.id), replaced: file.replaced };
     } catch (error) {
       const message = error instanceof Error ? error.message : "UPLOAD_FAILED";
       return {
