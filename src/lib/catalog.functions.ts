@@ -295,25 +295,35 @@ export const getCatalog = createServerFn({ method: "GET" })
     const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
 
 
-    let mapped: CatalogArticle[] = articles.map((row) => ({
-      id: String(row.id),
-      sku: row.sku,
-      name: row.name,
-      spec: row.spec,
-      category: row.category,
-      level1: row.level1,
-      level2: row.level2,
+    let mapped: CatalogArticle[] = articles.map((row) => {
+      // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
+      const pct = Number(row.rebate_pct ?? 0);
+      const factor = 1 - pct / 100;
+      return {
+        id: String(row.id),
+        sku: row.sku,
+        name: row.name,
+        spec: row.spec,
+        category: row.category,
+        level1: row.level1,
+        level2: row.level2,
 
-      unit: row.unit,
-      moq: Math.max(1, Math.round(row.moq)),
-      onHand: Math.round(row.on_hand),
-      breaks: (row.breaks ?? [])
-        .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
-        .sort((a, b) => a.from - b.from),
-      groupId: row.group_id ?? "",
-      groupSku: row.group_sku ?? "",
-      groupName: row.group_name ?? "",
-    }));
+        unit: row.unit,
+        moq: Math.max(1, Math.round(row.moq)),
+        onHand: Math.round(row.on_hand),
+        breaks: (row.breaks ?? [])
+          .map((b) => ({
+            from: Number(b.from),
+            price: Math.round(Number(b.price) * factor * 100) / 100,
+          }))
+          .sort((a, b) => a.from - b.from),
+        rebatePct: pct,
+        groupId: row.group_id ?? "",
+        groupSku: row.group_sku ?? "",
+        groupName: row.group_name ?? "",
+      };
+    });
+
 
 
     const term = normalizeTerm(data.search);
