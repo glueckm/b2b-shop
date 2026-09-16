@@ -213,7 +213,7 @@ function ImageAdmin() {
         </ul>
       )}
 
-      <p className="label-mono mt-8 text-muted-foreground">Schritt 2 — Fotos hochladen</p>
+      <p className="label-mono mt-8 text-muted-foreground">Fotos zum gewählten Artikel</p>
       <div className="mt-2 rounded-sm border border-border bg-panel p-4">
         {selected ? (
           <>
