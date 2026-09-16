@@ -71,12 +71,16 @@ from weclapp.article a
 join tier t on t.article_id = a.id
 left join weclapp.article_category c on c.id = a.article_category_id
 left join stock s on s.article_id = a.id
+left join weclapp.article_status st on st.id = a.status_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+  -- EOL-Artikel ohne Lagerbestand ausblenden
+  and not (coalesce(st.name, '') = 'EOL' and coalesce(s.qty, 0) <= 0)
   and ($2 = '' or c.name = $2)
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(s.qty, 0) desc, a.article_number
 limit 400
+
 `;
 
 const COUNT_SQL = `
