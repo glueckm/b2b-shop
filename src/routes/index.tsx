@@ -314,15 +314,19 @@ function Shop() {
             return (
               <button
                 key={category.name || "all"}
-                onClick={() =>
+                onClick={() => {
+                  // Suchbegriff zurücksetzen, damit die Kategorie vollständig angezeigt wird.
+                  setTerm("");
                   void navigate({
                     search: (prev) => ({
                       ...prev,
                       category: active ? "" : category.name,
                       subcategory: "",
+                      q: "",
                     }),
-                  })
-                }
+                  });
+                }}
+
                 className={`whitespace-nowrap border-b-2 px-3 py-3 text-[13px] transition-colors ${
                   active
                     ? "border-accent font-semibold text-foreground"
@@ -345,9 +349,11 @@ function Shop() {
                 {search.category}
               </span>
               <button
-                onClick={() =>
-                  void navigate({ search: (prev) => ({ ...prev, subcategory: "" }) })
-                }
+                onClick={() => {
+                  setTerm("");
+                  void navigate({ search: (prev) => ({ ...prev, subcategory: "", q: "" }) });
+                }}
+
                 className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
                   search.subcategory === ""
                     ? "bg-accent font-semibold text-accent-foreground"
@@ -361,11 +367,17 @@ function Shop() {
                 return (
                   <button
                     key={sub.name}
-                    onClick={() =>
+                    onClick={() => {
+                      setTerm("");
                       void navigate({
-                        search: (prev) => ({ ...prev, subcategory: active ? "" : sub.name }),
-                      })
-                    }
+                        search: (prev) => ({
+                          ...prev,
+                          subcategory: active ? "" : sub.name,
+                          q: "",
+                        }),
+                      });
+                    }}
+
                     className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
                       active
                         ? "bg-accent font-semibold text-accent-foreground"
@@ -517,8 +529,11 @@ function Shop() {
                 {articles.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                      Keine Artikel für diese Auswahl.
+                      {search.q
+                        ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
+                        : "Keine Artikel für diese Auswahl."}
                     </td>
+
                   </tr>
                 )}
                 {articles.map((article) => {
