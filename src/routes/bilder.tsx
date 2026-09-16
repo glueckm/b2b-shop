@@ -1,8 +1,9 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { uploadArticleImageFn } from "@/lib/article-images.functions";
+import { getShopUser } from "@/lib/shop-auth.functions";
 
 export const Route = createFileRoute("/bilder")({
   // Bildpflege nur für angemeldete Kunden/Mitarbeiter.
