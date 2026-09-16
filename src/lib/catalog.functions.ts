@@ -26,7 +26,12 @@ export type CatalogArticle = {
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
+  /** Variantenartikel (Mutter) — leer, wenn der Artikel keine Variante ist. */
+  groupId: string;
+  groupSku: string;
+  groupName: string;
 };
+
 
 export type CategoryNode = {
   name: string;
