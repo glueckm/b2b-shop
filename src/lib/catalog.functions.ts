@@ -18,10 +18,20 @@ export type CatalogArticle = {
   name: string;
   spec: string;
   category: string;
+  /** Oberste Kategorie-Ebene (z. B. NOCPIX). */
+  level1: string;
+  /** Zweite Kategorie-Ebene (z. B. NOCPIX-TH). */
+  level2: string;
   unit: string;
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
+};
+
+export type CategoryNode = {
+  name: string;
+  count: number;
+  children: { name: string; count: number }[];
 };
 
 export type CatalogPayload = {
@@ -32,14 +42,18 @@ export type CatalogPayload = {
   articles: CatalogArticle[];
   total: number;
   categories: { name: string; count: number }[];
+  /** Zweistufige Menüführung: Ebene 1 mit ihren Ebene-2-Kategorien. */
+  categoryTree: CategoryNode[];
   stats: { articles: number; categories: number; onHand: number };
 };
 
 const inputSchema = z.object({
   channel: z.string().default("NET1"),
   category: z.string().default(""),
+  subcategory: z.string().default(""),
   search: z.string().default(""),
 });
+
 
 const ARTICLES_SQL = `
 with tier as (
