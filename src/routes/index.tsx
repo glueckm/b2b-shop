@@ -113,6 +113,7 @@ function Shop() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
+  const router = useRouter();
 
   const articles = data.articles;
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
