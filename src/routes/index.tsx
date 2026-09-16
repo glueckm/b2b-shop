@@ -607,7 +607,7 @@ function Shop() {
               )}
 
 
-              <table className="mt-4 w-full text-left">
+              <table className="mt-2 w-full text-left">
                 <thead>
                   <tr className="border-b border-border">
                     <th className="label-mono py-2 font-medium text-muted-foreground">Ab Menge</th>
