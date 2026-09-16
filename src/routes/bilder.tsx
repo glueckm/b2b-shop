@@ -45,24 +45,29 @@ type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: s
 const norm = (value: string) => value.toLowerCase().replace(/[^a-z0-9]/g, "");
 
 /**
- * Artikel aus dem Dateinamen ermitteln: die Artikelnummer steht am Anfang und darf
- * selbst Trennzeichen enthalten (z. B. "600-441-139-nx4m-25-lrf_4.png" → 600-441-139).
- * Es wird die längste passende Artikelnummer gewählt.
+ * Artikelnummer aus dem Dateinamen ableiten — gleiche Regel wie im bestehenden
+ * Python-Skript: Bildnummer steht nach dem letzten "_", die Artikelnummer sind die
+ * ersten drei dreistelligen Blöcke (600-441-139), sonst nur der erste Block.
  */
+export function articleNumberFromFileName(fileName: string) {
+  const stem = fileName.replace(/\.[^.]+$/, "");
+  const [head, ...rest] = stem.split("_");
+  const imageNo = rest.length > 0 ? (rest[rest.length - 1] ?? "1") : "1";
+  const parts = (head ?? "").split("-");
+  const [a, b, c] = parts;
+  const number =
+    parts.length >= 3 && a?.length === 3 && b?.length === 3 && c?.length === 3
+      ? [a, b, c].join("-")
+      : (a ?? "");
+  return { number, imageNo };
+}
+
+/** Artikel aus dem Dateinamen ermitteln (Artikelnummer oder interne ID). */
 function articleFromFileName(fileName: string, articles: CatalogArticle[]) {
-  const base = fileName.replace(/\.[^.]+$/, "");
-  const parts = base.split(/[\s_\-–.]+/).filter(Boolean);
-  // Von der längsten Kombination am Anfang zur kürzesten prüfen.
-  for (let take = parts.length; take >= 1; take -= 1) {
-    const prefix = parts.slice(0, take);
-    const needle = norm(prefix.join(""));
-    if (!needle) continue;
-    const hit = articles.find(
-      (a) => norm(a.sku) === needle || norm(a.id) === needle,
-    );
-    if (hit) return hit;
-  }
-  return null;
+  const { number } = articleNumberFromFileName(fileName);
+  const needle = norm(number);
+  if (!needle) return null;
+  return articles.find((a) => norm(a.sku) === needle || norm(a.id) === needle) ?? null;
 }
 
 const toBase64 = (buffer: ArrayBuffer) => {
