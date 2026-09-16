@@ -204,22 +204,26 @@ export const getCatalog = createServerFn({ method: "GET" })
     }
 
     let images: Record<string, string[]> = {};
+    // Kleines Vorschaubild je Artikel für die Listenansicht.
+    const thumbs: Record<string, string> = {};
     try {
       const { listArticleImages } = await import("./mawa-api.server");
       const { articleImageUrl } = await import("./article-images.functions");
+      const { isThumbFileName } = await import("./resize-image");
       const grouped = await listArticleImages();
-      images = Object.fromEntries(
-        Object.entries(grouped).map(([articleId, files]) => [
-          articleId,
-          files.map((file) => articleImageUrl(file.id)),
-        ]),
-      );
+      for (const [articleId, files] of Object.entries(grouped)) {
+        const full = files.filter((file) => !isThumbFileName(file.filename));
+        const thumb = files.find((file) => isThumbFileName(file.filename));
+        if (full.length > 0) images[articleId] = full.map((file) => articleImageUrl(file.id));
+        if (thumb) thumbs[articleId] = articleImageUrl(thumb.id);
+      }
     } catch {
       images = {};
     }
 
     return {
       images,
+      thumbs,
       articles: mapped,
       total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
