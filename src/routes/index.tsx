@@ -529,8 +529,11 @@ function Shop() {
                 {articles.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                      Keine Artikel für diese Auswahl.
+                      {search.q
+                        ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
+                        : "Keine Artikel für diese Auswahl."}
                     </td>
+
                   </tr>
                 )}
                 {articles.map((article) => {
