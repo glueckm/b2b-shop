@@ -367,11 +367,17 @@ function Shop() {
                 return (
                   <button
                     key={sub.name}
-                    onClick={() =>
+                    onClick={() => {
+                      setTerm("");
                       void navigate({
-                        search: (prev) => ({ ...prev, subcategory: active ? "" : sub.name }),
-                      })
-                    }
+                        search: (prev) => ({
+                          ...prev,
+                          subcategory: active ? "" : sub.name,
+                          q: "",
+                        }),
+                      });
+                    }}
+
                     className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
                       active
                         ? "bg-accent font-semibold text-accent-foreground"
