@@ -126,7 +126,7 @@ function ImageAdmin() {
       </p>
 
       <label className="label-mono mt-8 block text-muted-foreground" htmlFor="article-search">
-        Artikel suchen (Nummer oder Name)
+        Schritt 1 — Artikel auswählen (Nummer oder Name)
       </label>
       <input
         id="article-search"
