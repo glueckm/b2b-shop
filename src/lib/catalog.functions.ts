@@ -26,6 +26,8 @@ export type CatalogArticle = {
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
+  /** Rabatt des Vertriebswegs (Preisgruppe) für die Warengruppe des Artikels, in Prozent. */
+  rebatePct: number;
   /** Variantenartikel (Mutter) — leer, wenn der Artikel keine Variante ist. */
   groupId: string;
   groupSku: string;
@@ -64,6 +66,8 @@ const inputSchema = z.object({
 const CATEGORY_PATH_CTE = `
 cat as (
   select c.id,
+         p.id as pid,
+         pp.id as ppid,
          c.name as leaf,
          coalesce(pp.name, p.name, c.name) as level1,
          coalesce(case when pp.id is not null then p.name
@@ -72,6 +76,24 @@ cat as (
   left join weclapp.article_category p on p.id = c.parent_category_id
   left join weclapp.article_category pp on pp.id = p.parent_category_id
 )
+`;
+
+/** Vertriebsweg-Rabatte (weclapp „rebate"): Prozent je Warengruppe, aktuell gültig. */
+const REBATE_CTE = `
+reb_all as (
+  select rc.id as category_id,
+         r.value as pct,
+         row_number() over (partition by rc.id
+           order by r.start_date desc nulls last, r.last_modified_date desc) as rn
+  from weclapp.rebate r
+  join weclapp.rebate_article_category rc on rc._parent_rid = r._rid
+  where r.sales_channel = $1
+    and r.type = 'REDUCTION_PERCENT'
+    and coalesce(r.customer_id, '') = ''
+    and (r.start_date is null or r.start_date <= now())
+    and (r.end_date is null or r.end_date > now())
+),
+reb as (select category_id, pct from reb_all where rn = 1)
 `;
 
 const ARTICLES_SQL = `
@@ -101,7 +123,9 @@ variant as (
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
+${REBATE_CTE},
 ${CATEGORY_PATH_CTE}
+
 select a.id as id,
        a.article_number as sku,
        a.name,
@@ -115,10 +139,14 @@ select a.id as id,
        t.breaks,
        coalesce(vr.group_id, '') as group_id,
        coalesce(vr.group_sku, '') as group_sku,
-       coalesce(vr.group_name, '') as group_name
+       coalesce(vr.group_name, '') as group_name,
+       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
+left join reb r1 on r1.category_id = cat.id
+left join reb r2 on r2.category_id = cat.pid
+left join reb r3 on r3.category_id = cat.ppid
 left join variant vr on vr.article_id = a.id
 join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
@@ -241,9 +269,11 @@ export const getCatalog = createServerFn({ method: "GET" })
         moq: number;
         on_hand: number;
         breaks: PriceBreak[];
+        rebate_pct: number;
         group_id: string;
         group_sku: string;
         group_name: string;
+
 
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
@@ -265,25 +295,35 @@ export const getCatalog = createServerFn({ method: "GET" })
     const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
 
 
-    let mapped: CatalogArticle[] = articles.map((row) => ({
-      id: String(row.id),
-      sku: row.sku,
-      name: row.name,
-      spec: row.spec,
-      category: row.category,
-      level1: row.level1,
-      level2: row.level2,
+    let mapped: CatalogArticle[] = articles.map((row) => {
+      // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
+      const pct = Number(row.rebate_pct ?? 0);
+      const factor = 1 - pct / 100;
+      return {
+        id: String(row.id),
+        sku: row.sku,
+        name: row.name,
+        spec: row.spec,
+        category: row.category,
+        level1: row.level1,
+        level2: row.level2,
 
-      unit: row.unit,
-      moq: Math.max(1, Math.round(row.moq)),
-      onHand: Math.round(row.on_hand),
-      breaks: (row.breaks ?? [])
-        .map((b) => ({ from: Number(b.from), price: Number(b.price) }))
-        .sort((a, b) => a.from - b.from),
-      groupId: row.group_id ?? "",
-      groupSku: row.group_sku ?? "",
-      groupName: row.group_name ?? "",
-    }));
+        unit: row.unit,
+        moq: Math.max(1, Math.round(row.moq)),
+        onHand: Math.round(row.on_hand),
+        breaks: (row.breaks ?? [])
+          .map((b) => ({
+            from: Number(b.from),
+            price: Math.round(Number(b.price) * factor * 100) / 100,
+          }))
+          .sort((a, b) => a.from - b.from),
+        rebatePct: pct,
+        groupId: row.group_id ?? "",
+        groupSku: row.group_sku ?? "",
+        groupName: row.group_name ?? "",
+      };
+    });
+
 
 
     const term = normalizeTerm(data.search);
