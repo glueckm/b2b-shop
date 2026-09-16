@@ -105,28 +105,37 @@ where a.active and a.available_in_sale
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 `;
 
+const MAIN_STOCK_EXISTS = `
+  coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
+    where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
+`;
+
 const CATEGORIES_SQL = `
 select coalesce(c.name, 'Ohne Kategorie') as name, count(*)::int as count
 from weclapp.article a
 left join weclapp.article_category c on c.id = a.article_category_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+  and ${MAIN_STOCK_EXISTS}
 group by 1
 order by count desc, name
 limit 18
 `;
 
 const STATS_SQL = `
-select (select count(*)::int from weclapp.article where active and available_in_sale
-          and (ca_de_webshop_on_off or ca_at_webshop_on_off)) as articles,
-       (select count(distinct article_category_id)::int from weclapp.article
-         where active and available_in_sale and article_category_id is not null
-           and (ca_de_webshop_on_off or ca_at_webshop_on_off)) as categories,
+select (select count(*)::int from weclapp.article a where a.active and a.available_in_sale
+          and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+          and ${MAIN_STOCK_EXISTS}) as articles,
+       (select count(distinct a.article_category_id)::int from weclapp.article a
+         where a.active and a.available_in_sale and a.article_category_id is not null
+           and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+           and ${MAIN_STOCK_EXISTS}) as categories,
        (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
          join weclapp.article a on a.id = w.article_id
-         where a.active and a.available_in_sale
+         where a.active and a.available_in_sale and w.warehouse_id = '3566'
            and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)) as on_hand
 `;
+
 
 // --- Fuzzy Search (Trigramm-Ähnlichkeit, da pg_trgm auf der Replica nicht verfügbar ist) ---
 function normalizeTerm(value: string): string {
