@@ -135,9 +135,13 @@ limit 400
 
 const COUNT_SQL = `
 with ${CATEGORY_PATH_CTE}
-select count(*)::int as total
+-- Variantenartikel zählen als eine Position
+select count(distinct coalesce(
+         (select vv.variant_article_id from weclapp.variant_article_variant vv
+           where vv.article_id = a.id limit 1), a.id))::int as total
 from weclapp.article a
 left join cat on cat.id = a.article_category_id
+
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
