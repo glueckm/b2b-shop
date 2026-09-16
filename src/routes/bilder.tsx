@@ -32,7 +32,7 @@ export const Route = createFileRoute("/bilder")({
   component: ImageAdmin,
 });
 
-type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: string };
+type Status = { file: string; state: "läuft" | "fertig" | "fehler"; message?: string | undefined };
 
 const toBase64 = (buffer: ArrayBuffer) => {
   const bytes = new Uint8Array(buffer);
