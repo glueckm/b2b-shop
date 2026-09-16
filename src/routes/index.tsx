@@ -380,7 +380,8 @@ function Shop() {
                   const unit = priceForQty(article, q);
                   const state = stockState(article.onHand);
                   const spec = specText(article.spec);
-                  const thumb = imagesOf(article)[0];
+                  // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
+                  const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
                   return (
                     <Fragment key={article.sku}>
                     <tr className="border-t border-border/70">
