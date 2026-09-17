@@ -121,9 +121,10 @@ glevel as (
   group by 1
 )
 `;
-const EFF_L1 = `coalesce(nullif(a.ca_level1, ''), g.l1, 'Ohne Zuordnung')`;
-const EFF_L2 = `coalesce(nullif(a.ca_level2, ''), g.l2, '')`;
-const EFF_L3 = `coalesce(nullif(a.ca_level3, ''), g.l3, '')`;
+// Keine Vererbung innerhalb der Variantenfamilie: die Werte kommen 1:1 aus weclapp.
+const EFF_L1 = `coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung')`;
+const EFF_L2 = `coalesce(a.ca_level2, '')`;
+const EFF_L3 = `coalesce(a.ca_level3, '')`;
 
 
 
