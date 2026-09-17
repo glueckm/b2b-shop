@@ -691,24 +691,6 @@ function Shop() {
           <h1 className="mt-3 whitespace-nowrap text-3xl font-bold leading-[1.1] tracking-tight text-primary-foreground lg:text-4xl">
             Für Profis gemacht. Für Ihren Betrieb gedacht.
           </h1>
-          <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-4 font-mono text-primary-foreground">
-            <div>
-              <dt className="label-mono text-primary-foreground/55">Artikel verfügbar</dt>
-              <dd className="text-xl font-semibold">{num(data.stats.articles)}</dd>
-            </div>
-            <div>
-              <dt className="label-mono text-primary-foreground/55">Kategorien</dt>
-              <dd className="text-xl font-semibold">{num(data.stats.categories)}</dd>
-            </div>
-            <div>
-              <dt className="label-mono text-primary-foreground/55">Lagerstück</dt>
-              <dd className="text-xl font-semibold">{num(data.stats.onHand)}</dd>
-            </div>
-            <div>
-              <dt className="label-mono text-primary-foreground/55">Preisgruppe</dt>
-              <dd className="text-xl font-semibold">{activeGroup.label}</dd>
-            </div>
-          </dl>
         </div>
       </section>
 
