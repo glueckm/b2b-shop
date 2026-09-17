@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
-import heroImage from "@/assets/warehouse-hero.jpg";
+import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
@@ -643,7 +643,7 @@ function Shop() {
       <section className="relative isolate overflow-hidden border-b border-border">
         <img
           src={heroImage}
-          alt="MAWA Distributionslager mit palettierter Ware"
+          alt="Fuchs im nebligen Herbstwald bei Sonnenaufgang"
           width={1600}
           height={912}
           className="absolute inset-0 size-full object-cover"
