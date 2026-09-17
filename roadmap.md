@@ -6,3 +6,4 @@
   - [x] Server-Anbindung + Bild-Endpunkt + Upload-Seite
   - [x] Login im Shop (MAWA-Konto, httpOnly-Cookie) statt Servicekonto; Bildpflege nur angemeldet
 - [ ] Später: Kundenerkennung (Konditionen/Preisgruppe automatisch aus dem angemeldeten Konto)
+- [ ] "Meine Bestellungen": Bestellungen der letzten 12 Monate, Rechnungen (Download), offene Posten, "nochmals kaufen" (Artikel in den Warenkorb)
