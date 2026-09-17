@@ -135,6 +135,7 @@ function Shop() {
   const [quick, setQuick] = useState("");
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
+  const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
 
@@ -339,6 +340,18 @@ function Shop() {
           <tr className="bg-muted/30">
             <td />
             <td colSpan={7} className="px-3 pb-4 pt-1">
+              <div className="float-right ml-4 w-[190px]">
+                <button
+                  onClick={() => setScopeArticle(article)}
+                  disabled={!article.scope}
+                  className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-left text-xs font-semibold transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Lieferumfang anzeigen
+                  <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                  </span>
+                </button>
+              </div>
               {imagesOf(article).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {imagesOf(article).map((src, index) => (
@@ -415,6 +428,38 @@ function Shop() {
 
   return (
     <div className="min-h-screen bg-background">
+      {scopeArticle && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setScopeArticle(null)}
+        >
+          <div
+            className="max-h-[80vh] w-full max-w-[560px] overflow-y-auto rounded-sm border border-border bg-card p-5 shadow-xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="label-mono text-muted-foreground">Lieferumfang</p>
+                <h2 className="mt-1 text-sm font-semibold">{scopeArticle.name}</h2>
+                <p className="font-mono text-[12px] text-muted-foreground">{scopeArticle.sku}</p>
+              </div>
+              <button
+                onClick={() => setScopeArticle(null)}
+                aria-label="Schließen"
+                className="grid size-8 place-items-center rounded-sm border border-border text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+            <div
+              className="spec-html mt-4 text-[13px] text-foreground"
+              dangerouslySetInnerHTML={{ __html: sanitizeSpec(scopeArticle.scope) }}
+            />
+          </div>
+        </div>
+      )}
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1440px] items-center gap-6 px-5 py-3">
           <div className="flex items-center gap-3">

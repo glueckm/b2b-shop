@@ -18,6 +18,8 @@ export type CatalogArticle = {
   sku: string;
   name: string;
   spec: string;
+  /** Langtext aus weclapp (Lieferumfang). */
+  scope: string;
   category: string;
   /** Oberste Kategorie-Ebene (z. B. NOCPIX). */
   level1: string;
@@ -131,6 +133,7 @@ select a.id as id,
        a.article_number as sku,
        a.name,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
+       coalesce(a.long_text, '') as scope,
        coalesce(cat.leaf, 'Ohne Kategorie') as category,
        coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
        coalesce(a.ca_level2, '') as level2,
@@ -266,6 +269,7 @@ export const getCatalog = createServerFn({ method: "GET" })
         sku: string;
         name: string;
         spec: string;
+        scope: string;
         category: string;
         level1: string;
         level2: string;
@@ -308,6 +312,7 @@ export const getCatalog = createServerFn({ method: "GET" })
         sku: row.sku,
         name: row.name,
         spec: row.spec,
+        scope: row.scope ?? "",
         category: row.category,
         level1: row.level1,
         level2: row.level2,
