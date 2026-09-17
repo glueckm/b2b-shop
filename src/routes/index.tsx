@@ -220,9 +220,17 @@ function Shop() {
       }
       group.variants.push(article);
     }
+    // Varianten nach der Größenzahl im Namen sortieren (z. B. ARM52-30 vor ARM52-50).
+    const sizeOf = (value: string) => {
+      const match = /-\s*(\d+(?:[.,]\d+)?)/.exec(value);
+      return match ? Number(match[1]!.replace(",", ".")) : Number.POSITIVE_INFINITY;
+    };
     for (const group of groups.values()) {
-      group.variants.sort((a, b) => a.sku.localeCompare(b.sku));
+      group.variants.sort(
+        (a, b) => sizeOf(a.name) - sizeOf(b.name) || a.name.localeCompare(b.name),
+      );
     }
+
     return out;
   }, [articles]);
 
