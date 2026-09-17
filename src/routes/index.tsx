@@ -956,8 +956,23 @@ function Shop() {
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {line.sku}
                       </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        {line.qty} × {eur(line.unit)}
+                      <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                        <button
+                          onClick={() => stepLine(line.sku, -1, line.article.moq)}
+                          aria-label={`${line.sku} Menge verringern`}
+                          className="flex size-5 items-center justify-center rounded-sm border border-border text-foreground hover:border-accent hover:text-accent"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[2ch] text-center text-foreground">{line.qty}</span>
+                        <button
+                          onClick={() => stepLine(line.sku, 1, line.article.moq)}
+                          aria-label={`${line.sku} Menge erhöhen`}
+                          className="flex size-5 items-center justify-center rounded-sm border border-border text-foreground hover:border-accent hover:text-accent"
+                        >
+                          +
+                        </button>
+                        × {eur(line.unit)}
                       </span>
                     </div>
                     <p className="truncate text-[13px] font-medium">{line.article.name}</p>
