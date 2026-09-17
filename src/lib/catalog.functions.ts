@@ -109,6 +109,24 @@ reb_all as (
 reb as (select category_id, pct from reb_all where rn = 1)
 `;
 
+/** Ebenen-Werte je Variantenfamilie: in weclapp sind LEVEL1-3 oft nur bei einer Variante gepflegt. */
+const GLEVEL_CTE = `
+glevel as (
+  select vv.variant_article_id as group_id,
+         max(nullif(a2.ca_level1, '')) as l1,
+         max(nullif(a2.ca_level2, '')) as l2,
+         max(nullif(a2.ca_level3, '')) as l3
+  from weclapp.variant_article_variant vv
+  join weclapp.article a2 on a2.id = vv.article_id
+  group by 1
+)
+`;
+const EFF_L1 = `coalesce(nullif(a.ca_level1, ''), g.l1, 'Ohne Zuordnung')`;
+const EFF_L2 = `coalesce(nullif(a.ca_level2, ''), g.l2, '')`;
+const EFF_L3 = `coalesce(nullif(a.ca_level3, ''), g.l3, '')`;
+
+
+
 const ARTICLES_SQL = `
 with tier as (
   select article_id,
