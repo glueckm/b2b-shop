@@ -243,6 +243,16 @@ function Shop() {
 
   const removeLine = (sku: string) => setLines((prev) => prev.filter((l) => l.sku !== sku));
 
+  /** Menge einer Warenkorbposition um eine Mindestbestellmenge erhöhen/verringern. */
+  const stepLine = (sku: string, delta: number, moq: number) =>
+    setLines((prev) =>
+      prev.flatMap((l) => {
+        if (l.sku !== sku) return [l];
+        const next = l.qty + delta * Math.max(1, moq);
+        return next < Math.max(1, moq) ? [] : [{ ...l, qty: next }];
+      }),
+    );
+
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     void navigate({ search: (prev) => ({ ...prev, q: term.trim() }) });
