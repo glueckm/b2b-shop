@@ -187,6 +187,13 @@ function Shop() {
     [data.categoryTree, search.category],
   );
 
+  /** Ebene-3-Kategorien der aktuell gewählten Ebene-2-Kategorie. */
+  const subSubCategories = useMemo(
+    () => subCategories.find((child) => child.name === search.subcategory)?.children ?? [],
+    [subCategories, search.subcategory],
+  );
+
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
