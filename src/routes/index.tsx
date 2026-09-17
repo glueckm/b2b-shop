@@ -729,8 +729,8 @@ function Shop() {
 
                 className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
                   active
-                    ? "border-accent font-bold text-foreground"
-                    : "border-transparent font-semibold text-muted-foreground hover:text-foreground"
+                    ? "border-accent bg-accent/15 font-bold text-accent"
+                    : "border-transparent font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 {category.name || "Alle Artikel"}
