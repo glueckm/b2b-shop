@@ -154,6 +154,7 @@ variant as (
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
+${GLEVEL_CTE},
 ${REBATE_CTE},
 ${CATEGORY_PATH_CTE}
 
