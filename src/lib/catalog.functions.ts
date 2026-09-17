@@ -41,11 +41,16 @@ export type CatalogArticle = {
 };
 
 
+export type CategoryLeaf = { name: string; count: number };
+
+export type CategoryChild = { name: string; count: number; children: CategoryLeaf[] };
+
 export type CategoryNode = {
   name: string;
   count: number;
-  children: { name: string; count: number }[];
+  children: CategoryChild[];
 };
+
 
 export type CatalogPayload = {
   /** Bild-URLs je Artikel-ID (aus dem MAWA-Backend). */
