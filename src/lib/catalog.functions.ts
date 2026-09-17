@@ -147,6 +147,8 @@ select a.id as id,
        coalesce(cat.leaf, 'Ohne Kategorie') as category,
        coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
        coalesce(a.ca_level2, '') as level2,
+       coalesce(a.ca_level3, '') as level3,
+
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
        coalesce(s.qty, 0)::float8 as on_hand,
