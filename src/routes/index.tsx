@@ -118,7 +118,7 @@ function stockState(onHand: number) {
   return "in" as const;
 }
 
-const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nachbestellung" };
+const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nicht lagernd" };
 const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-foreground" };
 const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
 
@@ -359,7 +359,13 @@ function Shop() {
                 </span>
               )}
             </span>
+            {article.onHand <= 0 && (
+              <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                bestellbar · Lieferung bei Zugang
+              </span>
+            )}
           </td>
+
           <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <span className="flex w-max items-center rounded-sm border border-border">
               <button
@@ -956,9 +962,11 @@ function Shop() {
                         <td className="px-3 py-3 align-top">
                           <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
                             <span className="size-1.5 rounded-full bg-stock" />
-                            {row.variants.filter((v) => v.onHand > 0).length} Varianten auf Lager
+                            {row.variants.filter((v) => v.onHand > 0).length} von{" "}
+                            {row.variants.length} Varianten lagernd
                           </span>
                         </td>
+
                         <td className="px-3 py-3" />
                         <td className="px-3 py-3 align-top">
                           <button

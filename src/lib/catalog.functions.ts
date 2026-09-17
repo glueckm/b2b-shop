@@ -164,18 +164,19 @@ left join reb r1 on r1.category_id = cat.id
 left join reb r2 on r2.category_id = cat.pid
 left join reb r3 on r3.category_id = cat.ppid
 left join variant vr on vr.article_id = a.id
-join stock s on s.article_id = a.id
+left join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-  -- nur Artikel mit Bestand im Hauptlager
-  and s.qty > 0
+  -- Einzelartikel nur mit Bestand im Hauptlager; Varianten immer (auch nicht lagernd, bestellbar)
+  and (vr.group_id is not null or coalesce(s.qty, 0) > 0)
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
   and ($6 = '' or coalesce(a.ca_level3, '') = $6)
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
-limit 400
+limit 600
+
 
 `;
 
@@ -190,8 +191,10 @@ left join cat on cat.id = a.article_category_id
 
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-  and coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
-    where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
+  and (exists (select 1 from weclapp.variant_article_variant vv where vv.article_id = a.id)
+       or coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
+         where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0)
+
   and exists (
     select 1 from weclapp.article_price p
     where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
