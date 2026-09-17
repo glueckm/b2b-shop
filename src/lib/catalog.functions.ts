@@ -25,7 +25,10 @@ export type CatalogArticle = {
   level1: string;
   /** Zweite Kategorie-Ebene (z. B. NOCPIX-TH). */
   level2: string;
+  /** Dritte Kategorie-Ebene. */
+  level3: string;
   unit: string;
+
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
@@ -38,11 +41,16 @@ export type CatalogArticle = {
 };
 
 
+export type CategoryLeaf = { name: string; count: number };
+
+export type CategoryChild = { name: string; count: number; children: CategoryLeaf[] };
+
 export type CategoryNode = {
   name: string;
   count: number;
-  children: { name: string; count: number }[];
+  children: CategoryChild[];
 };
+
 
 export type CatalogPayload = {
   /** Bild-URLs je Artikel-ID (aus dem MAWA-Backend). */
@@ -61,8 +69,10 @@ const inputSchema = z.object({
   channel: z.string().default("NET1"),
   category: z.string().default(""),
   subcategory: z.string().default(""),
+  subsubcategory: z.string().default(""),
   search: z.string().default(""),
 });
+
 
 
 /** Kategoriepfad: Ebene 1 (Wurzel) und Ebene 2 (zweite Stufe). */
@@ -137,6 +147,8 @@ select a.id as id,
        coalesce(cat.leaf, 'Ohne Kategorie') as category,
        coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
        coalesce(a.ca_level2, '') as level2,
+       coalesce(a.ca_level3, '') as level3,
+
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
        coalesce(s.qty, 0)::float8 as on_hand,
@@ -159,6 +171,8 @@ where a.active and a.available_in_sale
   and s.qty > 0
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
+  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
 limit 400
@@ -186,6 +200,8 @@ where a.active and a.available_in_sale
   )
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
+  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
   and ($5::text is not null or true) -- $5 = Vertriebsweg für Rabatte (hier ungenutzt)
 `;
@@ -195,18 +211,20 @@ const MAIN_STOCK_EXISTS = `
     where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
 `;
 
-/** Ebene 1 und Ebene 2 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
+/** Ebene 1, 2 und 3 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
 const CATEGORY_TREE_SQL = `
 select coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
        coalesce(a.ca_level2, '') as level2,
+       coalesce(a.ca_level3, '') as level3,
        count(*)::int as count
 from weclapp.article a
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
-group by 1, 2
-order by 1, 2
+group by 1, 2, 3
+order by 1, 2, 3
 `;
+
 
 
 
@@ -261,7 +279,14 @@ export const getCatalog = createServerFn({ method: "GET" })
     const { query } = await import("./db.server");
     // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
     const priceChannel = data.channel || "NET1";
-    const params = [priceChannel, data.category, "", data.subcategory, data.channel];
+    const params = [
+      priceChannel,
+      data.category,
+      "",
+      data.subcategory,
+      data.channel,
+      data.subsubcategory,
+    ];
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
@@ -273,6 +298,7 @@ export const getCatalog = createServerFn({ method: "GET" })
         category: string;
         level1: string;
         level2: string;
+        level3: string;
         unit: string;
         moq: number;
         on_hand: number;
@@ -285,7 +311,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
-      query<{ level1: string; level2: string; count: number }>(CATEGORY_TREE_SQL),
+      query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
       query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
     ]);
 
@@ -293,14 +319,30 @@ export const getCatalog = createServerFn({ method: "GET" })
     for (const row of treeRows) {
       const node = treeMap.get(row.level1) ?? { name: row.level1, count: 0, children: [] };
       node.count += row.count;
-      if (row.level2) node.children.push({ name: row.level2, count: row.count });
+      if (row.level2) {
+        let child = node.children.find((c) => c.name === row.level2);
+        if (!child) {
+          child = { name: row.level2, count: 0, children: [] };
+          node.children.push(child);
+        }
+        child.count += row.count;
+        if (row.level3) {
+          const leaf = child.children.find((l) => l.name === row.level3);
+          if (leaf) leaf.count += row.count;
+          else child.children.push({ name: row.level3, count: row.count });
+        }
+      }
       treeMap.set(row.level1, node);
     }
-    const categoryTree = [...treeMap.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    const byCount = (a: { name: string; count: number }, b: { name: string; count: number }) =>
+      b.count - a.count || a.name.localeCompare(b.name);
+    const categoryTree = [...treeMap.values()].sort(byCount);
     for (const node of categoryTree) {
-      node.children.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      node.children.sort(byCount);
+      for (const child of node.children) child.children.sort(byCount);
     }
     const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
+
 
 
     let mapped: CatalogArticle[] = articles.map((row) => {
@@ -316,6 +358,8 @@ export const getCatalog = createServerFn({ method: "GET" })
         category: row.category,
         level1: row.level1,
         level2: row.level2,
+        level3: row.level3 ?? "",
+
 
         unit: row.unit,
         moq: Math.max(1, Math.round(row.moq)),
