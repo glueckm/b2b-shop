@@ -732,6 +732,7 @@ function Shop() {
                       ...prev,
                       category: active ? "" : category.name,
                       subcategory: "",
+                      subsubcategory: "",
                       q: "",
                     }),
                   });
@@ -758,7 +759,9 @@ function Shop() {
               <button
                 onClick={() => {
                   setTerm("");
-                  void navigate({ search: (prev) => ({ ...prev, subcategory: "", q: "" }) });
+                  void navigate({
+                    search: (prev) => ({ ...prev, subcategory: "", subsubcategory: "", q: "" }),
+                  });
                 }}
 
                 className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
@@ -780,6 +783,7 @@ function Shop() {
                         search: (prev) => ({
                           ...prev,
                           subcategory: active ? "" : sub.name,
+                          subsubcategory: "",
                           q: "",
                         }),
                       });
@@ -798,6 +802,55 @@ function Shop() {
             </div>
           </div>
         )}
+
+        {subSubCategories.length > 0 && (
+          <div className="border-t border-border bg-muted/40">
+            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
+              <span className="label-mono whitespace-nowrap text-muted-foreground">
+                {search.subcategory}
+              </span>
+              <button
+                onClick={() => {
+                  setTerm("");
+                  void navigate({ search: (prev) => ({ ...prev, subsubcategory: "", q: "" }) });
+                }}
+                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                  search.subsubcategory === ""
+                    ? "bg-stock/20 font-semibold text-stock"
+                    : "bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
+                }`}
+              >
+                Alle
+              </button>
+              {subSubCategories.map((leaf) => {
+                const active = leaf.name === search.subsubcategory;
+                return (
+                  <button
+                    key={leaf.name}
+                    onClick={() => {
+                      setTerm("");
+                      void navigate({
+                        search: (prev) => ({
+                          ...prev,
+                          subsubcategory: active ? "" : leaf.name,
+                          q: "",
+                        }),
+                      });
+                    }}
+                    className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                      active
+                        ? "bg-stock/20 font-semibold text-stock"
+                        : "bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
+                    }`}
+                  >
+                    {leaf.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
       </nav>
 
       <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
