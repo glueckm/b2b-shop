@@ -69,8 +69,10 @@ const inputSchema = z.object({
   channel: z.string().default("NET1"),
   category: z.string().default(""),
   subcategory: z.string().default(""),
+  subsubcategory: z.string().default(""),
   search: z.string().default(""),
 });
+
 
 
 /** Kategoriepfad: Ebene 1 (Wurzel) und Ebene 2 (zweite Stufe). */
