@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { Trash2 } from "lucide-react";
 import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
@@ -967,9 +968,9 @@ function Shop() {
                   <button
                     onClick={() => removeLine(line.sku)}
                     aria-label={`${line.sku} entfernen`}
-                    className="font-mono text-muted-foreground hover:text-foreground"
+                    className="text-muted-foreground transition-colors hover:text-destructive"
                   >
-                    ×
+                    <Trash2 className="size-4" />
                   </button>
                 </li>
               ))}
