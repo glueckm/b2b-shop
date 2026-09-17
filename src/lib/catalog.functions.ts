@@ -201,13 +201,16 @@ limit 600
 `;
 
 const COUNT_SQL = `
-with ${CATEGORY_PATH_CTE}
+with ${GLEVEL_CTE},
+${CATEGORY_PATH_CTE}
 -- Variantenartikel zählen als eine Position
 select count(distinct coalesce(
          (select vv.variant_article_id from weclapp.variant_article_variant vv
            where vv.article_id = a.id limit 1), a.id))::int as total
 from weclapp.article a
 left join cat on cat.id = a.article_category_id
+left join weclapp.variant_article_variant vg on vg.article_id = a.id
+left join glevel g on g.group_id = vg.variant_article_id
 
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
@@ -221,9 +224,9 @@ where a.active and a.available_in_sale
       and (p.start_date is null or p.start_date <= now())
       and (p.end_date is null or p.end_date > now())
   )
-  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
-  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
-  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+  and ($2 = '' or ${EFF_L1} = $2)
+  and ($4 = '' or ${EFF_L2} = $4)
+  and ($6 = '' or ${EFF_L3} = $6)
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
   and ($5::text is not null or true) -- $5 = Vertriebsweg für Rabatte (hier ungenutzt)
