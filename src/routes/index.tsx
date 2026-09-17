@@ -359,7 +359,13 @@ function Shop() {
                 </span>
               )}
             </span>
+            {article.onHand <= 0 && (
+              <span className="mt-0.5 block text-[11px] text-muted-foreground">
+                bestellbar · Lieferung bei Zugang
+              </span>
+            )}
           </td>
+
           <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <span className="flex w-max items-center rounded-sm border border-border">
               <button
