@@ -689,14 +689,14 @@ function Shop() {
                   });
                 }}
 
-                className={`whitespace-nowrap border-b-2 px-3 py-3 text-[13px] transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
                   active
-                    ? "border-accent font-semibold text-foreground"
-                    : "border-transparent font-medium text-muted-foreground hover:text-foreground"
+                    ? "border-accent font-bold text-foreground"
+                    : "border-transparent font-semibold text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {category.name || "Alle Artikel"}
-                <span className="ml-2 font-mono text-[11px] text-muted-foreground">
+                <span className="ml-2 font-mono text-[12px] text-muted-foreground">
                   {category.count}
                 </span>
               </button>
@@ -716,7 +716,7 @@ function Shop() {
                   void navigate({ search: (prev) => ({ ...prev, subcategory: "", q: "" }) });
                 }}
 
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                   search.subcategory === ""
                     ? "bg-accent font-semibold text-accent-foreground"
                     : "bg-panel font-medium text-muted-foreground hover:text-foreground"
@@ -740,7 +740,7 @@ function Shop() {
                       });
                     }}
 
-                    className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                    className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                       active
                         ? "bg-accent font-semibold text-accent-foreground"
                         : "bg-panel font-medium text-muted-foreground hover:text-foreground"
