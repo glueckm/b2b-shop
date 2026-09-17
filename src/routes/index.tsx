@@ -545,7 +545,7 @@ function Shop() {
         <div className="relative mx-auto max-w-[1440px] px-5 py-14">
           <p className="label-mono text-accent">Distributionsportal · Nettopreise</p>
           <h1 className="mt-3 max-w-[26ch] text-4xl font-bold leading-[1.05] tracking-tight text-primary-foreground text-balance">
-            Das komplette MAWA Distributionsprogramm zu Ihrem Konditionspreis.
+            Für Profis gemacht. Für Ihren Betrieb gedacht.
           </h1>
           <dl className="mt-8 flex flex-wrap gap-x-12 gap-y-4 font-mono text-primary-foreground">
             <div>
