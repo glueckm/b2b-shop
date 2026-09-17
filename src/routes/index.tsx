@@ -340,6 +340,18 @@ function Shop() {
           <tr className="bg-muted/30">
             <td />
             <td colSpan={7} className="px-3 pb-4 pt-1">
+              <div className="float-right ml-4 w-[190px]">
+                <button
+                  onClick={() => setScopeArticle(article)}
+                  disabled={!article.scope}
+                  className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-left text-xs font-semibold transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Lieferumfang anzeigen
+                  <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                  </span>
+                </button>
+              </div>
               {imagesOf(article).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {imagesOf(article).map((src, index) => (
