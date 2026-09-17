@@ -171,6 +171,8 @@ where a.active and a.available_in_sale
   and s.qty > 0
   and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
   and ($4 = '' or coalesce(a.ca_level2, '') = $4)
+  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
 limit 400
