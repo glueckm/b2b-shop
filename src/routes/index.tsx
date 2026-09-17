@@ -371,6 +371,21 @@ function Shop() {
                     {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
                   </span>
                 </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void downloadPhotos(article);
+                  }}
+                  disabled={imagesOf(article).length === 0}
+                  className="mt-2 w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Foto Download
+                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
+                    {imagesOf(article).length > 0
+                      ? `${imagesOf(article).length} Bild(er) speichern`
+                      : "Keine Bilder vorhanden"}
+                  </span>
+                </button>
               </div>
               {imagesOf(article).length > 0 && (
                 <div className="flex flex-wrap gap-2">
