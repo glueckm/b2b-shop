@@ -716,7 +716,7 @@ function Shop() {
                   void navigate({ search: (prev) => ({ ...prev, subcategory: "", q: "" }) });
                 }}
 
-                className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                   search.subcategory === ""
                     ? "bg-accent font-semibold text-accent-foreground"
                     : "bg-panel font-medium text-muted-foreground hover:text-foreground"
@@ -740,7 +740,7 @@ function Shop() {
                       });
                     }}
 
-                    className={`whitespace-nowrap rounded-full px-3 py-1 text-[12px] transition-colors ${
+                    className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                       active
                         ? "bg-accent font-semibold text-accent-foreground"
                         : "bg-panel font-medium text-muted-foreground hover:text-foreground"
