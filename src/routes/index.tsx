@@ -317,7 +317,7 @@ function Shop() {
               )}
             </span>
           </td>
-          <td className="px-3 pt-3 align-top">
+          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <span className="flex w-max items-center rounded-sm border border-border">
               <button
                 onClick={() => step(article, -1)}
@@ -336,7 +336,7 @@ function Shop() {
               </button>
             </span>
           </td>
-          <td className="px-3 pt-3 align-top">
+          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => addLine(article.sku, q)}
               className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -345,7 +345,10 @@ function Shop() {
             </button>
           </td>
         </tr>
-        <tr className={nested ? "bg-card" : ""}>
+        <tr
+          onClick={toggleDetail}
+          className={`cursor-pointer hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
+        >
           <td />
           <td colSpan={7} className="px-3 pb-3 pt-1">
             <span className="line-clamp-2 block text-xs text-muted-foreground">
