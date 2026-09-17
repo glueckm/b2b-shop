@@ -130,6 +130,28 @@ function Shop() {
     const remote = data.images[article.id] ?? [];
     return remote.length > 0 ? remote : articleImages(article.id, article.sku);
   };
+  /** Lädt alle Artikelbilder als Dateien herunter. */
+  const downloadPhotos = async (article: { id: string; sku: string }) => {
+    const urls = imagesOf(article);
+    for (let index = 0; index < urls.length; index += 1) {
+      try {
+        const response = await fetch(urls[index]!);
+        if (!response.ok) continue;
+        const blob = await response.blob();
+        const extension = (blob.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg");
+        const href = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = href;
+        anchor.download = `${article.sku}_${index + 1}.${extension}`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(href);
+      } catch {
+        // einzelnes Bild überspringen
+      }
+    }
+  };
   const [qty, setQty] = useState<Record<string, number>>({});
   const [lines, setLines] = useState<Line[]>([]);
   const [quick, setQuick] = useState("");
@@ -369,6 +391,21 @@ function Shop() {
                   Lieferumfang anzeigen
                   <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
                     {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                  </span>
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void downloadPhotos(article);
+                  }}
+                  disabled={imagesOf(article).length === 0}
+                  className="mt-2 w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Foto Download
+                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
+                    {imagesOf(article).length > 0
+                      ? `${imagesOf(article).length} Bild(er) speichern`
+                      : "Keine Bilder vorhanden"}
                   </span>
                 </button>
               </div>
