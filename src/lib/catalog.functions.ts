@@ -109,6 +109,24 @@ reb_all as (
 reb as (select category_id, pct from reb_all where rn = 1)
 `;
 
+/** Ebenen-Werte je Variantenfamilie: in weclapp sind LEVEL1-3 oft nur bei einer Variante gepflegt. */
+const GLEVEL_CTE = `
+glevel as (
+  select vv.variant_article_id as group_id,
+         max(nullif(a2.ca_level1, '')) as l1,
+         max(nullif(a2.ca_level2, '')) as l2,
+         max(nullif(a2.ca_level3, '')) as l3
+  from weclapp.variant_article_variant vv
+  join weclapp.article a2 on a2.id = vv.article_id
+  group by 1
+)
+`;
+const EFF_L1 = `coalesce(nullif(a.ca_level1, ''), g.l1, 'Ohne Zuordnung')`;
+const EFF_L2 = `coalesce(nullif(a.ca_level2, ''), g.l2, '')`;
+const EFF_L3 = `coalesce(nullif(a.ca_level3, ''), g.l3, '')`;
+
+
+
 const ARTICLES_SQL = `
 with tier as (
   select article_id,
@@ -136,6 +154,7 @@ variant as (
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
+${GLEVEL_CTE},
 ${REBATE_CTE},
 ${CATEGORY_PATH_CTE}
 
@@ -145,9 +164,9 @@ select a.id as id,
        coalesce(nullif(a.short_description1, ''), nullif(a.description, ''), '') as spec,
        coalesce(a.long_text, '') as scope,
        coalesce(cat.leaf, 'Ohne Kategorie') as category,
-       coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
-       coalesce(a.ca_level2, '') as level2,
-       coalesce(a.ca_level3, '') as level3,
+       ${EFF_L1} as level1,
+       ${EFF_L2} as level2,
+       ${EFF_L3} as level3,
 
        coalesce(nullif(a.unit_name, ''), 'Stk.') as unit,
        greatest(coalesce(a.minimum_purchase_quantity, 1), 1)::float8 as moq,
@@ -164,14 +183,15 @@ left join reb r1 on r1.category_id = cat.id
 left join reb r2 on r2.category_id = cat.pid
 left join reb r3 on r3.category_id = cat.ppid
 left join variant vr on vr.article_id = a.id
+left join glevel g on g.group_id = vr.group_id
 left join stock s on s.article_id = a.id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- Einzelartikel nur mit Bestand im Hauptlager; Varianten immer (auch nicht lagernd, bestellbar)
   and (vr.group_id is not null or coalesce(s.qty, 0) > 0)
-  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
-  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
-  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+  and ($2 = '' or ${EFF_L1} = $2)
+  and ($4 = '' or ${EFF_L2} = $4)
+  and ($6 = '' or ${EFF_L3} = $6)
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
@@ -181,13 +201,16 @@ limit 600
 `;
 
 const COUNT_SQL = `
-with ${CATEGORY_PATH_CTE}
+with ${GLEVEL_CTE},
+${CATEGORY_PATH_CTE}
 -- Variantenartikel zählen als eine Position
 select count(distinct coalesce(
          (select vv.variant_article_id from weclapp.variant_article_variant vv
            where vv.article_id = a.id limit 1), a.id))::int as total
 from weclapp.article a
 left join cat on cat.id = a.article_category_id
+left join weclapp.variant_article_variant vg on vg.article_id = a.id
+left join glevel g on g.group_id = vg.variant_article_id
 
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
@@ -201,9 +224,9 @@ where a.active and a.available_in_sale
       and (p.start_date is null or p.start_date <= now())
       and (p.end_date is null or p.end_date > now())
   )
-  and ($2 = '' or coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') = $2)
-  and ($4 = '' or coalesce(a.ca_level2, '') = $4)
-  and ($6 = '' or coalesce(a.ca_level3, '') = $6)
+  and ($2 = '' or ${EFF_L1} = $2)
+  and ($4 = '' or ${EFF_L2} = $4)
+  and ($6 = '' or ${EFF_L3} = $6)
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
   and ($5::text is not null or true) -- $5 = Vertriebsweg für Rabatte (hier ungenutzt)
@@ -216,11 +239,14 @@ const MAIN_STOCK_EXISTS = `
 
 /** Ebene 1, 2 und 3 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
 const CATEGORY_TREE_SQL = `
-select coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
-       coalesce(a.ca_level2, '') as level2,
-       coalesce(a.ca_level3, '') as level3,
+with ${GLEVEL_CTE}
+select ${EFF_L1} as level1,
+       ${EFF_L2} as level2,
+       ${EFF_L3} as level3,
        count(*)::int as count
 from weclapp.article a
+left join weclapp.variant_article_variant vg on vg.article_id = a.id
+left join glevel g on g.group_id = vg.variant_article_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
