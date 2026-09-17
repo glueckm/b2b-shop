@@ -13,6 +13,7 @@ const searchSchema = z.object({
   channel: z.string().default("NET1"),
   category: z.string().default(""),
   subcategory: z.string().default(""),
+  subsubcategory: z.string().default(""),
   q: z.string().default(""),
 });
 
@@ -26,6 +27,7 @@ export const Route = createFileRoute("/")({
           channel: deps.channel,
           category: deps.category,
           subcategory: deps.subcategory,
+          subsubcategory: deps.subsubcategory,
           search: deps.q,
         },
       }),
@@ -33,6 +35,7 @@ export const Route = createFileRoute("/")({
     ]);
     return { ...catalog, user };
   },
+
 
   head: () => ({
     meta: [
