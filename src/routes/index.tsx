@@ -756,8 +756,8 @@ function Shop() {
 
                 className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                   search.subcategory === ""
-                    ? "bg-accent font-semibold text-accent-foreground"
-                    : "bg-panel font-medium text-muted-foreground hover:text-foreground"
+                    ? "bg-accent/15 font-semibold text-accent"
+                    : "bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 Alle
@@ -780,8 +780,8 @@ function Shop() {
 
                     className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
                       active
-                        ? "bg-accent font-semibold text-accent-foreground"
-                        : "bg-panel font-medium text-muted-foreground hover:text-foreground"
+                        ? "bg-accent/15 font-semibold text-accent"
+                        : "bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     {sub.name}
