@@ -18,6 +18,8 @@ export type CatalogArticle = {
   sku: string;
   name: string;
   spec: string;
+  /** Langtext aus weclapp (Lieferumfang). */
+  scope: string;
   category: string;
   /** Oberste Kategorie-Ebene (z. B. NOCPIX). */
   level1: string;
