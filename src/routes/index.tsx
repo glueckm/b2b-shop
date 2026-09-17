@@ -136,6 +136,20 @@ function Shop() {
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
   const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    images: string[];
+    index: number;
+    title: string;
+  } | null>(null);
+  const stepLightbox = (delta: number) =>
+    setLightbox((current) =>
+      current
+        ? {
+            ...current,
+            index: (current.index + delta + current.images.length) % current.images.length,
+          }
+        : current,
+    );
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
 
