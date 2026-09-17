@@ -643,7 +643,7 @@ function Shop() {
       <section className="relative isolate overflow-hidden border-b border-border">
         <img
           src={heroImage}
-          alt="MAWA Distributionslager mit palettierter Ware"
+          alt="Fuchs im nebligen Herbstwald bei Sonnenaufgang"
           width={1600}
           height={912}
           className="absolute inset-0 size-full object-cover"
