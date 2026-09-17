@@ -646,7 +646,7 @@ function Shop() {
           alt="Fuchs im nebligen Herbstwald bei Sonnenaufgang"
           width={1600}
           height={912}
-          className="absolute inset-0 size-full object-cover object-[50%_25%]"
+          className="absolute inset-0 size-full object-cover object-[50%_38%]"
         />
         <div className="absolute inset-0 bg-primary/80" />
         <div className="relative mx-auto max-w-[1440px] px-5 py-14">
