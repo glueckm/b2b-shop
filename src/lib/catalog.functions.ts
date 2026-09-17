@@ -312,6 +312,7 @@ export const getCatalog = createServerFn({ method: "GET" })
         sku: row.sku,
         name: row.name,
         spec: row.spec,
+        scope: row.scope ?? "",
         category: row.category,
         level1: row.level1,
         level2: row.level2,
