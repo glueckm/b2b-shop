@@ -355,13 +355,25 @@ function Shop() {
               {imagesOf(article).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {imagesOf(article).map((src, index) => (
-                    <img
+                    <button
                       key={src}
-                      src={src}
-                      alt={`${article.name} — Bild ${index + 1}`}
-                      loading="lazy"
-                      className="h-20 w-20 rounded-sm border border-border bg-panel object-contain p-0.5"
-                    />
+                      onClick={() =>
+                        setLightbox({
+                          images: imagesOf(article),
+                          index,
+                          title: `${article.sku} · ${article.name}`,
+                        })
+                      }
+                      aria-label={`Bild ${index + 1} vergrößern`}
+                      className="rounded-sm border border-border bg-panel p-0.5 transition-colors hover:border-accent"
+                    >
+                      <img
+                        src={src}
+                        alt={`${article.name} — Bild ${index + 1}`}
+                        loading="lazy"
+                        className="h-20 w-20 object-contain"
+                      />
+                    </button>
                   ))}
                 </div>
               )}
