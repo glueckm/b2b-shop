@@ -268,7 +268,10 @@ function Shop() {
     const toggleDetail = () => setDetailSku(open ? null : article.sku);
     return (
       <Fragment>
-        <tr className={`border-t border-border/70 ${nested ? "bg-card" : ""}`}>
+        <tr
+          onClick={toggleDetail}
+          className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
+        >
           <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
             <button
               onClick={toggleDetail}
