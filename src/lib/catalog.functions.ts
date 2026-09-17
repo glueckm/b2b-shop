@@ -279,7 +279,14 @@ export const getCatalog = createServerFn({ method: "GET" })
     const { query } = await import("./db.server");
     // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
     const priceChannel = data.channel || "NET1";
-    const params = [priceChannel, data.category, "", data.subcategory, data.channel];
+    const params = [
+      priceChannel,
+      data.category,
+      "",
+      data.subcategory,
+      data.channel,
+      data.subsubcategory,
+    ];
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
@@ -291,6 +298,7 @@ export const getCatalog = createServerFn({ method: "GET" })
         category: string;
         level1: string;
         level2: string;
+        level3: string;
         unit: string;
         moq: number;
         on_hand: number;
@@ -303,7 +311,7 @@ export const getCatalog = createServerFn({ method: "GET" })
 
       }>(ARTICLES_SQL, params),
       query<{ total: number }>(COUNT_SQL, params),
-      query<{ level1: string; level2: string; count: number }>(CATEGORY_TREE_SQL),
+      query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
       query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
     ]);
 
@@ -311,14 +319,30 @@ export const getCatalog = createServerFn({ method: "GET" })
     for (const row of treeRows) {
       const node = treeMap.get(row.level1) ?? { name: row.level1, count: 0, children: [] };
       node.count += row.count;
-      if (row.level2) node.children.push({ name: row.level2, count: row.count });
+      if (row.level2) {
+        let child = node.children.find((c) => c.name === row.level2);
+        if (!child) {
+          child = { name: row.level2, count: 0, children: [] };
+          node.children.push(child);
+        }
+        child.count += row.count;
+        if (row.level3) {
+          const leaf = child.children.find((l) => l.name === row.level3);
+          if (leaf) leaf.count += row.count;
+          else child.children.push({ name: row.level3, count: row.count });
+        }
+      }
       treeMap.set(row.level1, node);
     }
-    const categoryTree = [...treeMap.values()].sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    const byCount = (a: { name: string; count: number }, b: { name: string; count: number }) =>
+      b.count - a.count || a.name.localeCompare(b.name);
+    const categoryTree = [...treeMap.values()].sort(byCount);
     for (const node of categoryTree) {
-      node.children.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+      node.children.sort(byCount);
+      for (const child of node.children) child.children.sort(byCount);
     }
     const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
+
 
 
     let mapped: CatalogArticle[] = articles.map((row) => {
