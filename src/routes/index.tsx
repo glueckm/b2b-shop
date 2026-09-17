@@ -358,10 +358,10 @@ function Shop() {
                 <button
                   onClick={() => setScopeArticle(article)}
                   disabled={!article.scope}
-                  className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-left text-xs font-semibold transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
+                  className="w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Lieferumfang anzeigen
-                  <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">
+                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
                     {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
                   </span>
                 </button>
