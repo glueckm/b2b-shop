@@ -135,6 +135,7 @@ function Shop() {
   const [quick, setQuick] = useState("");
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
+  const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
 
