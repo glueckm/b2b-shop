@@ -486,6 +486,7 @@ function Shop() {
                   })}
                 </tbody>
               </table>
+              )}
             </td>
           </tr>
         )}
