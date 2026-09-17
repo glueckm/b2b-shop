@@ -130,6 +130,28 @@ function Shop() {
     const remote = data.images[article.id] ?? [];
     return remote.length > 0 ? remote : articleImages(article.id, article.sku);
   };
+  /** Lädt alle Artikelbilder als Dateien herunter. */
+  const downloadPhotos = async (article: { id: string; sku: string }) => {
+    const urls = imagesOf(article);
+    for (let index = 0; index < urls.length; index += 1) {
+      try {
+        const response = await fetch(urls[index]!);
+        if (!response.ok) continue;
+        const blob = await response.blob();
+        const extension = (blob.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg");
+        const href = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = href;
+        anchor.download = `${article.sku}_${index + 1}.${extension}`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(href);
+      } catch {
+        // einzelnes Bild überspringen
+      }
+    }
+  };
   const [qty, setQty] = useState<Record<string, number>>({});
   const [lines, setLines] = useState<Line[]>([]);
   const [quick, setQuick] = useState("");
