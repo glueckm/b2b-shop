@@ -118,7 +118,7 @@ function stockState(onHand: number) {
   return "in" as const;
 }
 
-const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nachbestellung" };
+const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nicht lagernd" };
 const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-foreground" };
 const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
 
