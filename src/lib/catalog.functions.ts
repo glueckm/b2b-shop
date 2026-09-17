@@ -239,11 +239,14 @@ const MAIN_STOCK_EXISTS = `
 
 /** Ebene 1, 2 und 3 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
 const CATEGORY_TREE_SQL = `
-select coalesce(nullif(a.ca_level1, ''), 'Ohne Zuordnung') as level1,
-       coalesce(a.ca_level2, '') as level2,
-       coalesce(a.ca_level3, '') as level3,
+with ${GLEVEL_CTE}
+select ${EFF_L1} as level1,
+       ${EFF_L2} as level2,
+       ${EFF_L3} as level3,
        count(*)::int as count
 from weclapp.article a
+left join weclapp.variant_article_variant vg on vg.article_id = a.id
+left join glevel g on g.group_id = vg.variant_article_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   and ${MAIN_STOCK_EXISTS}
