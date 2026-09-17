@@ -734,9 +734,6 @@ function Shop() {
                 }`}
               >
                 {category.name || "Alle Artikel"}
-                <span className="ml-2 font-mono text-[12px] text-muted-foreground">
-                  {category.count}
-                </span>
               </button>
             );
           })}
@@ -785,7 +782,6 @@ function Shop() {
                     }`}
                   >
                     {sub.name}
-                    <span className="ml-2 font-mono text-[11px] opacity-70">{sub.count}</span>
                   </button>
                 );
               })}
