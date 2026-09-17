@@ -25,7 +25,10 @@ export type CatalogArticle = {
   level1: string;
   /** Zweite Kategorie-Ebene (z. B. NOCPIX-TH). */
   level2: string;
+  /** Dritte Kategorie-Ebene. */
+  level3: string;
   unit: string;
+
   moq: number;
   onHand: number;
   breaks: PriceBreak[];
