@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { Fragment, useMemo, useState } from "react";
 import { z } from "zod";
 
-import heroImage from "@/assets/warehouse-hero.jpg";
+import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
