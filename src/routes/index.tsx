@@ -449,6 +449,7 @@ function Shop() {
                 </p>
               )}
 
+              {article.breaks.length > 1 && (
               <table className="mt-3 w-full max-w-[520px] text-left">
                 <thead>
                   <tr className="border-b border-border">
@@ -485,6 +486,7 @@ function Shop() {
                   })}
                 </tbody>
               </table>
+              )}
             </td>
           </tr>
         )}
