@@ -782,7 +782,6 @@ function Shop() {
                     }`}
                   >
                     {sub.name}
-                    <span className="ml-2 font-mono text-[11px] opacity-70">{sub.count}</span>
                   </button>
                 );
               })}
