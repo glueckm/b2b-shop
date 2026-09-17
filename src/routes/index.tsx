@@ -136,6 +136,20 @@ function Shop() {
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
   const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
+  const [lightbox, setLightbox] = useState<{
+    images: string[];
+    index: number;
+    title: string;
+  } | null>(null);
+  const stepLightbox = (delta: number) =>
+    setLightbox((current) =>
+      current
+        ? {
+            ...current,
+            index: (current.index + delta + current.images.length) % current.images.length,
+          }
+        : current,
+    );
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
 
@@ -355,13 +369,25 @@ function Shop() {
               {imagesOf(article).length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {imagesOf(article).map((src, index) => (
-                    <img
+                    <button
                       key={src}
-                      src={src}
-                      alt={`${article.name} — Bild ${index + 1}`}
-                      loading="lazy"
-                      className="h-20 w-20 rounded-sm border border-border bg-panel object-contain p-0.5"
-                    />
+                      onClick={() =>
+                        setLightbox({
+                          images: imagesOf(article),
+                          index,
+                          title: `${article.sku} · ${article.name}`,
+                        })
+                      }
+                      aria-label={`Bild ${index + 1} vergrößern`}
+                      className="rounded-sm border border-border bg-panel p-0.5 transition-colors hover:border-accent"
+                    >
+                      <img
+                        src={src}
+                        alt={`${article.name} — Bild ${index + 1}`}
+                        loading="lazy"
+                        className="h-20 w-20 object-contain"
+                      />
+                    </button>
                   ))}
                 </div>
               )}
@@ -428,6 +454,81 @@ function Shop() {
 
   return (
     <div className="min-h-screen bg-background">
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[60] flex flex-col bg-black/85 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setLightbox(null)}
+          onKeyDown={(event) => {
+            if (event.key === "ArrowRight") stepLightbox(1);
+            if (event.key === "ArrowLeft") stepLightbox(-1);
+            if (event.key === "Escape") setLightbox(null);
+          }}
+          tabIndex={-1}
+          ref={(node) => node?.focus()}
+        >
+          <div className="flex items-center justify-between gap-4 text-primary-foreground">
+            <p className="font-mono text-[12px] opacity-80">
+              {lightbox.title} · Bild {lightbox.index + 1}/{lightbox.images.length}
+            </p>
+            <button
+              onClick={() => setLightbox(null)}
+              aria-label="Schließen"
+              className="grid size-9 place-items-center rounded-sm border border-white/30 text-lg hover:border-white"
+            >
+              ×
+            </button>
+          </div>
+          <div
+            className="flex min-h-0 flex-1 items-center justify-center gap-3"
+            onClick={(event) => event.stopPropagation()}
+          >
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={() => stepLightbox(-1)}
+                aria-label="Vorheriges Bild"
+                className="grid size-11 shrink-0 place-items-center rounded-sm border border-white/30 text-xl text-primary-foreground hover:border-white"
+              >
+                ‹
+              </button>
+            )}
+            <img
+              src={lightbox.images[lightbox.index]}
+              alt={`${lightbox.title} — Bild ${lightbox.index + 1}`}
+              className="max-h-full max-w-full object-contain"
+            />
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={() => stepLightbox(1)}
+                aria-label="Nächstes Bild"
+                className="grid size-11 shrink-0 place-items-center rounded-sm border border-white/30 text-xl text-primary-foreground hover:border-white"
+              >
+                ›
+              </button>
+            )}
+          </div>
+          {lightbox.images.length > 1 && (
+            <div
+              className="mt-3 flex flex-wrap justify-center gap-2"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {lightbox.images.map((src, index) => (
+                <button
+                  key={src}
+                  onClick={() => setLightbox({ ...lightbox, index })}
+                  aria-label={`Bild ${index + 1} anzeigen`}
+                  className={`rounded-sm border p-0.5 ${
+                    index === lightbox.index ? "border-accent" : "border-white/25"
+                  }`}
+                >
+                  <img src={src} alt="" className="h-14 w-14 object-contain" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {scopeArticle && (
         <div
           className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
