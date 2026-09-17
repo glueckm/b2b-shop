@@ -243,6 +243,16 @@ function Shop() {
 
   const removeLine = (sku: string) => setLines((prev) => prev.filter((l) => l.sku !== sku));
 
+  /** Menge einer Warenkorbposition um eine Mindestbestellmenge erhöhen/verringern. */
+  const stepLine = (sku: string, delta: number, moq: number) =>
+    setLines((prev) =>
+      prev.flatMap((l) => {
+        if (l.sku !== sku) return [l];
+        const next = l.qty + delta * Math.max(1, moq);
+        return next < Math.max(1, moq) ? [] : [{ ...l, qty: next }];
+      }),
+    );
+
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
     void navigate({ search: (prev) => ({ ...prev, q: term.trim() }) });
@@ -956,8 +966,23 @@ function Shop() {
                       <span className="font-mono text-[11px] text-muted-foreground">
                         {line.sku}
                       </span>
-                      <span className="font-mono text-[11px] text-muted-foreground">
-                        {line.qty} × {eur(line.unit)}
+                      <span className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                        <button
+                          onClick={() => stepLine(line.sku, -1, line.article.moq)}
+                          aria-label={`${line.sku} Menge verringern`}
+                          className="flex size-5 items-center justify-center rounded-sm border border-border text-foreground hover:border-accent hover:text-accent"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[2ch] text-center text-foreground">{line.qty}</span>
+                        <button
+                          onClick={() => stepLine(line.sku, 1, line.article.moq)}
+                          aria-label={`${line.sku} Menge erhöhen`}
+                          className="flex size-5 items-center justify-center rounded-sm border border-border text-foreground hover:border-accent hover:text-accent"
+                        >
+                          +
+                        </button>
+                        × {eur(line.unit)}
                       </span>
                     </div>
                     <p className="truncate text-[13px] font-medium">{line.article.name}</p>
