@@ -358,6 +358,8 @@ export const getCatalog = createServerFn({ method: "GET" })
         category: row.category,
         level1: row.level1,
         level2: row.level2,
+        level3: row.level3 ?? "",
+
 
         unit: row.unit,
         moq: Math.max(1, Math.round(row.moq)),
