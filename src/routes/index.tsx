@@ -339,8 +339,11 @@ function Shop() {
 
 
 
-  const activeGroup =
-    priceGroups.find((g) => g.channel === search.channel) ?? priceGroups[0]!;
+  /** Preisgruppe des angemeldeten Kunden (Anzeige), z. B. „PLATIN (NET6)". */
+  const activeGroup = data.pricing.group
+    ? `${data.pricing.group} (${data.pricing.channel})`
+    : data.pricing.channel;
+
 
 
   const getQty = (article: CatalogArticle) => qty[article.sku] ?? article.moq;
