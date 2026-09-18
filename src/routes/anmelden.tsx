@@ -33,6 +33,41 @@ function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Zugang anfordern
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [signupNumber, setSignupNumber] = useState("");
+  const [signupBusy, setSignupBusy] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
+  const [signupInfo, setSignupInfo] = useState<string | null>(null);
+
+  async function requestAccess(event: React.FormEvent) {
+    event.preventDefault();
+    setSignupBusy(true);
+    setSignupError(null);
+    setSignupInfo(null);
+    try {
+      const result = await requestShopAccess({ data: { customerNumber: signupNumber } });
+      if (!result.ok) {
+        setSignupError(result.error);
+      } else if (result.kind === "granted") {
+        setSignupInfo(
+          result.hint ??
+            (result.email
+              ? `Wir haben einen Link zum Setzen Ihres Passworts an ${result.email} geschickt.`
+              : "Wir haben Ihnen einen Link zum Setzen Ihres Passworts geschickt."),
+        );
+        setSignupNumber("");
+      } else {
+        setSignupInfo(result.message);
+      }
+    } catch {
+      setSignupError("Anfrage derzeit nicht möglich. Bitte später erneut versuchen.");
+    } finally {
+      setSignupBusy(false);
+    }
+  }
+
+
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
