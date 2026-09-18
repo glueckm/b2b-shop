@@ -1343,7 +1343,7 @@ function Shop() {
                 Stattdessen Angebot anfragen
               </button>
               <p className="label-mono mt-3 text-muted-foreground">
-                Preise gemäß Preisgruppe {activeGroup.label} · netto
+                Preise gemäß Preisgruppe {activeGroup} · netto
               </p>
             </div>
           </div>
