@@ -20,6 +20,8 @@ import {
 } from "@/lib/basket.functions";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
+import { SHOP_VERSION } from "@/lib/version";
+
 
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
