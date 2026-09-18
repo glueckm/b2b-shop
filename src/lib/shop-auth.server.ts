@@ -17,7 +17,7 @@ export type ShopUser = {
 const COOKIE = "mawa_b2b_shop_token";
 
 export function apiBase(): string {
-  return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.org";
+  return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.info";
 }
 
 export function appOrigin(): string {
