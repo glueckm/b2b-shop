@@ -88,13 +88,36 @@ function mapFile(raw: Record<string, unknown>): BackendFile {
   };
 }
 
-/** Alle Artikelbilder des Servicekontos, gruppiert nach Artikel-ID. */
-export async function listArticleImages(limit = 500): Promise<Record<string, BackendFile[]>> {
-  const res = await fetch(`${apiBase()}/v1/files?limit=${Math.min(Math.max(limit, 1), 500)}`, {
-    headers: await authHeaders(),
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!res.ok) throw new Error(`MAWA_API_LIST_FAILED_${res.status}`);
+/** Neues Shop-Backend: Bilder werden je Artikel abgefragt. */
+function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFile {
+  return {
+    id: String(raw["fileId"] ?? raw["id"] ?? ""),
+    filename: String(raw["fileName"] ?? raw["filename"] ?? "Bild"),
+    contentType: String(raw["contentType"] ?? "application/octet-stream"),
+    entityId: articleId,
+    createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
+  };
+}
+
+const imageCache = new Map<string, { files: BackendFile[]; expires: number }>();
+const CACHE_MS = 60_000;
+
+/** Bilder eines Artikels über GET /v1/shop/articles/{id}/images. */
+async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
+  const hit = imageCache.get(articleId);
+  if (hit && hit.expires > Date.now()) return hit.files;
+
+  const res = await fetch(
+    `${apiBase()}/v1/shop/articles/${encodeURIComponent(articleId)}/images`,
+    { headers: await authHeaders(), signal: AbortSignal.timeout(15_000) },
+  );
+  if (!res.ok) {
+    if (res.status === 404) {
+      imageCache.set(articleId, { files: [], expires: Date.now() + CACHE_MS });
+      return [];
+    }
+    throw new Error(`MAWA_API_LIST_FAILED_${res.status}`);
+  }
 
   const parsed = (await res.json()) as unknown;
   const rows: unknown[] = Array.isArray(parsed)
@@ -103,19 +126,40 @@ export async function listArticleImages(limit = 500): Promise<Record<string, Bac
       ? (parsed as { items: unknown[] }).items
       : [];
 
+  const files = rows
+    .map((row) => mapShopFile((row ?? {}) as Record<string, unknown>, articleId))
+    .filter((file) => file.id !== "")
+    .sort(
+      (a, b) =>
+        (a.createdAt ?? "").localeCompare(b.createdAt ?? "") ||
+        a.filename.localeCompare(b.filename),
+    );
+
+  imageCache.set(articleId, { files, expires: Date.now() + CACHE_MS });
+  return files;
+}
+
+/** Bilder mehrerer Artikel, gruppiert nach Artikel-ID (parallel, begrenzt). */
+export async function listArticleImages(
+  articleIds: string[] = [],
+): Promise<Record<string, BackendFile[]>> {
+  const ids = [...new Set(articleIds.filter(Boolean))];
   const grouped: Record<string, BackendFile[]> = {};
-  for (const row of rows) {
-    const raw = (row ?? {}) as Record<string, unknown>;
-    const entity = String(raw["entity"] ?? raw["entity_type"] ?? "");
-    if (entity !== ARTICLE_ENTITY) continue;
-    const file = mapFile(raw);
-    if (!file.id || !file.entityId) continue;
-    if (!file.contentType.startsWith("image/")) continue;
-    (grouped[file.entityId] ??= []).push(file);
-  }
-  for (const files of Object.values(grouped)) {
-    files.sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? "") || a.filename.localeCompare(b.filename));
-  }
+  const queue = [...ids];
+
+  const worker = async () => {
+    for (;;) {
+      const id = queue.shift();
+      if (!id) return;
+      try {
+        const files = await listImagesForArticle(id);
+        if (files.length > 0) grouped[id] = files;
+      } catch {
+        /* einzelner Artikel ohne Bilder — Liste bleibt nutzbar */
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(8, queue.length) }, worker));
   return grouped;
 }
 
@@ -123,10 +167,10 @@ export async function listArticleImages(limit = 500): Promise<Record<string, Bac
 export async function fetchFileBytes(
   fileId: string,
 ): Promise<{ bytes: ArrayBuffer; contentType: string } | null> {
-  const res = await fetch(
-    `${apiBase()}/v1/files/${encodeURIComponent(fileId)}?disposition=inline`,
-    { headers: await authHeaders(), signal: AbortSignal.timeout(20_000) },
-  );
+  const res = await fetch(`${apiBase()}/v1/shop/images/${encodeURIComponent(fileId)}`, {
+    headers: await authHeaders(),
+    signal: AbortSignal.timeout(20_000),
+  });
   if (!res.ok) return null;
   return {
     bytes: await res.arrayBuffer(),
@@ -158,7 +202,7 @@ export async function uploadArticleImage(input: {
   // Gleicher Dateiname beim selben Artikel: altes Bild wird ersetzt.
   let replaced = false;
   try {
-    const existing = (await listArticleImages())[input.articleId] ?? [];
+    const existing = (await listArticleImages([input.articleId]))[input.articleId] ?? [];
     const key = nameKey(input.fileName);
     for (const file of existing) {
       if (nameKey(file.filename) !== key) continue;

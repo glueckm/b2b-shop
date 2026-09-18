@@ -9,7 +9,7 @@ export const Route = createFileRoute("/api/public/artikel-bild/$fileId")({
     handlers: {
       GET: async ({ params }) => {
         const fileId = params.fileId;
-        if (!/^[A-Za-z0-9-]{8,64}$/.test(fileId)) {
+        if (!/^[A-Za-z0-9._-]{4,128}$/.test(fileId)) {
           return new Response("Bad request", { status: 400 });
         }
         try {

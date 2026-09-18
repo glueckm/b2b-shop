@@ -439,7 +439,7 @@ export const getCatalog = createServerFn({ method: "GET" })
       const { listArticleImages } = await import("./mawa-api.server");
       const { articleImageUrl } = await import("./article-images.functions");
       const { isThumbFileName } = await import("./resize-image");
-      const grouped = await listArticleImages();
+      const grouped = await listArticleImages(mapped.map((article) => article.id));
       for (const [articleId, files] of Object.entries(grouped)) {
         const full = files.filter((file) => !isThumbFileName(file.filename));
         const thumb = files.find((file) => isThumbFileName(file.filename));
