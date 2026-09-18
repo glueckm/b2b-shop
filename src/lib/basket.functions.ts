@@ -51,17 +51,30 @@ export const createBasket = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<BasketState> => {
     const api = await import("./basket.server");
-    try {
-      const name =
-        data.name && data.name.length > 0
-          ? data.name
-          : `Warenkorb ${new Date().toLocaleDateString("de-AT")}`;
-      const created = await api.createBasket(name);
-      return state(created.id);
-    } catch (error) {
-      return fail(error);
+    const stamp = new Date().toLocaleString("de-AT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const base = data.name && data.name.length > 0 ? data.name : `Warenkorb ${stamp}`;
+    let lastError: unknown = null;
+    // Das Backend lehnt gleiche Namen mit 409 ab — dann mit Zusatz erneut versuchen.
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const name = attempt === 0 ? base : `${base} (${attempt + 1})`.slice(0, 80);
+      try {
+        const created = await api.createBasket(name);
+        return state(created.id);
+      } catch (error) {
+        lastError = error;
+        const conflict = error instanceof Error && error.message === "BASKET_API_409";
+        if (!conflict) break;
+      }
     }
+    return fail(lastError);
   });
+
 
 export const renameBasket = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
