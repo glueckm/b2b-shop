@@ -18,7 +18,7 @@ import {
   type Basket,
   type BasketState,
 } from "@/lib/basket.functions";
-import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
+import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
 const searchSchema = z.object({
