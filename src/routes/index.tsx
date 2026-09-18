@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
-import { Trash2 } from "lucide-react";
+import { Star, Trash2 } from "lucide-react";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -19,6 +19,12 @@ import {
   type BasketState,
 } from "@/lib/basket.functions";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
+import {
+  loadFavourites,
+  markFavourite,
+  unmarkFavourite,
+  type FavouriteState,
+} from "@/lib/favourites.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
@@ -222,6 +228,34 @@ function Shop() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+
+  // Favoriten des Kunden (Backend). Schlüssel ist die Artikel-ID.
+  const [favourites, setFavourites] = useState<Set<string>>(new Set());
+
+  const applyFavourites = (result: FavouriteState) => {
+    if (result.ok) setFavourites(new Set(result.favourites.map((f) => f.articleId)));
+  };
+
+  useEffect(() => {
+    if (!data.user) return;
+    void loadFavourites().then(applyFavourites).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.user?.id]);
+
+  const toggleFavourite = (article: { id: string }) => {
+    const isFav = favourites.has(article.id);
+    // Optimistisch umschalten, danach den Backend-Stand übernehmen.
+    setFavourites((prev) => {
+      const next = new Set(prev);
+      if (isFav) next.delete(article.id);
+      else next.add(article.id);
+      return next;
+    });
+    const action = isFav ? unmarkFavourite : markFavourite;
+    void action({ data: { articleId: article.id } })
+      .then(applyFavourites)
+      .catch(() => undefined);
+  };
 
   const applyBasketState = (result: BasketState) => {
     if (result.ok) {
@@ -483,12 +517,36 @@ function Shop() {
           className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
         >
           <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
-            <button
-              onClick={toggleDetail}
-              className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-            >
-              {article.sku}
-            </button>
+            <span className="flex items-center gap-1.5">
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleFavourite(article);
+                }}
+                aria-label={
+                  favourites.has(article.id)
+                    ? `Favorit entfernen ${article.sku}`
+                    : `Als Favorit merken ${article.sku}`
+                }
+                title={favourites.has(article.id) ? "Favorit entfernen" : "Als Favorit merken"}
+                className={
+                  favourites.has(article.id)
+                    ? "text-accent"
+                    : "text-muted-foreground/50 hover:text-accent"
+                }
+              >
+                <Star
+                  className="size-4"
+                  {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
+                />
+              </button>
+              <button
+                onClick={toggleDetail}
+                className="font-mono text-[12px] text-muted-foreground hover:text-accent"
+              >
+                {article.sku}
+              </button>
+            </span>
           </td>
           <td className="max-w-[320px] px-3 pt-3 align-top">
             <span className="flex items-start gap-3">
