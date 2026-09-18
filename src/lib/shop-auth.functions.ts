@@ -32,8 +32,6 @@ export const shopLogin = createServerFn({ method: "POST" })
       const message = /BAD_CREDENTIALS|invalid|401/i.test(raw)
         ? "Kundennummer oder Passwort ist nicht korrekt."
         : "Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.";
-
-        : "Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.";
       return { ok: false, error: message };
     }
   });
