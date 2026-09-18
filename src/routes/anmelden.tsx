@@ -79,7 +79,7 @@ function LoginPage() {
       if (!result.ok) {
         setSignupError(result.error);
       } else if (result.kind === "granted") {
-        const target = result.hint ?? result.email;
+        const target = result.email ?? result.hint;
         setSignupInfo(
           [
             "Ihr Shop-Zugang wurde freigeschaltet.",
