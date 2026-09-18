@@ -202,7 +202,7 @@ export async function uploadArticleImage(input: {
   // Gleicher Dateiname beim selben Artikel: altes Bild wird ersetzt.
   let replaced = false;
   try {
-    const existing = (await listArticleImages())[input.articleId] ?? [];
+    const existing = (await listArticleImages([input.articleId]))[input.articleId] ?? [];
     const key = nameKey(input.fileName);
     for (const file of existing) {
       if (nameKey(file.filename) !== key) continue;
