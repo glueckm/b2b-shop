@@ -680,7 +680,7 @@ function Shop() {
                   to="/konto"
                   className="label-mono text-primary-foreground/70 hover:text-accent"
                 >
-                  {data.user.displayName ?? data.user.firstName ?? data.user.email}
+                  {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
                 </Link>
 
                 <button
