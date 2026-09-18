@@ -188,3 +188,19 @@ export async function deleteLine(basketId: string, articleId: string): Promise<B
     )) as Record<string, unknown>,
   );
 }
+
+/** Warenkorb bestellen — wird im weclapp zum Auftrag. */
+export async function checkoutBasket(
+  basketId: string,
+  orderNumberAtCustomer?: string | null,
+): Promise<Basket> {
+  return mapBasket(
+    (await call(`/v1/shop/baskets/${encodeURIComponent(basketId)}/checkout`, {
+      method: "POST",
+      body: {
+        orderNumberAtCustomer:
+          orderNumberAtCustomer && orderNumberAtCustomer.length > 0 ? orderNumberAtCustomer : null,
+      },
+    })) as Record<string, unknown>,
+  );
+}
