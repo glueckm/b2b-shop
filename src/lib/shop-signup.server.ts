@@ -54,23 +54,7 @@ export async function checkEligibility(customerNumber: string): Promise<Eligibil
   };
   if (!number) return base;
 
-  let rows: CustomerRow[] = [];
-  try {
-    rows = await query<CustomerRow>(CUSTOMER_SQL, [number]);
-  } catch {
-    // Fallback ohne E-Mail-Tabelle, falls Spalten abweichen.
-    rows = await query<CustomerRow>(
-      `select c.customer_number,
-              coalesce(nullif(c.company, ''), trim(coalesce(c.first_name,'') || ' ' || coalesce(c.last_name,''))) as company,
-              nullif(c.customer_category_name, '') as category,
-              coalesce(nullif(c.email, ''), nullif(c.email_home, '')) as email,
-              c.blocked
-         from weclapp.customer c
-        where trim(c.customer_number) = $1 or trim(coalesce(c.old_customer_number, '')) = $1
-        limit 1`,
-      [number],
-    );
-  }
+  const rows = await query<CustomerRow>(CUSTOMER_SQL, [number]);
 
   const row = rows[0];
   if (!row) return base;
