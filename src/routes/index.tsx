@@ -228,15 +228,21 @@ function Shop() {
       setBasketNote(null);
       return true;
     }
-    setBaskets([]);
-    setActiveBasket(null);
+    if (result.reason === "login") {
+      setBaskets([]);
+      setActiveBasket(null);
+      setBasketNote("Zum Speichern von Warenkörben bitte anmelden.");
+      return false;
+    }
+    // Bestehende Warenkörbe bleiben sichtbar, nur der Vorgang ist fehlgeschlagen.
     setBasketNote(
-      result.reason === "login"
-        ? "Zum Speichern von Warenkörben bitte anmelden."
+      result.message
+        ? `Warenkorb-Vorgang fehlgeschlagen (${result.message}).`
         : "Warenkörbe sind derzeit nicht erreichbar.",
     );
     return false;
   };
+
 
   const runBasket = async (action: () => Promise<BasketState>) => {
     setBasketBusy(true);
