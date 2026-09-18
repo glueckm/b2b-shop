@@ -682,9 +682,13 @@ function Shop() {
                 >
                   Bilder
                 </Link>
-                <span className="label-mono text-primary-foreground/70">
-                  {data.user.firstName ?? data.user.email}
-                </span>
+                <Link
+                  to="/konto"
+                  className="label-mono text-primary-foreground/70 hover:text-accent"
+                >
+                  {data.user.displayName ?? data.user.firstName ?? data.user.email}
+                </Link>
+
                 <button
                   onClick={async () => {
                     await shopLogout({});

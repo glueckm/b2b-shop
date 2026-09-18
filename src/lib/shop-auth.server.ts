@@ -1,5 +1,5 @@
 /**
- * Anmeldung im Shop gegen das bestehende MAWA-Backend (mawaapi).
+ * Anmeldung im Shop gegen die Shop-Endpunkte des MAWA-Backends (mawaapi).
  * Das Token liegt ausschließlich in einem httpOnly-Cookie, nie im Browser-JS.
  */
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
@@ -7,12 +7,14 @@ import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server
 export type ShopUser = {
   id: string;
   email: string;
+  displayName: string | null;
   firstName: string | null;
   lastName: string | null;
   isSuperuser: boolean;
 };
 
-const COOKIE = "mawa_shop_token";
+/** Eigener Cookie-Name – bewusst anders als im CRM-Projekt. */
+const COOKIE = "mawa_b2b_shop_token";
 
 export function apiBase(): string {
   return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.info";
@@ -54,14 +56,30 @@ async function detailMessage(response: Response, fallback: string): Promise<stri
     const body = (await response.json()) as { detail?: unknown };
     const detail = body.detail;
     if (typeof detail === "string" && detail.trim()) return detail;
+    if (detail && typeof detail === "object") {
+      const message = (detail as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) return message;
+    }
   } catch {
     /* ignore */
   }
   return fallback;
 }
 
+function mapAccount(raw: Record<string, unknown>): ShopUser {
+  const str = (key: string) => (raw[key] ? String(raw[key]) : null);
+  return {
+    id: String(raw["id"] ?? ""),
+    email: String(raw["email"] ?? ""),
+    displayName: str("display_name") ?? str("displayName") ?? str("name"),
+    firstName: str("first_name") ?? str("firstName"),
+    lastName: str("last_name") ?? str("lastName"),
+    isSuperuser: raw["is_superuser"] === true,
+  };
+}
+
 export async function apiLogin(email: string, password: string): Promise<string> {
-  const res = await fetch(`${apiBase()}/v1/auth/login`, {
+  const res = await fetch(`${apiBase()}/v1/shop/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", origin: appOrigin() },
     body: new URLSearchParams({ username: email, password }).toString(),
@@ -77,29 +95,51 @@ export async function apiCurrentUser(): Promise<ShopUser | null> {
   const token = readToken();
   if (!token) return null;
   try {
-    const res = await fetch(`${apiBase()}/v1/auth/users/me`, {
+    const res = await fetch(`${apiBase()}/v1/shop/auth/logins/me`, {
       headers: { authorization: `Bearer ${token}`, origin: appOrigin() },
       signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
-    const raw = (await res.json()) as Record<string, unknown>;
-    return {
-      id: String(raw["id"] ?? ""),
-      email: String(raw["email"] ?? ""),
-      firstName: raw["first_name"] ? String(raw["first_name"]) : null,
-      lastName: raw["last_name"] ? String(raw["last_name"]) : null,
-      isSuperuser: raw["is_superuser"] === true,
-    };
+    return mapAccount((await res.json()) as Record<string, unknown>);
   } catch {
     return null;
   }
+}
+
+/** Passwort und/oder Anzeigename des angemeldeten Kontos ändern. */
+export async function apiUpdateMe(input: {
+  displayName?: string | undefined;
+  password?: string | undefined;
+  currentPassword?: string | undefined;
+}): Promise<ShopUser> {
+
+  const token = readToken();
+  if (!token) throw new Error("NOT_AUTHENTICATED");
+
+  const payload: Record<string, string> = {};
+  if (input.displayName !== undefined) payload["display_name"] = input.displayName;
+  if (input.password) payload["password"] = input.password;
+  if (input.currentPassword) payload["current_password"] = input.currentPassword;
+
+  const res = await fetch(`${apiBase()}/v1/shop/auth/logins/me`, {
+    method: "PATCH",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${token}`,
+      origin: appOrigin(),
+    },
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) throw new Error(await detailMessage(res, "UPDATE_FAILED"));
+  return mapAccount((await res.json()) as Record<string, unknown>);
 }
 
 export async function apiLogout(): Promise<void> {
   const token = readToken();
   if (token) {
     try {
-      await fetch(`${apiBase()}/v1/auth/logout`, {
+      await fetch(`${apiBase()}/v1/shop/auth/logout`, {
         method: "POST",
         headers: { authorization: `Bearer ${token}`, origin: appOrigin() },
         signal: AbortSignal.timeout(8_000),
