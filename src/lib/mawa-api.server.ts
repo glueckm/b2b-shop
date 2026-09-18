@@ -151,12 +151,17 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
 
 let bulkAvailable = true;
 
+/** Höchstens so viele Artikel-IDs pro Sammelabfrage (URL-Länge). */
+const BULK_CHUNK = 50;
+
 /**
  * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c
  * Liefert das Backend sie nicht (404/405), wird dauerhaft auf Einzelabfragen
  * umgeschaltet.
  */
-async function listImagesBulk(ids: string[]): Promise<Record<string, BackendFile[]> | null> {
+async function listImagesBulkChunk(
+  ids: string[],
+): Promise<Record<string, BackendFile[]> | null> {
   if (!bulkAvailable || ids.length === 0) return null;
   try {
     const res = await fetch(
