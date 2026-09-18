@@ -15,7 +15,13 @@ const idSchema = z.object({ basketId: z.string().min(1) });
 async function state(activeId?: string): Promise<BasketState> {
   const api = await import("./basket.server");
   try {
-    const baskets = (await api.listBaskets("open")).filter((b) => !b.orderNumber);
+    let baskets = (await api.listBaskets("open")).filter((b) => !b.orderNumber);
+    // Ohne offenen Warenkorb legen wir automatisch einen an, damit der Kunde
+    // sofort Artikel hinzufügen kann.
+    if (baskets.length === 0) {
+      const created = await api.createBasket(`Warenkorb ${new Date().toLocaleDateString("de-AT")}`);
+      baskets = [created];
+    }
     const wanted = activeId && baskets.some((b) => b.id === activeId) ? activeId : baskets[0]?.id;
     const active = wanted ? await api.getBasket(wanted) : null;
     return { ok: true, baskets, active };
@@ -24,6 +30,7 @@ async function state(activeId?: string): Promise<BasketState> {
     return { ok: false, reason: login ? "login" : "error" };
   }
 }
+
 
 /** Warenkorbliste + aktiver Warenkorb mit Positionen. */
 export const loadBaskets = createServerFn({ method: "POST" })
