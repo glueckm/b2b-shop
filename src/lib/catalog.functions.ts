@@ -438,7 +438,8 @@ export const getCatalog = createServerFn({ method: "GET" })
     try {
       const { listArticleImages } = await import("./mawa-api.server");
       const { articleImageUrl } = await import("./article-images.functions");
-      const { isThumbFileName } = await import("./resize-image");
+      // Vorschaubilder (_thumb) werden im CRM erzeugt und hier nur erkannt.
+      const isThumbFileName = (name: string) => /_thumb\.[^.]+$/i.test(name);
       const grouped = await listArticleImages(mapped.map((article) => article.id));
       for (const [articleId, files] of Object.entries(grouped)) {
         const full = files.filter((file) => !isThumbFileName(file.filename));
