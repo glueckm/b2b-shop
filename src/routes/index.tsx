@@ -228,6 +228,8 @@ function Shop() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [orderRef, setOrderRef] = useState("");
+  const [orderDone, setOrderDone] = useState<string | null>(null);
 
   // Favoriten des Kunden (Backend). Schlüssel ist die Artikel-ID.
   const [favourites, setFavourites] = useState<Set<string>>(new Set());
