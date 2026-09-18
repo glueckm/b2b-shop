@@ -804,24 +804,13 @@ function Shop() {
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <label className="hidden items-center gap-2 sm:flex">
+            <span className="hidden items-center gap-2 sm:flex">
               <span className="label-mono text-primary-foreground/55">Preisgruppe</span>
-              <select
-                value={activeGroup.channel}
-                onChange={(event) =>
-                  void navigate({
-                    search: (prev) => ({ ...prev, channel: event.target.value }),
-                  })
-                }
-                className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground outline-none"
-              >
-                {priceGroups.map((group) => (
-                  <option key={group.channel} value={group.channel} className="text-foreground">
-                    {group.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <span className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground">
+                {activeGroup}
+              </span>
+            </span>
+
             {data.user ? (
               <div className="flex items-center gap-3">
                 <Link
