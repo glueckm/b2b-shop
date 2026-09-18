@@ -34,9 +34,12 @@ const CUSTOMER_SQL = `
   select c.customer_number,
          coalesce(nullif(c.company, ''), trim(coalesce(c.first_name, '') || ' ' || coalesce(c.last_name, ''))) as company,
          nullif(c.customer_category_name, '') as category,
-         nullif(c.email, '') as email,
+         nullif(trim(pe.to_addresses), '') as email,
          c.blocked
     from weclapp.customer c
+    left join weclapp.party_email_address pe
+           on pe.party_id = c.id and pe._idx = 0
+
    where regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
       or regexp_replace(upper(coalesce(c.old_customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
       or regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = 'KN' || $1
