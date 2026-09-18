@@ -432,24 +432,10 @@ export const getCatalog = createServerFn({ method: "GET" })
         .map((entry) => entry.article);
     }
 
-    let images: Record<string, string[]> = {};
-    // Kleines Vorschaubild je Artikel für die Listenansicht.
+    // Bilder werden nicht mehr im Katalog geladen (das war langsam), sondern
+    // nachträglich portionsweise vom Browser über getArticleImageMap.
+    const images: Record<string, string[]> = {};
     const thumbs: Record<string, string> = {};
-    try {
-      const { listArticleImages } = await import("./mawa-api.server");
-      const { articleImageUrl } = await import("./article-images.functions");
-      // Vorschaubilder (_thumb) werden im CRM erzeugt und hier nur erkannt.
-      const isThumbFileName = (name: string) => /_thumb\.[^.]+$/i.test(name);
-      const grouped = await listArticleImages(mapped.map((article) => article.id));
-      for (const [articleId, files] of Object.entries(grouped)) {
-        const full = files.filter((file) => !isThumbFileName(file.filename));
-        const thumb = files.find((file) => isThumbFileName(file.filename));
-        if (full.length > 0) images[articleId] = full.map((file) => articleImageUrl(file.id));
-        if (thumb) thumbs[articleId] = articleImageUrl(thumb.id);
-      }
-    } catch {
-      images = {};
-    }
 
     return {
       images,
