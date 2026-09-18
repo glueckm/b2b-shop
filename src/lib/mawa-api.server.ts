@@ -149,13 +149,81 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
   return files;
 }
 
-/** Bilder mehrerer Artikel, gruppiert nach Artikel-ID (parallel, begrenzt). */
+let bulkAvailable = true;
+
+/**
+ * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c
+ * Liefert das Backend sie nicht (404/405), wird dauerhaft auf Einzelabfragen
+ * umgeschaltet.
+ */
+async function listImagesBulk(ids: string[]): Promise<Record<string, BackendFile[]> | null> {
+  if (!bulkAvailable || ids.length === 0) return null;
+  try {
+    const res = await fetch(
+      `${apiBase()}/v1/shop/articles/images?articleIds=${ids.map(encodeURIComponent).join(",")}`,
+      { headers: await authHeaders(), signal: AbortSignal.timeout(20_000) },
+    );
+    if (res.status === 404 || res.status === 405) {
+      bulkAvailable = false;
+      return null;
+    }
+    if (!res.ok) return null;
+
+    const parsed = (await res.json()) as unknown;
+    const rows: unknown[] = Array.isArray(parsed)
+      ? parsed
+      : Array.isArray((parsed as { items?: unknown }).items)
+        ? (parsed as { items: unknown[] }).items
+        : [];
+
+    const grouped: Record<string, BackendFile[]> = {};
+    for (const row of rows) {
+      const entry = (row ?? {}) as Record<string, unknown>;
+      const articleId = String(entry["articleId"] ?? entry["article_id"] ?? "");
+      if (!articleId) continue;
+      const listRaw = entry["images"] ?? entry["files"];
+      const files = (Array.isArray(listRaw) ? listRaw : [])
+        .map((file) => mapShopFile((file ?? {}) as Record<string, unknown>, articleId))
+        .filter((file) => file.id !== "")
+        .sort(
+          (a, b) =>
+            (a.createdAt ?? "").localeCompare(b.createdAt ?? "") ||
+            a.filename.localeCompare(b.filename),
+        );
+      grouped[articleId] = files;
+    }
+    // Auch leere Ergebnisse merken, damit nicht einzeln nachgefragt wird.
+    for (const id of ids) {
+      imageCache.set(id, { files: grouped[id] ?? [], expires: Date.now() + CACHE_MS });
+    }
+    return grouped;
+  } catch {
+    return null;
+  }
+}
+
+/** Bilder mehrerer Artikel, gruppiert nach Artikel-ID (Sammelabfrage, sonst parallel). */
 export async function listArticleImages(
   articleIds: string[] = [],
 ): Promise<Record<string, BackendFile[]>> {
   const ids = [...new Set(articleIds.filter(Boolean))];
   const grouped: Record<string, BackendFile[]> = {};
-  const queue = [...ids];
+
+  const missing = ids.filter((id) => {
+    const hit = imageCache.get(id);
+    if (!hit || hit.expires <= Date.now()) return true;
+    if (hit.files.length > 0) grouped[id] = hit.files;
+    return false;
+  });
+
+  const bulk = await listImagesBulk(missing);
+  if (bulk) {
+    for (const [id, files] of Object.entries(bulk)) if (files.length > 0) grouped[id] = files;
+    return grouped;
+  }
+
+  const queue = [...missing];
+
 
   const worker = async () => {
     for (;;) {
