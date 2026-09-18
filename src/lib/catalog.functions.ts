@@ -63,7 +63,10 @@ export type CatalogPayload = {
   /** Zweistufige Menüführung: Ebene 1 mit ihren Ebene-2-Kategorien. */
   categoryTree: CategoryNode[];
   stats: { articles: number; categories: number; onHand: number };
+  /** Preisgruppe/Vertriebsweg des angemeldeten Kunden (nur Anzeige + Preisbasis). */
+  pricing: { channel: string; group: string | null; company: string | null };
 };
+
 
 const inputSchema = z.object({
   channel: z.string().default("NET1"),
@@ -307,16 +310,20 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
-    const priceChannel = data.channel || "NET1";
+    const { readCustomerNumber } = await import("./shop-auth.server");
+    const { customerPricing } = await import("./customer-pricing.server");
+    // Vertriebsweg/Preisgruppe kommen ausschließlich aus dem Kundenkonto in weclapp.
+    const pricing = await customerPricing(readCustomerNumber());
+    const priceChannel = pricing.channel || "NET1";
     const params = [
       priceChannel,
       data.category,
       "",
       data.subcategory,
-      data.channel,
+      priceChannel,
       data.subsubcategory,
     ];
+
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
@@ -444,6 +451,8 @@ export const getCatalog = createServerFn({ method: "GET" })
       total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
       categoryTree,
+      pricing: { channel: priceChannel, group: pricing.group, company: pricing.company },
+
 
       stats: {
         articles: stats[0]?.articles ?? 0,

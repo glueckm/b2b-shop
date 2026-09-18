@@ -18,7 +18,7 @@ import {
   type Basket,
   type BasketState,
 } from "@/lib/basket.functions";
-import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
+import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
 const searchSchema = z.object({
@@ -339,8 +339,11 @@ function Shop() {
 
 
 
-  const activeGroup =
-    priceGroups.find((g) => g.channel === search.channel) ?? priceGroups[0]!;
+  /** Preisgruppe des angemeldeten Kunden (Anzeige), z. B. „PLATIN (NET6)". */
+  const activeGroup = data.pricing.group
+    ? `${data.pricing.group} (${data.pricing.channel})`
+    : data.pricing.channel;
+
 
 
   const getQty = (article: CatalogArticle) => qty[article.sku] ?? article.moq;
@@ -369,7 +372,7 @@ function Shop() {
           quantity,
           name: article.name.slice(0, 400),
           priceShown: priceForQty(article, quantity),
-          ...(search.channel ? { salesChannel: search.channel } : {}),
+          salesChannel: data.pricing.channel,
         },
       }),
     );
@@ -804,24 +807,13 @@ function Shop() {
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <label className="hidden items-center gap-2 sm:flex">
+            <span className="hidden items-center gap-2 sm:flex">
               <span className="label-mono text-primary-foreground/55">Preisgruppe</span>
-              <select
-                value={activeGroup.channel}
-                onChange={(event) =>
-                  void navigate({
-                    search: (prev) => ({ ...prev, channel: event.target.value }),
-                  })
-                }
-                className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground outline-none"
-              >
-                {priceGroups.map((group) => (
-                  <option key={group.channel} value={group.channel} className="text-foreground">
-                    {group.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <span className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground">
+                {activeGroup}
+              </span>
+            </span>
+
             {data.user ? (
               <div className="flex items-center gap-3">
                 <Link
@@ -1351,7 +1343,7 @@ function Shop() {
                 Stattdessen Angebot anfragen
               </button>
               <p className="label-mono mt-3 text-muted-foreground">
-                Preise gemäß Preisgruppe {activeGroup.label} · netto
+                Preise gemäß Preisgruppe {activeGroup} · netto
               </p>
             </div>
           </div>
