@@ -27,7 +27,7 @@ export const Route = createFileRoute("/anmelden")({
 function LoginPage() {
   const navigate = useNavigate();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [customerNumber, setCustomerNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
