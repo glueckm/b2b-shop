@@ -195,7 +195,52 @@ function Shop() {
     }
   };
   const [qty, setQty] = useState<Record<string, number>>({});
-  const [lines, setLines] = useState<Line[]>([]);
+  const [localLines, setLocalLines] = useState<Line[]>([]);
+
+  // Warenkörbe liegen im Backend; ohne Anmeldung bleibt der Korb lokal.
+  const [baskets, setBaskets] = useState<Basket[]>([]);
+  const [activeBasket, setActiveBasket] = useState<Basket | null>(null);
+  const [basketBusy, setBasketBusy] = useState(false);
+  const [basketNote, setBasketNote] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const applyBasketState = (result: BasketState) => {
+    if (result.ok) {
+      setBaskets(result.baskets);
+      setActiveBasket(result.active);
+      setBasketNote(null);
+      return true;
+    }
+    setBaskets([]);
+    setActiveBasket(null);
+    setBasketNote(
+      result.reason === "login"
+        ? "Zum Speichern von Warenkörben bitte anmelden."
+        : "Warenkörbe sind derzeit nicht erreichbar.",
+    );
+    return false;
+  };
+
+  const runBasket = async (action: () => Promise<BasketState>) => {
+    setBasketBusy(true);
+    try {
+      applyBasketState(await action());
+    } catch {
+      setBasketNote("Warenkörbe sind derzeit nicht erreichbar.");
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!data.user) {
+      setBasketNote("Zum Speichern von Warenkörben bitte anmelden.");
+      return;
+    }
+    void runBasket(() => loadBaskets({ data: {} }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.user?.id]);
   const [quick, setQuick] = useState("");
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
