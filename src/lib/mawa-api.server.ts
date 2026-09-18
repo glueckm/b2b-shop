@@ -64,9 +64,15 @@ export async function serviceAuthHeaders(): Promise<Record<string, string>> {
   return { authorization: `Bearer ${await serviceToken()}`, origin: appOrigin() };
 }
 
+/**
+ * Letztes gültiges Kundentoken. Bilder sind allgemeine Shop-Daten; beim
+ * direkten Bildabruf des Browsers (<img>) wird das Cookie in der Vorschau
+ * (Fremd-Iframe) teils nicht mitgesendet — dann greift dieses Token.
+ */
+let lastShopToken: string | null = null;
+
 async function authHeaders(): Promise<Record<string, string>> {
   // Die Shop-Endpunkte akzeptieren nur das Token des angemeldeten Kunden.
-  // Das Servicekonto dient lediglich als Rückfalloption.
   let token: string | null = null;
   try {
     const { readToken } = await import("./shop-auth.server");
@@ -74,6 +80,8 @@ async function authHeaders(): Promise<Record<string, string>> {
   } catch {
     /* kein Request-Kontext */
   }
+  if (token) lastShopToken = token;
+  if (!token) token = lastShopToken;
   if (!token) {
     try {
       token = await serviceToken();
@@ -84,6 +92,7 @@ async function authHeaders(): Promise<Record<string, string>> {
   if (!token) throw new Error("MAWA_API_CREDENTIALS_MISSING");
   return { authorization: `Bearer ${token}`, origin: appOrigin() };
 }
+
 
 const str = (v: unknown) => (v === null || v === undefined ? null : String(v));
 
