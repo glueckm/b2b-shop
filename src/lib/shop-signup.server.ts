@@ -37,8 +37,12 @@ const CUSTOMER_SQL = `
          coalesce(nullif(c.email, ''), nullif(c.email_home, '')) as email,
          c.blocked
     from weclapp.customer c
-   where trim(c.customer_number) = $1 or trim(coalesce(c.old_customer_number, '')) = $1
+   where regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
+      or regexp_replace(upper(coalesce(c.old_customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
+      or regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = 'KN' || $1
+      or regexp_replace(upper(coalesce(c.old_customer_number, '')), '[^A-Z0-9]', '', 'g') = 'KN' || $1
    limit 1
+
 `;
 
 export async function checkEligibility(customerNumber: string): Promise<EligibilityResult> {
