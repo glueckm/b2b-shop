@@ -29,7 +29,7 @@ export const shopLogin = createServerFn({ method: "POST" })
       return { ok: true };
     } catch (error) {
       const raw = error instanceof Error ? error.message : "";
-      const message = /BAD_CREDENTIALS|401/i.test(raw)
+      const message = /BAD_CREDENTIALS|invalid|401/i.test(raw)
         ? "E-Mail oder Passwort ist nicht korrekt."
         : "Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.";
       return { ok: false, error: message };
@@ -43,3 +43,37 @@ export const shopLogout = createServerFn({ method: "POST" }).handler(
     return { ok: true };
   },
 );
+
+/** Anzeigename und/oder Passwort des angemeldeten Kontos ändern. */
+export const shopUpdateAccount = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: { displayName?: string; password?: string; currentPassword?: string }) => ({
+      displayName: data?.displayName === undefined ? undefined : String(data.displayName).trim(),
+      password: data?.password ? String(data.password) : undefined,
+      currentPassword: data?.currentPassword ? String(data.currentPassword) : undefined,
+    }),
+  )
+  .handler(
+    async ({ data }): Promise<{ ok: true; user: ShopUser } | { ok: false; error: string }> => {
+      if (data.displayName === undefined && !data.password) {
+        return { ok: false, error: "Bitte einen Anzeigenamen oder ein neues Passwort angeben." };
+      }
+      if (data.password && data.password.length < 8) {
+        return { ok: false, error: "Das neue Passwort muss mindestens 8 Zeichen haben." };
+      }
+      const { apiUpdateMe } = await import("./shop-auth.server");
+      try {
+        const user = await apiUpdateMe(data);
+        return { ok: true, user };
+      } catch (error) {
+        const raw = error instanceof Error ? error.message : "";
+        if (/NOT_AUTHENTICATED|401/i.test(raw)) {
+          return { ok: false, error: "Bitte erneut anmelden." };
+        }
+        return {
+          ok: false,
+          error: raw && raw !== "UPDATE_FAILED" ? raw : "Änderung konnte nicht gespeichert werden.",
+        };
+      }
+    },
+  );
