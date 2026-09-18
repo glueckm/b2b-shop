@@ -65,12 +65,21 @@ export async function serviceAuthHeaders(): Promise<Record<string, string>> {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
+  // Die Shop-Endpunkte akzeptieren nur das Token des angemeldeten Kunden.
+  // Das Servicekonto dient lediglich als Rückfalloption.
   let token: string | null = null;
   try {
-    token = await serviceToken();
-  } catch {
     const { readToken } = await import("./shop-auth.server");
     token = readToken();
+  } catch {
+    /* kein Request-Kontext */
+  }
+  if (!token) {
+    try {
+      token = await serviceToken();
+    } catch {
+      token = null;
+    }
   }
   if (!token) throw new Error("MAWA_API_CREDENTIALS_MISSING");
   return { authorization: `Bearer ${token}`, origin: appOrigin() };
@@ -112,6 +121,7 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
     { headers: await authHeaders(), signal: AbortSignal.timeout(15_000) },
   );
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) return [];
     if (res.status === 404) {
       imageCache.set(articleId, { files: [], expires: Date.now() + CACHE_MS });
       return [];
