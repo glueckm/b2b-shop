@@ -8,7 +8,14 @@ export type { Basket, BasketLine } from "./basket.server";
 
 export type BasketState =
   | { ok: true; baskets: Basket[]; active: Basket | null }
-  | { ok: false; reason: "login" | "error" };
+  | { ok: false; reason: "login" | "error"; message?: string };
+
+function fail(error: unknown): { ok: false; reason: "login" | "error"; message?: string } {
+  const text = error instanceof Error ? error.message : String(error);
+  if (text === "SHOP_LOGIN_REQUIRED") return { ok: false, reason: "login" };
+  console.error("[basket]", text);
+  return { ok: false, reason: "error", message: text };
+}
 
 const idSchema = z.object({ basketId: z.string().min(1) });
 
@@ -26,8 +33,7 @@ async function state(activeId?: string): Promise<BasketState> {
     const active = wanted ? await api.getBasket(wanted) : null;
     return { ok: true, baskets, active };
   } catch (error) {
-    const login = error instanceof Error && error.message === "SHOP_LOGIN_REQUIRED";
-    return { ok: false, reason: login ? "login" : "error" };
+    return fail(error);
   }
 }
 
@@ -53,8 +59,7 @@ export const createBasket = createServerFn({ method: "POST" })
       const created = await api.createBasket(name);
       return state(created.id);
     } catch (error) {
-      const login = error instanceof Error && error.message === "SHOP_LOGIN_REQUIRED";
-      return { ok: false, reason: login ? "login" : "error" };
+      return fail(error);
     }
   });
 
@@ -98,8 +103,7 @@ export const copyBasket = createServerFn({ method: "POST" })
       const copy = await api.copyBasket(data.basketId, data.name);
       return state(copy.id);
     } catch (error) {
-      const login = error instanceof Error && error.message === "SHOP_LOGIN_REQUIRED";
-      return { ok: false, reason: login ? "login" : "error" };
+      return fail(error);
     }
   });
 
@@ -123,8 +127,8 @@ export const setBasketLine = createServerFn({ method: "POST" })
     try {
       await api.putLine(data.basketId, data);
     } catch (error) {
-      const login = error instanceof Error && error.message === "SHOP_LOGIN_REQUIRED";
-      if (login) return { ok: false, reason: "login" };
+      const failed = fail(error);
+      if (failed.reason === "login") return failed;
     }
     return state(data.basketId);
   });
