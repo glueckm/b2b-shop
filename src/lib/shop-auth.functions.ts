@@ -47,7 +47,12 @@ export const shopLogout = createServerFn({ method: "POST" }).handler(
 /** Anzeigename und/oder Passwort des angemeldeten Kontos ändern. */
 export const shopUpdateAccount = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { displayName?: string; password?: string; currentPassword?: string }) => ({
+    (data: {
+      displayName?: string | undefined;
+      password?: string | undefined;
+      currentPassword?: string | undefined;
+    }) => ({
+
       displayName: data?.displayName === undefined ? undefined : String(data.displayName).trim(),
       password: data?.password ? String(data.password) : undefined,
       currentPassword: data?.currentPassword ? String(data.currentPassword) : undefined,
