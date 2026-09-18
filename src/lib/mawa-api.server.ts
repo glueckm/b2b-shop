@@ -207,6 +207,18 @@ async function listImagesBulkChunk(
   }
 }
 
+/** Sammelabfrage in Portionen von BULK_CHUNK IDs; null, wenn nicht verfügbar. */
+async function listImagesBulk(ids: string[]): Promise<Record<string, BackendFile[]> | null> {
+  if (!bulkAvailable || ids.length === 0) return null;
+  const chunks: string[][] = [];
+  for (let index = 0; index < ids.length; index += BULK_CHUNK) {
+    chunks.push(ids.slice(index, index + BULK_CHUNK));
+  }
+  const results = await Promise.all(chunks.map((chunk) => listImagesBulkChunk(chunk)));
+  if (results.some((result) => result === null)) return null;
+  return Object.assign({}, ...(results as Record<string, BackendFile[]>[]));
+}
+
 /** Bilder mehrerer Artikel, gruppiert nach Artikel-ID (Sammelabfrage, sonst parallel). */
 export async function listArticleImages(
   articleIds: string[] = [],
@@ -226,6 +238,7 @@ export async function listArticleImages(
     for (const [id, files] of Object.entries(bulk)) if (files.length > 0) grouped[id] = files;
     return grouped;
   }
+
 
   const queue = [...missing];
 
