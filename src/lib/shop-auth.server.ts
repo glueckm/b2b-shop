@@ -108,10 +108,11 @@ export async function apiCurrentUser(): Promise<ShopUser | null> {
 
 /** Passwort und/oder Anzeigename des angemeldeten Kontos ändern. */
 export async function apiUpdateMe(input: {
-  displayName?: string;
-  password?: string;
-  currentPassword?: string;
+  displayName?: string | undefined;
+  password?: string | undefined;
+  currentPassword?: string | undefined;
 }): Promise<ShopUser> {
+
   const token = readToken();
   if (!token) throw new Error("NOT_AUTHENTICATED");
 
