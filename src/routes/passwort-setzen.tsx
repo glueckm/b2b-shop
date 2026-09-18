@@ -3,7 +3,7 @@ import { useState } from "react";
 
 import { setShopPassword } from "@/lib/shop-password.functions";
 
-type Search = { token?: string };
+type Search = { token: string };
 
 export const Route = createFileRoute("/passwort-setzen")({
   validateSearch: (search: Record<string, unknown>): Search => ({
