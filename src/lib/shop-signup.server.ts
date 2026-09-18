@@ -58,7 +58,10 @@ export async function checkEligibility(customerNumber: string): Promise<Eligibil
   };
   if (!number) return base;
 
-  const rows = await query<CustomerRow>(CUSTOMER_SQL, [number]);
+  const rows = await query<CustomerRow>(CUSTOMER_SQL, [
+    number.toUpperCase().replace(/[^A-Z0-9]/g, ""),
+  ]);
+
 
   const row = rows[0];
   if (!row) return base;
