@@ -7,7 +7,7 @@ type Search = { token: string };
 
 export const Route = createFileRoute("/passwort-setzen")({
   validateSearch: (search: Record<string, unknown>): Search => ({
-    token: typeof search.token === "string" ? search.token : undefined,
+    token: typeof search["token"] === "string" ? search["token"] : "",
   }),
   head: () => ({
     meta: [
