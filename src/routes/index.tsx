@@ -1145,7 +1145,7 @@ function Shop() {
           </div>
         </main>
 
-        <aside id="order" className="lg:sticky lg:top-5 lg:self-start">
+        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
