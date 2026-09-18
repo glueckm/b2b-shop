@@ -877,7 +877,7 @@ function Shop() {
         </div>
       </section>
 
-      <nav className="border-b border-border bg-panel">
+      <nav className="sticky top-0 z-40 border-b border-border bg-panel shadow-sm">
         <div className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5">
           {[{ name: "", count: data.stats.articles }, ...data.categories].map((category) => {
             const active = category.name === search.category;
