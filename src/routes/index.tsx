@@ -19,6 +19,12 @@ import {
   type BasketState,
 } from "@/lib/basket.functions";
 import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
+import {
+  loadFavourites,
+  markFavourite,
+  unmarkFavourite,
+  type FavouriteState,
+} from "@/lib/favourites.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
@@ -222,6 +228,34 @@ function Shop() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+
+  // Favoriten des Kunden (Backend). Schlüssel ist die Artikel-ID.
+  const [favourites, setFavourites] = useState<Set<string>>(new Set());
+
+  const applyFavourites = (result: FavouriteState) => {
+    if (result.ok) setFavourites(new Set(result.favourites.map((f) => f.articleId)));
+  };
+
+  useEffect(() => {
+    if (!data.user) return;
+    void loadFavourites().then(applyFavourites).catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.user?.id]);
+
+  const toggleFavourite = (article: { id: string }) => {
+    const isFav = favourites.has(article.id);
+    // Optimistisch umschalten, danach den Backend-Stand übernehmen.
+    setFavourites((prev) => {
+      const next = new Set(prev);
+      if (isFav) next.delete(article.id);
+      else next.add(article.id);
+      return next;
+    });
+    const action = isFav ? unmarkFavourite : markFavourite;
+    void action({ data: { articleId: article.id } })
+      .then(applyFavourites)
+      .catch(() => undefined);
+  };
 
   const applyBasketState = (result: BasketState) => {
     if (result.ok) {
