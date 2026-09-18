@@ -50,11 +50,15 @@ function LoginPage() {
       if (!result.ok) {
         setSignupError(result.error);
       } else if (result.kind === "granted") {
+        const target = result.hint ?? result.email;
         setSignupInfo(
-          result.hint ??
-            (result.email
-              ? `Wir haben einen Link zum Setzen Ihres Passworts an ${result.email} geschickt.`
-              : "Wir haben Ihnen einen Link zum Setzen Ihres Passworts geschickt."),
+          [
+            "Ihr Shop-Zugang wurde freigeschaltet.",
+            target
+              ? `Wir haben einen Link zum Setzen Ihres Passworts an ${target} geschickt.`
+              : "Wir haben Ihnen einen Link zum Setzen Ihres Passworts geschickt.",
+            "Bitte prüfen Sie auch Ihren Spam-Ordner. Der Link ist aus Sicherheitsgründen nur begrenzt gültig – danach können Sie den Zugang hier erneut anfordern.",
+          ].join(" "),
         );
         setSignupNumber("");
       } else {
