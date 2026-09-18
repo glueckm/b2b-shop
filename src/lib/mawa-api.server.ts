@@ -19,7 +19,7 @@ export type BackendFile = {
 };
 
 function apiBase(): string {
-  return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.info";
+  return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.org";
 }
 
 function appOrigin(): string {
