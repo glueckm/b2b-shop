@@ -448,6 +448,8 @@ export const getCatalog = createServerFn({ method: "GET" })
       total: term ? mapped.length : (counts[0]?.total ?? 0),
       categories,
       categoryTree,
+      pricing: { channel: priceChannel, group: pricing.group, company: pricing.company },
+
 
       stats: {
         articles: stats[0]?.articles ?? 0,
