@@ -24,25 +24,10 @@ export const shopLogin = createServerFn({ method: "POST" })
       return { ok: false, error: "Bitte Kundennummer und Passwort eingeben." };
     }
     const { apiLogin, storeToken } = await import("./shop-auth.server");
-    const identifier = data.customerNumber;
     try {
-      storeToken(await apiLogin(identifier, data.password));
+      storeToken(await apiLogin(data.customerNumber, data.password));
       return { ok: true };
     } catch (error) {
-      // Das Backend erwartet die E-Mail des Shop-Zugangs. Wenn eine Kundennummer
-      // eingegeben wurde, ermitteln wir die primäre E-Mail und versuchen es erneut.
-      if (!identifier.includes("@")) {
-        try {
-          const { checkEligibility } = await import("./shop-signup.server");
-          const info = await checkEligibility(identifier);
-          if (info.email) {
-            storeToken(await apiLogin(info.email, data.password));
-            return { ok: true };
-          }
-        } catch {
-          /* Fehlermeldung unten */
-        }
-      }
       const raw = error instanceof Error ? error.message : "";
       const message = /BAD_CREDENTIALS|invalid|401/i.test(raw)
         ? "Kundennummer oder Passwort ist nicht korrekt."
