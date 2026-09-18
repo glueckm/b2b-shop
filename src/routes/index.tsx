@@ -1402,9 +1402,25 @@ function Shop() {
                 <span className="text-muted-foreground">Staffelvorteil</span>
                 <span className="font-mono font-semibold text-stock">−{eur(savings)}</span>
               </div>
-              <button className="mt-4 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-                Bestellung absenden
+              <input
+                value={orderRef}
+                onChange={(e) => setOrderRef(e.target.value)}
+                placeholder="Ihre Bestellnummer (optional)"
+                maxLength={80}
+                className="mt-4 w-full rounded-sm border border-border bg-card px-3 py-2 text-sm"
+              />
+              <button
+                onClick={submitOrder}
+                disabled={basketBusy || !activeBasket || lines.length === 0}
+                className="mt-2 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
               </button>
+              {orderDone && (
+                <p className="mt-2 rounded-sm border border-stock/40 bg-stock/10 px-3 py-2 text-[13px] text-stock">
+                  {orderDone}
+                </p>
+              )}
               <button className="mt-2 w-full rounded-sm border border-border px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-muted">
                 Stattdessen Angebot anfragen
               </button>
