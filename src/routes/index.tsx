@@ -32,21 +32,26 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
-  loader: async ({ deps }) => {
-    const [catalog, user] = await Promise.all([
-      getCatalog({
-        data: {
-          channel: deps.channel,
-          category: deps.category,
-          subcategory: deps.subcategory,
-          subsubcategory: deps.subsubcategory,
-          search: deps.q,
-        },
-      }),
-      getShopUser().catch(() => null),
-    ]);
-    return { ...catalog, user };
+  beforeLoad: async () => {
+    const user = await getShopUser().catch(() => null);
+    if (!user) {
+      throw redirect({ to: "/anmelden" });
+    }
+    return { shopUser: user };
   },
+  loader: async ({ deps, context }) => {
+    const catalog = await getCatalog({
+      data: {
+        channel: deps.channel,
+        category: deps.category,
+        subcategory: deps.subcategory,
+        subsubcategory: deps.subsubcategory,
+        search: deps.q,
+      },
+    });
+    return { ...catalog, user: context.shopUser };
+  },
+
 
 
   head: () => ({
