@@ -34,7 +34,7 @@ const CUSTOMER_SQL = `
   select c.customer_number,
          coalesce(nullif(c.company, ''), trim(coalesce(c.first_name, '') || ' ' || coalesce(c.last_name, ''))) as company,
          nullif(c.customer_category_name, '') as category,
-         coalesce(nullif(c.email, ''), nullif(c.email_home, '')) as email,
+         nullif(c.email, '') as email,
          c.blocked
     from weclapp.customer c
    where regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
