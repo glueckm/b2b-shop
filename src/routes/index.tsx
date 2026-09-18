@@ -873,31 +873,32 @@ function Shop() {
 
       <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
         <main className="min-w-0">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
-                {search.subcategory || search.category || "Alle Artikel"}
-              </h2>
+          <div>
+            <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
+              {search.subcategory || search.category || "Alle Artikel"}
+            </h2>
 
-              <p className="mt-1 text-sm text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <form onSubmit={submitSearch} className="flex items-center gap-2">
+                <input
+                  value={term}
+                  onChange={(event) => setTerm(event.target.value)}
+                  placeholder="Artikelnummer oder Name"
+                  aria-label="Katalog durchsuchen"
+                  className="w-56 rounded-sm border border-border bg-card px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground"
+                />
+                <button
+                  type="submit"
+                  className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
+                >
+                  Suchen
+                </button>
+              </form>
+
+              <p className="text-sm text-muted-foreground">
                 {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
               </p>
             </div>
-            <form onSubmit={submitSearch} className="flex items-center gap-2">
-              <input
-                value={term}
-                onChange={(event) => setTerm(event.target.value)}
-                placeholder="Artikelnummer oder Name"
-                aria-label="Katalog durchsuchen"
-                className="w-56 rounded-sm border border-border bg-card px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground"
-              />
-              <button
-                type="submit"
-                className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
-              >
-                Suchen
-              </button>
-            </form>
           </div>
 
           <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
