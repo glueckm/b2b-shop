@@ -24,7 +24,7 @@ export function apiBase(): string {
 }
 
 export function appOrigin(): string {
-  return process.env["APP_PUBLIC_URL"] ?? "https://mawa-shop.lovable.app";
+  return process.env["APP_PUBLIC_URL"] ?? "https://mawashop.lovable.app";
 }
 
 export function readToken(): string | null {
