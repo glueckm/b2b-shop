@@ -158,9 +158,9 @@ export async function putLine(
     articleId: string;
     articleNumber: string;
     quantity: number;
-    name?: string | null;
-    priceShown?: number | null;
-    salesChannel?: string | null;
+    name?: string | null | undefined;
+    priceShown?: number | null | undefined;
+    salesChannel?: string | null | undefined;
   },
 ): Promise<Basket> {
   return mapBasket(
