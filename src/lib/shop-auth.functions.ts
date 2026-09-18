@@ -15,19 +15,20 @@ export const getShopUser = createServerFn({ method: "GET" }).handler(
 );
 
 export const shopLogin = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string; password: string }) => ({
-    email: String(data?.email ?? "").trim(),
+  .inputValidator((data: { customerNumber: string; password: string }) => ({
+    customerNumber: String(data?.customerNumber ?? "").trim(),
     password: String(data?.password ?? ""),
   }))
   .handler(async ({ data }): Promise<AuthResult> => {
-    if (!data.email || !data.password) {
-      return { ok: false, error: "Bitte E-Mail und Passwort eingeben." };
+    if (!data.customerNumber || !data.password) {
+      return { ok: false, error: "Bitte Kundennummer und Passwort eingeben." };
     }
     const { apiLogin, storeToken } = await import("./shop-auth.server");
     try {
-      storeToken(await apiLogin(data.email, data.password));
+      storeToken(await apiLogin(data.customerNumber, data.password));
       return { ok: true };
     } catch (error) {
+
       const raw = error instanceof Error ? error.message : "";
       const message = /BAD_CREDENTIALS|invalid|401/i.test(raw)
         ? "E-Mail oder Passwort ist nicht korrekt."
