@@ -36,6 +36,24 @@ export const requestShopAccess = createServerFn({ method: "POST" })
     if (check.allowed) {
       try {
         const result = await apiSignup(check.customerNumber);
+        if (result.status !== "sent") {
+          // Backend konnte den Zugang nicht abschließen – Anfrage vermerken.
+          try {
+            await apiRecordRegistration({
+              customerNumber: check.customerNumber,
+              email: check.email,
+              note: `Freischaltung ohne Versand (Status: ${result.status}) – bitte manuell prüfen.`,
+            });
+          } catch {
+            /* ignore */
+          }
+          return {
+            ok: true,
+            kind: "review",
+            message:
+              "Ihre Anfrage ist eingegangen, der Zugang konnte aber noch nicht automatisch freigeschaltet werden. Unser Team prüft das und meldet sich bei Ihnen.",
+          };
+        }
         return {
           ok: true,
           kind: "granted",

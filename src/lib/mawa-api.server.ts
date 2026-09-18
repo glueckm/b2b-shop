@@ -19,7 +19,10 @@ export type BackendFile = {
 };
 
 function apiBase(): string {
-  return process.env["USER_API_BASE_URL"] ?? "https://mawaapi.mangari.info";
+  const configured = process.env["USER_API_BASE_URL"] ?? "";
+  // Die alte Adresse mangari.org ist abgeschaltet – immer das Produktiv-Backend nutzen.
+  if (!configured || configured.includes("mangari.org")) return "https://mawaapi.mangari.info";
+  return configured;
 }
 
 function appOrigin(): string {
