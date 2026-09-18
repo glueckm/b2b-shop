@@ -63,7 +63,10 @@ export type CatalogPayload = {
   /** Zweistufige Menüführung: Ebene 1 mit ihren Ebene-2-Kategorien. */
   categoryTree: CategoryNode[];
   stats: { articles: number; categories: number; onHand: number };
+  /** Preisgruppe/Vertriebsweg des angemeldeten Kunden (nur Anzeige + Preisbasis). */
+  pricing: { channel: string; group: string | null; company: string | null };
 };
+
 
 const inputSchema = z.object({
   channel: z.string().default("NET1"),
