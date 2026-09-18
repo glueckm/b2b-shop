@@ -37,7 +37,7 @@ function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const result = await shopLogin({ data: { email, password } });
+      const result = await shopLogin({ data: { customerNumber, password } });
       if (result.ok) {
         await router.invalidate();
         void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
