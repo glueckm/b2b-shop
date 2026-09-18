@@ -145,6 +145,33 @@ function LoginPage() {
         </button>
       </form>
 
+      <section className="mt-8 border-t border-border pt-6">
+        <h2 className="text-base font-semibold tracking-tight">Passwort vergessen?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Geben Sie Ihre E-Mail-Adresse ein – wir senden Ihnen einen Link zum Setzen eines neuen
+          Passworts.
+        </p>
+        <form onSubmit={requestReset} className="mt-4 space-y-3">
+          <input
+            type="email"
+            required
+            value={resetEmail}
+            placeholder="ihre@firma.at"
+            onChange={(event) => setResetEmail(event.target.value)}
+            className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+          {resetError && <p className="text-sm text-destructive">{resetError}</p>}
+          {resetInfo && <p className="text-sm text-stock">{resetInfo}</p>}
+          <button
+            type="submit"
+            disabled={resetBusy}
+            className="w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+          >
+            {resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}
+          </button>
+        </form>
+      </section>
+
       <section className="mt-10 border-t border-border pt-6">
         <h2 className="text-base font-semibold tracking-tight">Noch kein Zugang?</h2>
         <p className="mt-1 text-sm text-muted-foreground">

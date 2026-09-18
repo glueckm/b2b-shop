@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
 import { Route as BilderRouteImport } from './routes/bilder'
 import { Route as KontoRouteImport } from './routes/konto'
+import { Route as PasswortSetzenRouteImport } from './routes/passwort-setzen'
 import { Route as ApiPublicArtikelBildFileIdRouteImport } from './routes/api/public/artikel-bild.$fileId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,11 @@ const KontoRoute = KontoRouteImport.update({
   path: '/konto',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PasswortSetzenRoute = PasswortSetzenRouteImport.update({
+  id: '/passwort-setzen',
+  path: '/passwort-setzen',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicArtikelBildFileIdRoute =
   ApiPublicArtikelBildFileIdRouteImport.update({
     id: '/api/public/artikel-bild/$fileId',
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/anmelden': typeof AnmeldenRoute
   '/bilder': typeof BilderRoute
   '/konto': typeof KontoRoute
+  '/passwort-setzen': typeof PasswortSetzenRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesByTo {
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/anmelden': typeof AnmeldenRoute
   '/bilder': typeof BilderRoute
   '/konto': typeof KontoRoute
+  '/passwort-setzen': typeof PasswortSetzenRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRoutesById {
@@ -62,6 +70,7 @@ export interface FileRoutesById {
   '/anmelden': typeof AnmeldenRoute
   '/bilder': typeof BilderRoute
   '/konto': typeof KontoRoute
+  '/passwort-setzen': typeof PasswortSetzenRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
 }
 export interface FileRouteTypes {
@@ -71,6 +80,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/bilder'
     | '/konto'
+    | '/passwort-setzen'
     | '/api/public/artikel-bild/$fileId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -78,6 +88,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/bilder'
     | '/konto'
+    | '/passwort-setzen'
     | '/api/public/artikel-bild/$fileId'
   id:
     | '__root__'
@@ -85,6 +96,7 @@ export interface FileRouteTypes {
     | '/anmelden'
     | '/bilder'
     | '/konto'
+    | '/passwort-setzen'
     | '/api/public/artikel-bild/$fileId'
   fileRoutesById: FileRoutesById
 }
@@ -93,6 +105,7 @@ export interface RootRouteChildren {
   AnmeldenRoute: typeof AnmeldenRoute
   BilderRoute: typeof BilderRoute
   KontoRoute: typeof KontoRoute
+  PasswortSetzenRoute: typeof PasswortSetzenRoute
   ApiPublicArtikelBildFileIdRoute: typeof ApiPublicArtikelBildFileIdRoute
 }
 
@@ -126,6 +139,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof KontoRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/passwort-setzen': {
+      id: '/passwort-setzen'
+      path: '/passwort-setzen'
+      fullPath: '/passwort-setzen'
+      preLoaderRoute: typeof PasswortSetzenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/artikel-bild/$fileId': {
       id: '/api/public/artikel-bild/$fileId'
       path: '/api/public/artikel-bild/$fileId'
@@ -141,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   AnmeldenRoute: AnmeldenRoute,
   BilderRoute: BilderRoute,
   KontoRoute: KontoRoute,
+  PasswortSetzenRoute: PasswortSetzenRoute,
   ApiPublicArtikelBildFileIdRoute: ApiPublicArtikelBildFileIdRoute,
 }
 export const routeTree = rootRouteImport
