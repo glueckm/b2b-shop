@@ -372,7 +372,7 @@ function Shop() {
           quantity,
           name: article.name.slice(0, 400),
           priceShown: priceForQty(article, quantity),
-          ...(search.channel ? { salesChannel: search.channel } : {}),
+          salesChannel: data.pricing.channel,
         },
       }),
     );
