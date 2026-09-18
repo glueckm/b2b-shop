@@ -28,10 +28,11 @@ export const shopLogin = createServerFn({ method: "POST" })
       storeToken(await apiLogin(data.customerNumber, data.password));
       return { ok: true };
     } catch (error) {
-
       const raw = error instanceof Error ? error.message : "";
       const message = /BAD_CREDENTIALS|invalid|401/i.test(raw)
-        ? "E-Mail oder Passwort ist nicht korrekt."
+        ? "Kundennummer oder Passwort ist nicht korrekt."
+        : "Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.";
+
         : "Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.";
       return { ok: false, error: message };
     }
