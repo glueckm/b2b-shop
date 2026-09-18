@@ -56,6 +56,11 @@ async function serviceToken(): Promise<string> {
  * Nur wenn kein Servicekonto hinterlegt ist, wird ersatzweise das Token des
  * angemeldeten Kunden verwendet.
  */
+/** Nur das Servicekonto (für Vorgänge ohne angemeldeten Kunden). */
+export async function serviceAuthHeaders(): Promise<Record<string, string>> {
+  return { authorization: `Bearer ${await serviceToken()}`, origin: appOrigin() };
+}
+
 async function authHeaders(): Promise<Record<string, string>> {
   let token: string | null = null;
   try {
