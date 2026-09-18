@@ -78,11 +78,13 @@ function mapAccount(raw: Record<string, unknown>): ShopUser {
   };
 }
 
-export async function apiLogin(email: string, password: string): Promise<string> {
+/** Anmeldung mit Kundennummer (wird als "username" gesendet). */
+export async function apiLogin(customerNumber: string, password: string): Promise<string> {
   const res = await fetch(`${apiBase()}/v1/shop/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", origin: appOrigin() },
-    body: new URLSearchParams({ username: email, password }).toString(),
+    body: new URLSearchParams({ username: customerNumber, password }).toString(),
+
     signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) throw new Error(await detailMessage(res, "LOGIN_BAD_CREDENTIALS"));

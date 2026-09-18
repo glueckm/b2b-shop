@@ -27,7 +27,7 @@ export const Route = createFileRoute("/anmelden")({
 function LoginPage() {
   const navigate = useNavigate();
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [customerNumber, setCustomerNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,7 +37,7 @@ function LoginPage() {
     setBusy(true);
     setError(null);
     try {
-      const result = await shopLogin({ data: { email, password } });
+      const result = await shopLogin({ data: { customerNumber, password } });
       if (result.ok) {
         await router.invalidate();
         void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
@@ -58,25 +58,27 @@ function LoginPage() {
       </Link>
       <h1 className="mt-6 text-2xl font-semibold tracking-tight">Kundenanmeldung</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Mit Ihrem MAWA-Konto anmelden. Nach der Anmeldung erkennen wir Ihre Kundendaten und
-        Konditionen.
+        Mit Ihrer Kundennummer und Ihrem Passwort anmelden. Nach der Anmeldung erkennen wir Ihre
+        Kundendaten und Konditionen.
       </p>
 
       <form onSubmit={submit} className="mt-8 space-y-4">
         <div>
-          <label className="label-mono text-muted-foreground" htmlFor="email">
-            E-Mail
+          <label className="label-mono text-muted-foreground" htmlFor="customerNumber">
+            Kundennummer
           </label>
           <input
-            id="email"
-            type="email"
-            autoComplete="email"
+            id="customerNumber"
+            type="text"
+            inputMode="numeric"
+            autoComplete="username"
             required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            value={customerNumber}
+            onChange={(event) => setCustomerNumber(event.target.value)}
             className="mt-1 w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
           />
         </div>
+
         <div>
           <label className="label-mono text-muted-foreground" htmlFor="password">
             Passwort
