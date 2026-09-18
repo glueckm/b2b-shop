@@ -9,6 +9,7 @@ import { articleImages } from "@/lib/article-images";
 import { getArticleImageMap } from "@/lib/article-images.functions";
 import {
   abandonBasket,
+  checkoutBasket,
   copyBasket,
   createBasket,
   loadBaskets,
