@@ -159,3 +159,27 @@ export const removeBasketLine = createServerFn({ method: "POST" })
     }
     return state(data.basketId);
   });
+
+export type CheckoutState =
+  | { ok: true; orderNumber: string | null; state: BasketState }
+  | { ok: false; reason: "login" | "error"; message?: string };
+
+/** Warenkorb bestellen (wird im weclapp zum Auftrag). */
+export const checkoutBasket = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        basketId: z.string().min(1),
+        orderNumberAtCustomer: z.string().trim().max(80).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }): Promise<CheckoutState> => {
+    const api = await import("./basket.server");
+    try {
+      const ordered = await api.checkoutBasket(data.basketId, data.orderNumberAtCustomer ?? null);
+      return { ok: true, orderNumber: ordered.orderNumber, state: await state() };
+    } catch (error) {
+      return fail(error);
+    }
+  });

@@ -9,6 +9,7 @@ import { articleImages } from "@/lib/article-images";
 import { getArticleImageMap } from "@/lib/article-images.functions";
 import {
   abandonBasket,
+  checkoutBasket,
   copyBasket,
   createBasket,
   loadBaskets,
@@ -228,6 +229,8 @@ function Shop() {
   const [basketNote, setBasketNote] = useState<string | null>(null);
   const [renaming, setRenaming] = useState(false);
   const [renameValue, setRenameValue] = useState("");
+  const [orderRef, setOrderRef] = useState("");
+  const [orderDone, setOrderDone] = useState<string | null>(null);
 
   // Favoriten des Kunden (Backend). Schlüssel ist die Artikel-ID.
   const [favourites, setFavourites] = useState<Set<string>>(new Set());
@@ -286,6 +289,42 @@ function Shop() {
       applyBasketState(await action());
     } catch {
       setBasketNote("Warenkörbe sind derzeit nicht erreichbar.");
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
+  /** Warenkorb bestellen — wird im weclapp zum Auftrag. */
+  const submitOrder = async () => {
+    if (!activeBasket) return;
+    setBasketBusy(true);
+    setOrderDone(null);
+    try {
+      const result = await checkoutBasket({
+        data: {
+          basketId: activeBasket.id,
+          ...(orderRef.trim() ? { orderNumberAtCustomer: orderRef.trim() } : {}),
+        },
+      });
+      if (result.ok) {
+        applyBasketState(result.state);
+        setOrderRef("");
+        setOrderDone(
+          result.orderNumber
+            ? `Bestellung übermittelt · Auftragsnummer ${result.orderNumber}`
+            : "Bestellung übermittelt.",
+        );
+      } else if (result.reason === "login") {
+        setBasketNote("Zum Bestellen bitte anmelden.");
+      } else {
+        setBasketNote(
+          result.message
+            ? `Bestellung fehlgeschlagen (${result.message}).`
+            : "Bestellung fehlgeschlagen.",
+        );
+      }
+    } catch {
+      setBasketNote("Bestellung fehlgeschlagen — das Backend ist nicht erreichbar.");
     } finally {
       setBasketBusy(false);
     }
@@ -1402,9 +1441,25 @@ function Shop() {
                 <span className="text-muted-foreground">Staffelvorteil</span>
                 <span className="font-mono font-semibold text-stock">−{eur(savings)}</span>
               </div>
-              <button className="mt-4 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-                Bestellung absenden
+              <input
+                value={orderRef}
+                onChange={(e) => setOrderRef(e.target.value)}
+                placeholder="Ihre Bestellnummer (optional)"
+                maxLength={80}
+                className="mt-4 w-full rounded-sm border border-border bg-card px-3 py-2 text-sm"
+              />
+              <button
+                onClick={submitOrder}
+                disabled={basketBusy || !activeBasket || lines.length === 0}
+                className="mt-2 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
               </button>
+              {orderDone && (
+                <p className="mt-2 rounded-sm border border-stock/40 bg-stock/10 px-3 py-2 text-[13px] text-stock">
+                  {orderDone}
+                </p>
+              )}
               <button className="mt-2 w-full rounded-sm border border-border px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-muted">
                 Stattdessen Angebot anfragen
               </button>
