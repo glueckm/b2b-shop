@@ -40,6 +40,34 @@ function LoginPage() {
   const [signupError, setSignupError] = useState<string | null>(null);
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
 
+  // Passwort vergessen
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetInfo, setResetInfo] = useState<string | null>(null);
+
+  async function requestReset(event: React.FormEvent) {
+    event.preventDefault();
+    setResetBusy(true);
+    setResetError(null);
+    setResetInfo(null);
+    try {
+      const result = await requestShopPasswordReset({ data: { email: resetEmail } });
+      if (result.ok) {
+        setResetInfo(
+          `Wenn für ${resetEmail} ein Shop-Zugang besteht, haben wir einen Link zum Setzen eines neuen Passworts geschickt. Bitte prüfen Sie auch Ihren Spam-Ordner.`,
+        );
+        setResetEmail("");
+      } else {
+        setResetError(result.error);
+      }
+    } catch {
+      setResetError("Anfrage derzeit nicht möglich. Bitte später erneut versuchen.");
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
   async function requestAccess(event: React.FormEvent) {
     event.preventDefault();
     setSignupBusy(true);
