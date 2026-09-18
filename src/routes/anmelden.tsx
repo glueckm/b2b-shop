@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { useState } from "react";
 
 import { shopLogin } from "@/lib/shop-auth.functions";
+import { requestShopAccess } from "@/lib/shop-signup.functions";
 
 export const Route = createFileRoute("/anmelden")({
   head: () => ({
