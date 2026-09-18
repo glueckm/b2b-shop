@@ -36,7 +36,9 @@ export const requestShopAccess = createServerFn({ method: "POST" })
     if (check.allowed) {
       try {
         const result = await apiSignup(check.customerNumber);
-        if (result.status !== "sent") {
+        // Nur wenn das Backend gar nichts zustellen konnte, geht die Anfrage in die Prüfung.
+        const delivered = result.status === "sent" || result.hint !== null;
+        if (!delivered) {
           // Backend konnte den Zugang nicht abschließen – Anfrage vermerken.
           try {
             await apiRecordRegistration({
