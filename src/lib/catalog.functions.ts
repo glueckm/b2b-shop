@@ -307,16 +307,20 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    // Ohne Vertriebsweg: Listenpreise (NET1-Preisliste) ohne Konditionsrabatt.
-    const priceChannel = data.channel || "NET1";
+    const { readCustomerNumber } = await import("./shop-auth.server");
+    const { customerPricing } = await import("./customer-pricing.server");
+    // Vertriebsweg/Preisgruppe kommen ausschließlich aus dem Kundenkonto in weclapp.
+    const pricing = await customerPricing(readCustomerNumber());
+    const priceChannel = pricing.channel || "NET1";
     const params = [
       priceChannel,
       data.category,
       "",
       data.subcategory,
-      data.channel,
+      priceChannel,
       data.subsubcategory,
     ];
+
 
     const [articles, counts, treeRows, stats] = await Promise.all([
       query<{
