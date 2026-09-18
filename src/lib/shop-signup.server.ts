@@ -34,13 +34,7 @@ const CUSTOMER_SQL = `
   select c.customer_number,
          coalesce(nullif(c.company, ''), trim(coalesce(c.first_name, '') || ' ' || coalesce(c.last_name, ''))) as company,
          nullif(c.customer_category_name, '') as category,
-         coalesce(
-           nullif(c.email, ''),
-           nullif(c.email_home, ''),
-           (select nullif(e.email, '') from weclapp.party_email_address e
-             where e.parent_party_id = c.id and coalesce(e.email, '') <> ''
-             order by e.primary_email desc nulls last limit 1)
-         ) as email,
+         coalesce(nullif(c.email, ''), nullif(c.email_home, '')) as email,
          c.blocked
     from weclapp.customer c
    where trim(c.customer_number) = $1 or trim(coalesce(c.old_customer_number, '')) = $1
