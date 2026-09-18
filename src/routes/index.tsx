@@ -1,11 +1,12 @@
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { Trash2 } from "lucide-react";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
+import { getArticleImageMap } from "@/lib/article-images.functions";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
@@ -129,9 +130,46 @@ function Shop() {
   const router = useRouter();
 
   const articles = data.articles;
+
+  // Bilder werden nach dem Seitenaufbau portionsweise nachgeladen, damit die
+  // Liste sofort erscheint.
+  const [imageMap, setImageMap] = useState<Record<string, string[]>>({});
+  const [thumbMap, setThumbMap] = useState<Record<string, string>>({});
+  const loadedIds = useRef(new Set<string>());
+
+  useEffect(() => {
+    const pending = articles.map((article) => article.id).filter((id) => !loadedIds.current.has(id));
+    if (pending.length === 0) return;
+    pending.forEach((id) => loadedIds.current.add(id));
+
+    let cancelled = false;
+    void (async () => {
+      const CHUNK = 20;
+      for (let index = 0; index < pending.length; index += CHUNK) {
+        if (cancelled) return;
+        const batch = pending.slice(index, index + CHUNK);
+        try {
+          const result = await getArticleImageMap({ data: { articleIds: batch } });
+          if (cancelled) return;
+          if (Object.keys(result.images).length > 0) {
+            setImageMap((prev) => ({ ...prev, ...result.images }));
+          }
+          if (Object.keys(result.thumbs).length > 0) {
+            setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
+          }
+        } catch {
+          /* Bilder sind optional */
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [articles]);
+
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
   const imagesOf = (article: { id: string; sku: string }) => {
-    const remote = data.images[article.id] ?? [];
+    const remote = imageMap[article.id] ?? [];
     return remote.length > 0 ? remote : articleImages(article.id, article.sku);
   };
   /** Lädt alle Artikelbilder als Dateien herunter. */
@@ -314,7 +352,7 @@ function Shop() {
     const state = stockState(article.onHand);
     const spec = specText(article.spec);
     // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
-    const thumb = data.thumbs?.[article.id] ?? imagesOf(article)[0];
+    const thumb = thumbMap[article.id] ?? imagesOf(article)[0];
     const open = detailSku === article.sku;
     const toggleDetail = () => setDetailSku(open ? null : article.sku);
     return (
