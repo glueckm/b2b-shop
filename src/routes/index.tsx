@@ -293,6 +293,42 @@ function Shop() {
     }
   };
 
+  /** Warenkorb bestellen — wird im weclapp zum Auftrag. */
+  const submitOrder = async () => {
+    if (!activeBasket) return;
+    setBasketBusy(true);
+    setOrderDone(null);
+    try {
+      const result = await checkoutBasket({
+        data: {
+          basketId: activeBasket.id,
+          ...(orderRef.trim() ? { orderNumberAtCustomer: orderRef.trim() } : {}),
+        },
+      });
+      if (result.ok) {
+        applyBasketState(result.state);
+        setOrderRef("");
+        setOrderDone(
+          result.orderNumber
+            ? `Bestellung übermittelt · Auftragsnummer ${result.orderNumber}`
+            : "Bestellung übermittelt.",
+        );
+      } else if (result.reason === "login") {
+        setBasketNote("Zum Bestellen bitte anmelden.");
+      } else {
+        setBasketNote(
+          result.message
+            ? `Bestellung fehlgeschlagen (${result.message}).`
+            : "Bestellung fehlgeschlagen.",
+        );
+      }
+    } catch {
+      setBasketNote("Bestellung fehlgeschlagen — das Backend ist nicht erreichbar.");
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
   useEffect(() => {
     if (!data.user) {
       setBasketNote("Zum Speichern von Warenkörben bitte anmelden.");
