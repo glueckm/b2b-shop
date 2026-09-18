@@ -335,24 +335,73 @@ function Shop() {
       [article.sku]: Math.max(article.moq, getQty(article) + delta * article.moq),
     }));
 
-  const addLine = (sku: string, amount: number) =>
-    setLines((prev) => {
+  /** Positionen: aus dem Backend-Warenkorb, sonst lokal (nicht angemeldet). */
+  const lines: Line[] = activeBasket
+    ? (activeBasket.lines ?? []).map((line) => ({ sku: line.articleNumber, qty: line.quantity }))
+    : localLines;
+
+  /** Menge im Backend setzen (Upsert) — ohne Warenkorb nur lokal. */
+  const saveLine = async (sku: string, quantity: number) => {
+    const article = bySku.get(sku);
+    if (!activeBasket || !article) return;
+    await runBasket(() =>
+      setBasketLine({
+        data: {
+          basketId: activeBasket.id,
+          articleId: article.id,
+          articleNumber: article.sku,
+          quantity,
+          name: article.name.slice(0, 400),
+          priceShown: priceForQty(article, quantity),
+          ...(search.channel ? { salesChannel: search.channel } : {}),
+        },
+      }),
+    );
+  };
+
+  const addLine = (sku: string, amount: number) => {
+    const current = lines.find((l) => l.sku === sku)?.qty ?? 0;
+    if (activeBasket) {
+      void saveLine(sku, current + amount);
+      return;
+    }
+    setLocalLines((prev) => {
       const existing = prev.find((l) => l.sku === sku);
       if (existing) return prev.map((l) => (l.sku === sku ? { ...l, qty: l.qty + amount } : l));
       return [...prev, { sku, qty: amount }];
     });
+  };
 
-  const removeLine = (sku: string) => setLines((prev) => prev.filter((l) => l.sku !== sku));
+  const removeLine = (sku: string) => {
+    const article = bySku.get(sku);
+    if (activeBasket && article) {
+      void runBasket(() =>
+        removeBasketLine({ data: { basketId: activeBasket.id, articleId: article.id } }),
+      );
+      return;
+    }
+    setLocalLines((prev) => prev.filter((l) => l.sku !== sku));
+  };
 
   /** Menge einer Warenkorbposition um eine Mindestbestellmenge erhöhen/verringern. */
-  const stepLine = (sku: string, delta: number, moq: number) =>
-    setLines((prev) =>
+  const stepLine = (sku: string, delta: number, moq: number) => {
+    const step = Math.max(1, moq);
+    if (activeBasket) {
+      const current = lines.find((l) => l.sku === sku)?.qty ?? 0;
+      const next = current + delta * step;
+      if (next < step) removeLine(sku);
+      else void saveLine(sku, next);
+      return;
+    }
+    setLocalLines((prev) =>
       prev.flatMap((l) => {
         if (l.sku !== sku) return [l];
-        const next = l.qty + delta * Math.max(1, moq);
-        return next < Math.max(1, moq) ? [] : [{ ...l, qty: next }];
+        const next = l.qty + delta * step;
+        return next < step ? [] : [{ ...l, qty: next }];
       }),
     );
+  };
+
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
