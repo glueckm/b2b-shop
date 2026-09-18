@@ -23,9 +23,10 @@ export const shopLogin = createServerFn({ method: "POST" })
     if (!data.customerNumber || !data.password) {
       return { ok: false, error: "Bitte Kundennummer und Passwort eingeben." };
     }
-    const { apiLogin, storeToken } = await import("./shop-auth.server");
+    const { apiLogin, storeToken, storeCustomerNumber } = await import("./shop-auth.server");
     try {
       storeToken(await apiLogin(data.customerNumber, data.password));
+      storeCustomerNumber(data.customerNumber);
       return { ok: true };
     } catch (error) {
       const raw = error instanceof Error ? error.message : "";

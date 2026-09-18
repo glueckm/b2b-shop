@@ -10,11 +10,14 @@ export type ShopUser = {
   displayName: string | null;
   firstName: string | null;
   lastName: string | null;
+  customerNumber: string | null;
   isSuperuser: boolean;
 };
 
 /** Eigener Cookie-Name – bewusst anders als im CRM-Projekt. */
 const COOKIE = "mawa_b2b_shop_token";
+/** Kundennummer der Anmeldung – nur zur Anzeige im Kopf. */
+const NUMBER_COOKIE = "mawa_b2b_shop_customer";
 
 export function apiBase(): string {
   const configured = process.env["USER_API_BASE_URL"] ?? "";
@@ -46,7 +49,30 @@ export function storeToken(token: string) {
   });
 }
 
+export function storeCustomerNumber(customerNumber: string) {
+  setCookie(NUMBER_COOKIE, customerNumber, {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 7,
+  });
+}
+
+export function readCustomerNumber(): string | null {
+  try {
+    return getCookie(NUMBER_COOKIE) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function clearToken() {
+  try {
+    deleteCookie(NUMBER_COOKIE, { path: "/", secure: true, sameSite: "none" });
+  } catch {
+    /* ignore */
+  }
   try {
     deleteCookie(COOKIE, { path: "/", secure: true, sameSite: "none" });
   } catch {
@@ -77,6 +103,8 @@ function mapAccount(raw: Record<string, unknown>): ShopUser {
     displayName: str("display_name") ?? str("displayName") ?? str("name"),
     firstName: str("first_name") ?? str("firstName"),
     lastName: str("last_name") ?? str("lastName"),
+    customerNumber:
+      str("customer_number") ?? str("customerNumber") ?? str("username") ?? readCustomerNumber(),
     isSuperuser: raw["is_superuser"] === true,
   };
 }
