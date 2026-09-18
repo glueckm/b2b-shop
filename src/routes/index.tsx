@@ -517,12 +517,36 @@ function Shop() {
           className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
         >
           <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
-            <button
-              onClick={toggleDetail}
-              className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-            >
-              {article.sku}
-            </button>
+            <span className="flex items-center gap-1.5">
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  toggleFavourite(article);
+                }}
+                aria-label={
+                  favourites.has(article.id)
+                    ? `Favorit entfernen ${article.sku}`
+                    : `Als Favorit merken ${article.sku}`
+                }
+                title={favourites.has(article.id) ? "Favorit entfernen" : "Als Favorit merken"}
+                className={
+                  favourites.has(article.id)
+                    ? "text-accent"
+                    : "text-muted-foreground/50 hover:text-accent"
+                }
+              >
+                <Star
+                  className="size-4"
+                  {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
+                />
+              </button>
+              <button
+                onClick={toggleDetail}
+                className="font-mono text-[12px] text-muted-foreground hover:text-accent"
+              >
+                {article.sku}
+              </button>
+            </span>
           </td>
           <td className="max-w-[320px] px-3 pt-3 align-top">
             <span className="flex items-start gap-3">
