@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-r
 import { useState } from "react";
 
 import { shopLogin } from "@/lib/shop-auth.functions";
+import { requestShopPasswordReset } from "@/lib/shop-password.functions";
 import { requestShopAccess } from "@/lib/shop-signup.functions";
 
 export const Route = createFileRoute("/anmelden")({
@@ -39,6 +40,34 @@ function LoginPage() {
   const [signupBusy, setSignupBusy] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
+
+  // Passwort vergessen
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetInfo, setResetInfo] = useState<string | null>(null);
+
+  async function requestReset(event: React.FormEvent) {
+    event.preventDefault();
+    setResetBusy(true);
+    setResetError(null);
+    setResetInfo(null);
+    try {
+      const result = await requestShopPasswordReset({ data: { email: resetEmail } });
+      if (result.ok) {
+        setResetInfo(
+          `Wenn für ${resetEmail} ein Shop-Zugang besteht, haben wir einen Link zum Setzen eines neuen Passworts geschickt. Bitte prüfen Sie auch Ihren Spam-Ordner.`,
+        );
+        setResetEmail("");
+      } else {
+        setResetError(result.error);
+      }
+    } catch {
+      setResetError("Anfrage derzeit nicht möglich. Bitte später erneut versuchen.");
+    } finally {
+      setResetBusy(false);
+    }
+  }
 
   async function requestAccess(event: React.FormEvent) {
     event.preventDefault();
@@ -144,6 +173,33 @@ function LoginPage() {
           {busy ? "Anmelden …" : "Anmelden"}
         </button>
       </form>
+
+      <section className="mt-8 border-t border-border pt-6">
+        <h2 className="text-base font-semibold tracking-tight">Passwort vergessen?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Geben Sie Ihre E-Mail-Adresse ein – wir senden Ihnen einen Link zum Setzen eines neuen
+          Passworts.
+        </p>
+        <form onSubmit={requestReset} className="mt-4 space-y-3">
+          <input
+            type="email"
+            required
+            value={resetEmail}
+            placeholder="ihre@firma.at"
+            onChange={(event) => setResetEmail(event.target.value)}
+            className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+          {resetError && <p className="text-sm text-destructive">{resetError}</p>}
+          {resetInfo && <p className="text-sm text-stock">{resetInfo}</p>}
+          <button
+            type="submit"
+            disabled={resetBusy}
+            className="w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+          >
+            {resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}
+          </button>
+        </form>
+      </section>
 
       <section className="mt-10 border-t border-border pt-6">
         <h2 className="text-base font-semibold tracking-tight">Noch kein Zugang?</h2>
