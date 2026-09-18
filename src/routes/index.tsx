@@ -7,6 +7,17 @@ import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getArticleImageMap } from "@/lib/article-images.functions";
+import {
+  abandonBasket,
+  copyBasket,
+  createBasket,
+  loadBaskets,
+  removeBasketLine,
+  renameBasket,
+  setBasketLine,
+  type Basket,
+  type BasketState,
+} from "@/lib/basket.functions";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
@@ -195,7 +206,52 @@ function Shop() {
     }
   };
   const [qty, setQty] = useState<Record<string, number>>({});
-  const [lines, setLines] = useState<Line[]>([]);
+  const [localLines, setLocalLines] = useState<Line[]>([]);
+
+  // Warenkörbe liegen im Backend; ohne Anmeldung bleibt der Korb lokal.
+  const [baskets, setBaskets] = useState<Basket[]>([]);
+  const [activeBasket, setActiveBasket] = useState<Basket | null>(null);
+  const [basketBusy, setBasketBusy] = useState(false);
+  const [basketNote, setBasketNote] = useState<string | null>(null);
+  const [renaming, setRenaming] = useState(false);
+  const [renameValue, setRenameValue] = useState("");
+
+  const applyBasketState = (result: BasketState) => {
+    if (result.ok) {
+      setBaskets(result.baskets);
+      setActiveBasket(result.active);
+      setBasketNote(null);
+      return true;
+    }
+    setBaskets([]);
+    setActiveBasket(null);
+    setBasketNote(
+      result.reason === "login"
+        ? "Zum Speichern von Warenkörben bitte anmelden."
+        : "Warenkörbe sind derzeit nicht erreichbar.",
+    );
+    return false;
+  };
+
+  const runBasket = async (action: () => Promise<BasketState>) => {
+    setBasketBusy(true);
+    try {
+      applyBasketState(await action());
+    } catch {
+      setBasketNote("Warenkörbe sind derzeit nicht erreichbar.");
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!data.user) {
+      setBasketNote("Zum Speichern von Warenkörben bitte anmelden.");
+      return;
+    }
+    void runBasket(() => loadBaskets({ data: {} }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.user?.id]);
   const [quick, setQuick] = useState("");
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
@@ -290,24 +346,73 @@ function Shop() {
       [article.sku]: Math.max(article.moq, getQty(article) + delta * article.moq),
     }));
 
-  const addLine = (sku: string, amount: number) =>
-    setLines((prev) => {
+  /** Positionen: aus dem Backend-Warenkorb, sonst lokal (nicht angemeldet). */
+  const lines: Line[] = activeBasket
+    ? (activeBasket.lines ?? []).map((line) => ({ sku: line.articleNumber, qty: line.quantity }))
+    : localLines;
+
+  /** Menge im Backend setzen (Upsert) — ohne Warenkorb nur lokal. */
+  const saveLine = async (sku: string, quantity: number) => {
+    const article = bySku.get(sku);
+    if (!activeBasket || !article) return;
+    await runBasket(() =>
+      setBasketLine({
+        data: {
+          basketId: activeBasket.id,
+          articleId: article.id,
+          articleNumber: article.sku,
+          quantity,
+          name: article.name.slice(0, 400),
+          priceShown: priceForQty(article, quantity),
+          ...(search.channel ? { salesChannel: search.channel } : {}),
+        },
+      }),
+    );
+  };
+
+  const addLine = (sku: string, amount: number) => {
+    const current = lines.find((l) => l.sku === sku)?.qty ?? 0;
+    if (activeBasket) {
+      void saveLine(sku, current + amount);
+      return;
+    }
+    setLocalLines((prev) => {
       const existing = prev.find((l) => l.sku === sku);
       if (existing) return prev.map((l) => (l.sku === sku ? { ...l, qty: l.qty + amount } : l));
       return [...prev, { sku, qty: amount }];
     });
+  };
 
-  const removeLine = (sku: string) => setLines((prev) => prev.filter((l) => l.sku !== sku));
+  const removeLine = (sku: string) => {
+    const article = bySku.get(sku);
+    if (activeBasket && article) {
+      void runBasket(() =>
+        removeBasketLine({ data: { basketId: activeBasket.id, articleId: article.id } }),
+      );
+      return;
+    }
+    setLocalLines((prev) => prev.filter((l) => l.sku !== sku));
+  };
 
   /** Menge einer Warenkorbposition um eine Mindestbestellmenge erhöhen/verringern. */
-  const stepLine = (sku: string, delta: number, moq: number) =>
-    setLines((prev) =>
+  const stepLine = (sku: string, delta: number, moq: number) => {
+    const unitStep = Math.max(1, moq);
+    if (activeBasket) {
+      const current = lines.find((l) => l.sku === sku)?.qty ?? 0;
+      const next = current + delta * unitStep;
+      if (next < unitStep) removeLine(sku);
+      else void saveLine(sku, next);
+      return;
+    }
+    setLocalLines((prev) =>
       prev.flatMap((l) => {
         if (l.sku !== sku) return [l];
-        const next = l.qty + delta * Math.max(1, moq);
-        return next < Math.max(1, moq) ? [] : [{ ...l, qty: next }];
+        const next = l.qty + delta * unitStep;
+        return next < unitStep ? [] : [{ ...l, qty: next }];
       }),
     );
+  };
+
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
@@ -1043,6 +1148,118 @@ function Shop() {
                 {detailedLines.length} Positionen
               </span>
             </div>
+
+            {data.user && (
+              <div className="border-b border-border px-4 py-3">
+                {renaming && activeBasket ? (
+                  <form
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const name = renameValue.trim();
+                      setRenaming(false);
+                      if (name.length > 0) {
+                        void runBasket(() =>
+                          renameBasket({ data: { basketId: activeBasket.id, name } }),
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-2"
+                  >
+                    <input
+                      value={renameValue}
+                      onChange={(event) => setRenameValue(event.target.value)}
+                      maxLength={80}
+                      autoFocus
+                      placeholder="Name des Warenkorbs"
+                      className="min-w-0 flex-1 rounded-sm border border-border bg-card px-2 py-1.5 text-[13px] outline-none focus:border-accent"
+                    />
+                    <button type="submit" className="text-sm font-semibold text-accent">
+                      Speichern
+                    </button>
+                  </form>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <select
+                      value={activeBasket?.id ?? ""}
+                      disabled={basketBusy || baskets.length === 0}
+                      onChange={(event) =>
+                        void runBasket(() => loadBaskets({ data: { basketId: event.target.value } }))
+                      }
+                      className="min-w-0 flex-1 rounded-sm border border-border bg-card px-2 py-1.5 text-[13px] outline-none focus:border-accent"
+                    >
+                      {baskets.length === 0 && <option value="">Kein Warenkorb</option>}
+                      {baskets.map((basket) => (
+                        <option key={basket.id} value={basket.id}>
+                          {basket.name} · {basket.lineCount} Pos.
+                        </option>
+                      ))}
+                    </select>
+                    {activeBasket && (
+                      <button
+                        onClick={() => {
+                          setRenameValue(activeBasket.name);
+                          setRenaming(true);
+                        }}
+                        className="rounded-sm border border-border px-2 py-1.5 text-[12px] font-semibold hover:bg-muted"
+                      >
+                        Umbenennen
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    disabled={basketBusy}
+                    onClick={() => void runBasket(() => createBasket({ data: {} }))}
+                    className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:bg-muted disabled:opacity-50"
+                  >
+                    Neuer Warenkorb
+                  </button>
+                  {activeBasket && (
+                    <>
+                      <button
+                        disabled={basketBusy}
+                        onClick={() =>
+                          void runBasket(() =>
+                            copyBasket({ data: { basketId: activeBasket.id } }),
+                          )
+                        }
+                        className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:bg-muted disabled:opacity-50"
+                      >
+                        Kopieren
+                      </button>
+                      <button
+                        disabled={basketBusy}
+                        onClick={() =>
+                          void runBasket(() =>
+                            abandonBasket({ data: { basketId: activeBasket.id } }),
+                          )
+                        }
+                        className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold text-muted-foreground hover:text-destructive disabled:opacity-50"
+                      >
+                        Aufgeben
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {basketNote && (
+              <p className="border-b border-border px-4 py-2 text-[12px] text-muted-foreground">
+                {basketNote}
+                {!data.user && (
+                  <>
+                    {" "}
+                    <Link to="/anmelden" className="font-semibold text-accent">
+                      Anmelden
+                    </Link>
+                  </>
+                )}
+              </p>
+            )}
+
 
             <form onSubmit={submitQuick} className="border-b border-border px-4 py-3">
               <label className="block text-xs font-medium text-muted-foreground" htmlFor="quick">
