@@ -7,6 +7,17 @@ import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getArticleImageMap } from "@/lib/article-images.functions";
+import {
+  abandonBasket,
+  copyBasket,
+  createBasket,
+  loadBaskets,
+  removeBasketLine,
+  renameBasket,
+  setBasketLine,
+  type Basket,
+  type BasketState,
+} from "@/lib/basket.functions";
 import { getCatalog, priceGroups, type CatalogArticle } from "@/lib/catalog.functions";
 import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
 
@@ -385,19 +396,19 @@ function Shop() {
 
   /** Menge einer Warenkorbposition um eine Mindestbestellmenge erhöhen/verringern. */
   const stepLine = (sku: string, delta: number, moq: number) => {
-    const step = Math.max(1, moq);
+    const unitStep = Math.max(1, moq);
     if (activeBasket) {
       const current = lines.find((l) => l.sku === sku)?.qty ?? 0;
-      const next = current + delta * step;
-      if (next < step) removeLine(sku);
+      const next = current + delta * unitStep;
+      if (next < unitStep) removeLine(sku);
       else void saveLine(sku, next);
       return;
     }
     setLocalLines((prev) =>
       prev.flatMap((l) => {
         if (l.sku !== sku) return [l];
-        const next = l.qty + delta * step;
-        return next < step ? [] : [{ ...l, qty: next }];
+        const next = l.qty + delta * unitStep;
+        return next < unitStep ? [] : [{ ...l, qty: next }];
       }),
     );
   };
