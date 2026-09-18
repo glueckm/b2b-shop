@@ -677,12 +677,6 @@ function Shop() {
             {data.user ? (
               <div className="flex items-center gap-3">
                 <Link
-                  to="/bilder"
-                  className="label-mono text-primary-foreground/70 hover:text-accent"
-                >
-                  Bilder
-                </Link>
-                <Link
                   to="/konto"
                   className="label-mono text-primary-foreground/70 hover:text-accent"
                 >
