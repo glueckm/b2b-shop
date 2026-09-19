@@ -1509,6 +1509,33 @@ function Shop() {
                 maxLength={80}
                 className="mt-4 w-full rounded-sm border border-border bg-card px-3 py-2 text-sm"
               />
+              {priceDiffs && priceDiffs.length > 0 && (
+                <div className="mt-3 rounded-sm border border-accent/50 bg-accent/10 px-3 py-2 text-[13px]">
+                  <p className="font-semibold text-accent">
+                    Preise haben sich geändert — bitte prüfen
+                  </p>
+                  <ul className="mt-1 space-y-1 text-foreground">
+                    {priceDiffs.map((diff) => (
+                      <li key={diff.sku} className="flex items-center justify-between gap-2">
+                        <span className="font-mono">{diff.sku}</span>
+                        <span className="font-mono">
+                          <span className="text-muted-foreground line-through">
+                            {eur(diff.stored)}
+                          </span>{" "}
+                          {eur(diff.current)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    onClick={() => void refreshPrices()}
+                    disabled={basketBusy}
+                    className="mt-2 w-full rounded-sm border border-accent px-3 py-1.5 text-sm font-semibold text-accent hover:bg-accent hover:text-accent-foreground disabled:opacity-50"
+                  >
+                    Preise übernehmen
+                  </button>
+                </div>
+              )}
               <button
                 onClick={submitOrder}
                 disabled={basketBusy || !activeBasket || lines.length === 0}
@@ -1516,6 +1543,7 @@ function Shop() {
               >
                 {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
               </button>
+
               {orderDone && (
                 <p className="mt-2 rounded-sm border border-stock/40 bg-stock/10 px-3 py-2 text-[13px] text-stock">
                   {orderDone}
