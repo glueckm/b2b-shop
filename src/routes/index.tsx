@@ -231,6 +231,11 @@ function Shop() {
   const [renameValue, setRenameValue] = useState("");
   const [orderRef, setOrderRef] = useState("");
   const [orderDone, setOrderDone] = useState<string | null>(null);
+  // Abweichungen zwischen gespeichertem und aktuellem Preis (Prüfung vor dem Absenden).
+  const [priceDiffs, setPriceDiffs] = useState<
+    { sku: string; qty: number; stored: number; current: number }[] | null
+  >(null);
+
 
   // Favoriten des Kunden (Backend). Schlüssel ist die Artikel-ID.
   const [favourites, setFavourites] = useState<Set<string>>(new Set());
