@@ -360,8 +360,8 @@ function Shop() {
       }
       setPriceDiffs(null);
 
-    try {
       const result = await checkoutBasket({
+
         data: {
           basketId: activeBasket.id,
           ...(orderRef.trim() ? { orderNumberAtCustomer: orderRef.trim() } : {}),
