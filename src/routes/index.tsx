@@ -299,11 +299,67 @@ function Shop() {
     }
   };
 
+  /**
+   * Prüft, ob die im Warenkorb gespeicherten Preise noch den aktuellen
+   * Katalogpreisen (Preisgruppe des Kunden) entsprechen.
+   */
+  const findPriceDiffs = async (basketId: string) => {
+    const fresh = await loadBaskets({ data: { basketId } });
+    if (!fresh.ok || !fresh.active) return [];
+    return (fresh.active.lines ?? []).flatMap((line) => {
+      const article = bySku.get(line.articleNumber);
+      if (!article || line.priceShown === null) return [];
+      const current = priceForQty(article, line.quantity);
+      if (Math.abs(current - line.priceShown) < 0.005) return [];
+      return [
+        { sku: line.articleNumber, qty: line.quantity, stored: line.priceShown, current },
+      ];
+    });
+  };
+
+  /** Abweichende Positionen mit dem aktuellen Preis neu speichern. */
+  const refreshPrices = async () => {
+    if (!activeBasket || !priceDiffs) return;
+    setBasketBusy(true);
+    try {
+      for (const diff of priceDiffs) {
+        const article = bySku.get(diff.sku);
+        if (!article) continue;
+        await setBasketLine({
+          data: {
+            basketId: activeBasket.id,
+            articleId: article.id,
+            articleNumber: article.sku,
+            quantity: diff.qty,
+            name: article.name.slice(0, 400),
+            priceShown: diff.current,
+            salesChannel: data.pricing.channel,
+          },
+        }).then(applyBasketState);
+      }
+      setPriceDiffs(null);
+    } catch {
+      setBasketNote("Preise konnten nicht aktualisiert werden.");
+    } finally {
+      setBasketBusy(false);
+    }
+  };
+
   /** Warenkorb bestellen — wird im weclapp zum Auftrag. */
   const submitOrder = async () => {
     if (!activeBasket) return;
     setBasketBusy(true);
     setOrderDone(null);
+    try {
+      // Vor dem Absenden die Preise gegen den Katalog prüfen.
+      const diffs = await findPriceDiffs(activeBasket.id);
+      if (diffs.length > 0) {
+        setPriceDiffs(diffs);
+        setBasketBusy(false);
+        return;
+      }
+      setPriceDiffs(null);
+
     try {
       const result = await checkoutBasket({
         data: {
