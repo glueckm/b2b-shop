@@ -149,6 +149,7 @@ const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-fo
 const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
 
 const imageDataCache = new Map<string, Promise<string | null>>();
+const resolvedImageCache = new Map<string, string>();
 
 function imageFileId(src: string) {
   const match = src.match(/\/artikel-bild\/([^/?#]+)/);
@@ -157,13 +158,23 @@ function imageFileId(src: string) {
 
 async function loadAuthenticatedImage(src: string): Promise<string | null> {
   if (src.startsWith("data:") || !src.includes("/api/public/artikel-bild/")) return src;
+  const resolved = resolvedImageCache.get(src);
+  if (resolved) return resolved;
   const existing = imageDataCache.get(src);
   if (existing) return existing;
   const fileId = imageFileId(src);
   if (!fileId) return null;
   const request = getArticleImageData({ data: { fileId } })
-    .then((result) => result?.dataUrl ?? null)
-    .catch(() => null);
+    .then((result) => {
+      const dataUrl = result?.dataUrl ?? null;
+      if (dataUrl) resolvedImageCache.set(src, dataUrl);
+      else imageDataCache.delete(src);
+      return dataUrl;
+    })
+    .catch(() => {
+      imageDataCache.delete(src);
+      return null;
+    });
   imageDataCache.set(src, request);
   return request;
 }
@@ -177,11 +188,17 @@ function ArticleImage({
   alt: string;
   className: string;
 }) {
-  const [resolved, setResolved] = useState<string | null>(null);
+  const [resolved, setResolved] = useState<string | null>(() => resolvedImageCache.get(src) ?? null);
 
   useEffect(() => {
     let cancelled = false;
-    setResolved(null);
+    const cached = resolvedImageCache.get(src);
+    if (cached) {
+      setResolved(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
     void loadAuthenticatedImage(src).then((value) => {
       if (!cancelled) setResolved(value);
     });
@@ -191,9 +208,9 @@ function ArticleImage({
   }, [src]);
 
   return resolved ? (
-    <img src={resolved} alt={alt} className={className} />
+    <img src={resolved} alt={alt} className={className} loading="lazy" decoding="async" />
   ) : (
-    <span aria-label={alt} className={`${className} animate-pulse bg-muted`} />
+    <span aria-label={alt} className={`${className} bg-muted`} />
   );
 }
 
@@ -210,20 +227,30 @@ function Shop() {
   const [imageMap, setImageMap] = useState<Record<string, string[]>>({});
   const [thumbMap, setThumbMap] = useState<Record<string, string>>({});
   const loadedIds = useRef(new Set<string>());
+  const loadingIds = useRef(new Set<string>());
+  const [imageLookupDone, setImageLookupDone] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
-    const pending = articles.map((article) => article.id).filter((id) => !loadedIds.current.has(id));
+    const pending = articles
+      .map((article) => article.id)
+      .filter((id) => !loadedIds.current.has(id) && !loadingIds.current.has(id));
     if (pending.length === 0) return;
-    pending.forEach((id) => loadedIds.current.add(id));
+    pending.forEach((id) => loadingIds.current.add(id));
 
     let cancelled = false;
     void (async () => {
       const CHUNK = 20;
+      const batches: string[][] = [];
       for (let index = 0; index < pending.length; index += CHUNK) {
-        if (cancelled) return;
-        const batch = pending.slice(index, index + CHUNK);
+        batches.push(pending.slice(index, index + CHUNK));
+      }
+      const loadBatch = async (batch: string[]) => {
         try {
           const result = await getArticleImageMap({ data: { articleIds: batch } });
+          batch.forEach((id) => {
+            loadingIds.current.delete(id);
+            loadedIds.current.add(id);
+          });
           if (cancelled) return;
           if (Object.keys(result.images).length > 0) {
             setImageMap((prev) => ({ ...prev, ...result.images }));
@@ -231,9 +258,17 @@ function Shop() {
           if (Object.keys(result.thumbs).length > 0) {
             setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
           }
+          setImageLookupDone((prev) => new Set([...prev, ...batch]));
         } catch {
-          /* Bilder sind optional */
+          // Fehlgeschlagene Portionen bleiben erneut abrufbar.
+          batch.forEach((id) => loadingIds.current.delete(id));
         }
+      };
+
+      const [first, ...rest] = batches;
+      if (first) await loadBatch(first);
+      if (!cancelled && rest.length > 0) {
+        await Promise.all(rest.map(loadBatch));
       }
     })();
     return () => {
@@ -707,10 +742,12 @@ function Shop() {
                   alt={article.name}
                   className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
                 />
-              ) : (
+              ) : imageLookupDone.has(article.id) ? (
                 <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
                   —
                 </span>
+              ) : (
+                <span className="size-11 shrink-0 rounded-sm border border-border bg-muted" />
               )}
               <button onClick={toggleDetail} className="text-left">
                 <span className="block font-semibold">{article.name}</span>
