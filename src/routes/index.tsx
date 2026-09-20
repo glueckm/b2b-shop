@@ -6,7 +6,7 @@ import { z } from "zod";
 import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
-import { getArticleImageMap } from "@/lib/article-images.functions";
+import { getArticleImageData, getArticleImageMap } from "@/lib/article-images.functions";
 import {
   abandonBasket,
   checkoutBasket,
@@ -148,6 +148,55 @@ const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nicht la
 const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-foreground" };
 const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
 
+const imageDataCache = new Map<string, Promise<string | null>>();
+
+function imageFileId(src: string) {
+  const match = src.match(/\/artikel-bild\/([^/?#]+)/);
+  return match ? decodeURIComponent(match[1] ?? "") : "";
+}
+
+async function loadAuthenticatedImage(src: string): Promise<string | null> {
+  if (src.startsWith("data:") || !src.includes("/api/public/artikel-bild/")) return src;
+  const existing = imageDataCache.get(src);
+  if (existing) return existing;
+  const fileId = imageFileId(src);
+  if (!fileId) return null;
+  const request = getArticleImageData({ data: { fileId } })
+    .then((result) => result?.dataUrl ?? null)
+    .catch(() => null);
+  imageDataCache.set(src, request);
+  return request;
+}
+
+function ArticleImage({
+  src,
+  alt,
+  className,
+}: {
+  src: string;
+  alt: string;
+  className: string;
+}) {
+  const [resolved, setResolved] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setResolved(null);
+    void loadAuthenticatedImage(src).then((value) => {
+      if (!cancelled) setResolved(value);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return resolved ? (
+    <img src={resolved} alt={alt} className={className} />
+  ) : (
+    <span aria-label={alt} className={`${className} animate-pulse bg-muted`} />
+  );
+}
+
 function Shop() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
@@ -202,7 +251,9 @@ function Shop() {
     const urls = imagesOf(article);
     for (let index = 0; index < urls.length; index += 1) {
       try {
-        const response = await fetch(urls[index]!);
+        const resolved = await loadAuthenticatedImage(urls[index]!);
+        if (!resolved) continue;
+        const response = await fetch(resolved);
         if (!response.ok) continue;
         const blob = await response.blob();
         const extension = (blob.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg");
@@ -651,10 +702,9 @@ function Shop() {
           <td className="max-w-[320px] px-3 pt-3 align-top">
             <span className="flex items-start gap-3">
               {thumb ? (
-                <img
+                <ArticleImage
                   src={thumb}
                   alt={article.name}
-                  loading="lazy"
                   className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
                 />
               ) : (
@@ -776,10 +826,9 @@ function Shop() {
                       aria-label={`Bild ${index + 1} vergrößern`}
                       className="rounded-sm border border-border bg-panel p-0.5 transition-colors hover:border-accent"
                     >
-                      <img
+                      <ArticleImage
                         src={src}
                         alt={`${article.name} — Bild ${index + 1}`}
-                        loading="lazy"
                         className="h-20 w-20 object-contain"
                       />
                     </button>
@@ -890,8 +939,8 @@ function Shop() {
                 ‹
               </button>
             )}
-            <img
-              src={lightbox.images[lightbox.index]}
+            <ArticleImage
+              src={lightbox.images[lightbox.index] ?? lightbox.images[0] ?? ""}
               alt={`${lightbox.title} — Bild ${lightbox.index + 1}`}
               className="max-h-full max-w-full object-contain"
             />
@@ -919,7 +968,7 @@ function Shop() {
                     index === lightbox.index ? "border-accent" : "border-white/25"
                   }`}
                 >
-                  <img src={src} alt="" className="h-14 w-14 object-contain" />
+                  <ArticleImage src={src} alt="" className="h-14 w-14 object-contain" />
                 </button>
               ))}
             </div>

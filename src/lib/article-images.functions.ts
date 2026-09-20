@@ -33,3 +33,25 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
       return { images, thumbs };
     },
   );
+
+/**
+ * Lädt eine einzelne Bilddatei über die angemeldete Server-Verbindung.
+ * Dadurch funktioniert die Anzeige auch in eingebetteten Vorschauen, in denen
+ * der Browser das Shop-Cookie bei einem normalen <img>-Abruf blockiert.
+ */
+export const getArticleImageData = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    z.object({ fileId: z.string().regex(/^[A-Za-z0-9._-]{4,128}$/) }).parse(raw ?? {}),
+  )
+  .handler(async ({ data }): Promise<{ dataUrl: string } | null> => {
+    try {
+      const { fetchFileBytes } = await import("./mawa-api.server");
+      const file = await fetchFileBytes(data.fileId);
+      if (!file) return null;
+      const { Buffer } = await import("node:buffer");
+      const encoded = Buffer.from(file.bytes).toString("base64");
+      return { dataUrl: `data:${file.contentType};base64,${encoded}` };
+    } catch {
+      return null;
+    }
+  });
