@@ -1,2 +1,2 @@
 /** Version des MAWA B2B-Shops — bei Releases hier erhöhen. */
-export const SHOP_VERSION = "1.0.3";
+export const SHOP_VERSION = "1.0.4";

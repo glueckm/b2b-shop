@@ -199,9 +199,19 @@ function ArticleImage({
         cancelled = true;
       };
     }
-    void loadAuthenticatedImage(src).then((value) => {
-      if (!cancelled) setResolved(value);
-    });
+    // Ein fehlgeschlagener Abruf (z. B. kurzzeitige Backend-Last) wird erneut
+    // versucht, damit kein dauerhaft leeres Feld stehen bleibt.
+    const attempt = (tries: number) => {
+      void loadAuthenticatedImage(src).then((value) => {
+        if (cancelled) return;
+        if (value) {
+          setResolved(value);
+          return;
+        }
+        if (tries > 0) setTimeout(() => attempt(tries - 1), 1200);
+      });
+    };
+    attempt(3);
     return () => {
       cancelled = true;
     };
