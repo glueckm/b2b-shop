@@ -257,7 +257,14 @@ export async function listArticleImages(
       const id = queue.shift();
       if (!id) return;
       try {
-        const files = await listImagesForArticle(id);
+        let files: BackendFile[];
+        try {
+          files = await listImagesForArticle(id);
+        } catch {
+          // Einzelne Zeitüberschreitungen dürfen kein dauerhaft leeres Vorschaubild erzeugen.
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          files = await listImagesForArticle(id);
+        }
         if (files.length > 0) grouped[id] = files;
       } catch {
         /* einzelner Artikel ohne Bilder — Liste bleibt nutzbar */
