@@ -940,7 +940,7 @@ function Shop() {
               </button>
             )}
             <ArticleImage
-              src={lightbox.images[lightbox.index]}
+              src={lightbox.images[lightbox.index] ?? lightbox.images[0] ?? ""}
               alt={`${lightbox.title} — Bild ${lightbox.index + 1}`}
               className="max-h-full max-w-full object-contain"
             />
