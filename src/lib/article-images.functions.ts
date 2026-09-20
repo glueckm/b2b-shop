@@ -13,7 +13,11 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
   .handler(
     async ({
       data,
-    }): Promise<{ images: Record<string, string[]>; thumbs: Record<string, string> }> => {
+    }): Promise<{
+      images: Record<string, string[]>;
+      thumbs: Record<string, string>;
+      ok: boolean;
+    }> => {
       const images: Record<string, string[]> = {};
       const thumbs: Record<string, string> = {};
       try {
@@ -27,10 +31,10 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
           if (full.length > 0) images[articleId] = full.map((file) => articleImageUrl(file.id));
           if (thumb) thumbs[articleId] = articleImageUrl(thumb.id);
         }
+        return { images, thumbs, ok: true };
       } catch {
-        /* Bilder sind optional */
+        return { images, thumbs, ok: false };
       }
-      return { images, thumbs };
     },
   );
 
