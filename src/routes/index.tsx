@@ -274,7 +274,7 @@ function Shop() {
       const [first, ...rest] = batches;
       if (first) await loadBatch(first);
       if (rest.length > 0) {
-        await Promise.all(rest.map(loadBatch));
+        await Promise.all(rest.map((batch) => loadBatch(batch)));
       }
     })();
   }, [articles]);
