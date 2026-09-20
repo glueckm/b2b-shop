@@ -237,21 +237,27 @@ function Shop() {
     if (pending.length === 0) return;
     pending.forEach((id) => loadingIds.current.add(id));
 
-    let cancelled = false;
     void (async () => {
       const CHUNK = 20;
       const batches: string[][] = [];
       for (let index = 0; index < pending.length; index += CHUNK) {
         batches.push(pending.slice(index, index + CHUNK));
       }
-      const loadBatch = async (batch: string[]) => {
+      const loadBatch = async (batch: string[], retry = true): Promise<void> => {
         try {
           const result = await getArticleImageMap({ data: { articleIds: batch } });
+          if (!result.ok) {
+            if (retry) {
+              await new Promise((resolve) => window.setTimeout(resolve, 400));
+              return loadBatch(batch, false);
+            }
+            batch.forEach((id) => loadingIds.current.delete(id));
+            return;
+          }
           batch.forEach((id) => {
             loadingIds.current.delete(id);
             loadedIds.current.add(id);
           });
-          if (cancelled) return;
           if (Object.keys(result.images).length > 0) {
             setImageMap((prev) => ({ ...prev, ...result.images }));
           }
@@ -267,13 +273,10 @@ function Shop() {
 
       const [first, ...rest] = batches;
       if (first) await loadBatch(first);
-      if (!cancelled && rest.length > 0) {
+      if (rest.length > 0) {
         await Promise.all(rest.map(loadBatch));
       }
     })();
-    return () => {
-      cancelled = true;
-    };
   }, [articles]);
 
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
