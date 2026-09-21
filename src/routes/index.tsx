@@ -26,7 +26,7 @@ import {
   unmarkFavourite,
   type FavouriteState,
 } from "@/lib/favourites.functions";
-import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
+import { shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
 
@@ -41,14 +41,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
-  beforeLoad: async () => {
-    const user = await getShopUser().catch(() => null);
-    if (!user) {
-      throw redirect({ to: "/anmelden" });
-    }
-    return { shopUser: user };
-  },
-  loader: async ({ deps, context }) => {
+  loader: async ({ deps }) => {
     const catalog = await getCatalog({
       data: {
         channel: deps.channel,
@@ -58,7 +51,10 @@ export const Route = createFileRoute("/")({
         search: deps.q,
       },
     });
-    return { ...catalog, user: context.shopUser };
+    if (!catalog.user) {
+      throw redirect({ to: "/anmelden" });
+    }
+    return catalog;
   },
 
 

@@ -52,7 +52,19 @@ export type CategoryNode = {
 };
 
 
+export type CatalogUser = {
+  id: string;
+  email: string;
+  displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  customerNumber: string | null;
+  isSuperuser: boolean;
+};
+
 export type CatalogPayload = {
+  /** Angemeldeter Kunde – null bedeutet: nicht angemeldet. */
+  user: CatalogUser | null;
   /** Bild-URLs je Artikel-ID (aus dem MAWA-Backend). */
   images: Record<string, string[]>;
   /** Kleines Vorschaubild je Artikel-ID für die Listenansicht. */
@@ -310,9 +322,23 @@ export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { query } = await import("./db.server");
-    const { readCustomerNumber } = await import("./shop-auth.server");
+    const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
-    // Vertriebsweg/Preisgruppe kommen ausschließlich aus dem Kundenkonto in weclapp.
+    // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
+    const user = await apiCurrentUser();
+    if (!user) {
+      return {
+        user: null,
+        images: {},
+        thumbs: {},
+        articles: [],
+        total: 0,
+        categories: [],
+        categoryTree: [],
+        pricing: { channel: "NET1", group: null, company: null },
+        stats: { articles: 0, categories: 0, onHand: 0 },
+      };
+    }
     const pricing = await customerPricing(readCustomerNumber());
     const priceChannel = pricing.channel || "NET1";
     const params = [
@@ -445,6 +471,7 @@ export const getCatalog = createServerFn({ method: "GET" })
     const thumbs: Record<string, string> = {};
 
     return {
+      user,
       images,
       thumbs,
       articles: mapped,

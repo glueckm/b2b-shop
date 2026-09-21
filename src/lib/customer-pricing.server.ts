@@ -45,22 +45,34 @@ const FALLBACK: CustomerPricing = {
   customerNumber: null,
 };
 
+/** Kurzzeit-Cache: die Preisgruppe ändert sich selten, spart eine DB-Abfrage je Seitenaufbau. */
+const cacheRef = globalThis as typeof globalThis & {
+  __mawaPricingCache?: Map<string, { at: number; value: CustomerPricing }>;
+};
+const PRICING_TTL = 5 * 60 * 1000;
+
 export async function customerPricing(
   customerNumber: string | null | undefined,
 ): Promise<CustomerPricing> {
   const number = (customerNumber ?? "").trim();
   if (!number) return FALLBACK;
 
+  const cache = (cacheRef.__mawaPricingCache ??= new Map());
+  const hit = cache.get(number);
+  if (hit && Date.now() - hit.at < PRICING_TTL) return hit.value;
+
   try {
     const rows = await query<Row>(SQL, [number.toUpperCase().replace(/[^A-Z0-9]/g, "")]);
     const row = rows[0];
     if (!row) return { ...FALLBACK, customerNumber: number };
-    return {
+    const value: CustomerPricing = {
       channel: row.sales_channel?.trim() || FALLBACK.channel,
       group: row.category?.trim() || null,
       company: row.company?.trim() || null,
       customerNumber: row.customer_number?.trim() || number,
     };
+    cache.set(number, { at: Date.now(), value });
+    return value;
   } catch {
     return { ...FALLBACK, customerNumber: number };
   }

@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { shopLogin } from "@/lib/shop-auth.functions";
@@ -28,7 +28,6 @@ export const Route = createFileRoute("/anmelden")({
 
 function LoginPage() {
   const navigate = useNavigate();
-  const router = useRouter();
   const [customerNumber, setCustomerNumber] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +107,6 @@ function LoginPage() {
     try {
       const result = await shopLogin({ data: { customerNumber, password } });
       if (result.ok) {
-        await router.invalidate();
         void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
       } else {
         setError(result.error);
