@@ -183,8 +183,9 @@ let bulkAvailable = true;
 const BULK_CHUNK = 15;
 
 /**
- * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c&thumbnails=true
- * Mit thumbnails=true liefert das Backend die Vorschaubilder als dataUri mit.
+ * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c&thumbnail=true
+ * Mit thumbnail=true (bzw. thumbnails=true) liefert das Backend die
+ * Vorschaubilder als dataUri mit.
  * Liefert das Backend die Abfrage nicht (404/405), wird dauerhaft auf
  * Einzelabfragen umgeschaltet.
  */
@@ -194,7 +195,7 @@ async function listImagesBulkChunk(
   if (!bulkAvailable || ids.length === 0) return null;
   try {
     const res = await fetch(
-      `${apiBase()}/v1/shop/articles/images?articleIds=${ids.map(encodeURIComponent).join(",")}&thumbnails=true`,
+      `${apiBase()}/v1/shop/articles/images?articleIds=${ids.map(encodeURIComponent).join(",")}&thumbnail=true&thumbnails=true`,
       { headers: await authHeaders(), signal: AbortSignal.timeout(20_000) },
     );
     if (res.status === 404 || res.status === 405) {
