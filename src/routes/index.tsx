@@ -1192,7 +1192,20 @@ function Shop() {
 
       <nav className="sticky top-0 z-40 border-b border-border bg-panel shadow-sm">
         <div className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5">
-          {[{ name: "", count: data.stats.articles }, ...data.categories].map((category) => {
+          {(() => {
+            // Feste Reihenfolge: Optik, Montage, Jagdbedarf, Rest, danach "Alle Artikel".
+            const order = ["optik", "montage", "jagdbedarf"];
+            const rank = (name: string) => {
+              const idx = order.indexOf(name.trim().toLowerCase());
+              return idx === -1 ? order.length : idx;
+            };
+            return [
+              ...[...data.categories].sort(
+                (a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name),
+              ),
+              { name: "", count: data.stats.articles },
+            ];
+          })().map((category) => {
             const active = category.name === search.category;
             return (
               <button
