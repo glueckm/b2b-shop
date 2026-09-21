@@ -26,7 +26,7 @@ import {
   unmarkFavourite,
   type FavouriteState,
 } from "@/lib/favourites.functions";
-import { getShopUser, shopLogout } from "@/lib/shop-auth.functions";
+import { shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
 
@@ -50,8 +50,8 @@ export const Route = createFileRoute("/")({
         subsubcategory: deps.subsubcategory,
         search: deps.q,
       },
-    }).catch(() => null);
-    if (!catalog || !catalog.user) {
+    });
+    if (!catalog.user) {
       throw redirect({ to: "/anmelden" });
     }
     return catalog;

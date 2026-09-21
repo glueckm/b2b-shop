@@ -69,6 +69,16 @@ export function readCustomerNumber(): string | null {
 
 export function clearToken() {
   try {
+    const token = readToken();
+    if (token) {
+      (
+        globalThis as typeof globalThis & { __mawaShopUserCache?: Map<string, unknown> }
+      ).__mawaShopUserCache?.delete(token);
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
     deleteCookie(NUMBER_COOKIE, { path: "/", secure: true, sameSite: "none" });
   } catch {
     /* ignore */
