@@ -110,12 +110,24 @@ function mapFile(raw: Record<string, unknown>): BackendFile {
 
 /** Neues Shop-Backend: Bilder werden je Artikel abgefragt. */
 function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFile {
+  const contentType = String(raw["contentType"] ?? "application/octet-stream");
+  // Schickt das Backend die Bilddaten (Vorschaubild) mit, wird kein
+  // zusätzlicher Abruf je Bild mehr nötig.
+  const inline = str(
+    raw["data"] ?? raw["dataBase64"] ?? raw["contentBase64"] ?? raw["bytesBase64"],
+  );
+  const dataUrl = inline
+    ? inline.startsWith("data:")
+      ? inline
+      : `data:${contentType};base64,${inline}`
+    : undefined;
   return {
     id: String(raw["fileId"] ?? raw["id"] ?? ""),
     filename: String(raw["fileName"] ?? raw["filename"] ?? "Bild"),
-    contentType: String(raw["contentType"] ?? "application/octet-stream"),
+    contentType,
     entityId: articleId,
     createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
+    ...(dataUrl ? { dataUrl } : {}),
   };
 }
 
