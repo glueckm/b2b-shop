@@ -248,7 +248,8 @@ function Shop() {
     pending.forEach((id) => loadingIds.current.add(id));
 
     void (async () => {
-      const CHUNK = 20;
+      // Sammelabfrage im Backend: alle Bildlisten in einem Zug.
+      const CHUNK = 200;
       const batches: string[][] = [];
       for (let index = 0; index < pending.length; index += CHUNK) {
         batches.push(pending.slice(index, index + CHUNK));
