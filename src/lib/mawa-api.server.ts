@@ -114,7 +114,12 @@ function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFi
   // Schickt das Backend die Bilddaten (Vorschaubild) mit, wird kein
   // zusätzlicher Abruf je Bild mehr nötig.
   const inline = str(
-    raw["data"] ?? raw["dataBase64"] ?? raw["contentBase64"] ?? raw["bytesBase64"],
+    raw["dataUri"] ??
+      raw["dataUrl"] ??
+      raw["data"] ??
+      raw["dataBase64"] ??
+      raw["contentBase64"] ??
+      raw["bytesBase64"],
   );
   const dataUrl = inline
     ? inline.startsWith("data:")
