@@ -220,6 +220,48 @@ function ArticleImage({
   );
 }
 
+/**
+ * Meldet, sobald die Bildfläche in Sichtweite kommt — erst dann wird das
+ * Vorschaubild des Artikels angefordert.
+ */
+function ThumbSlot({
+  onVisible,
+  children,
+}: {
+  onVisible: () => void;
+  children: React.ReactNode;
+}) {
+  const holder = useRef<HTMLSpanElement | null>(null);
+  const notify = useRef(onVisible);
+  notify.current = onVisible;
+
+  useEffect(() => {
+    const node = holder.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      notify.current();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          notify.current();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={holder} className="contents">
+      {children}
+    </span>
+  );
+}
+
 function Shop() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
