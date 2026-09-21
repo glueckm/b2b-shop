@@ -1,6 +1,6 @@
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { Star, Trash2 } from "lucide-react";
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
 import heroImage from "@/assets/hero-fuchs.jpg";
@@ -220,6 +220,48 @@ function ArticleImage({
   );
 }
 
+/**
+ * Meldet, sobald die Bildfläche in Sichtweite kommt — erst dann wird das
+ * Vorschaubild des Artikels angefordert.
+ */
+function ThumbSlot({
+  onVisible,
+  children,
+}: {
+  onVisible: () => void;
+  children: React.ReactNode;
+}) {
+  const holder = useRef<HTMLSpanElement | null>(null);
+  const notify = useRef(onVisible);
+  notify.current = onVisible;
+
+  useEffect(() => {
+    const node = holder.current;
+    if (!node) return;
+    if (typeof IntersectionObserver === "undefined") {
+      notify.current();
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          notify.current();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px 0px" },
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <span ref={holder} className="block shrink-0">
+      {children}
+    </span>
+  );
+}
+
 function Shop() {
   const data = Route.useLoaderData();
   const search = Route.useSearch();
@@ -236,55 +278,68 @@ function Shop() {
   const loadingIds = useRef(new Set<string>());
   const [imageLookupDone, setImageLookupDone] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    const pending = articles
-      .map((article) => article.id)
-      .filter((id) => !loadedIds.current.has(id) && !loadingIds.current.has(id));
-    if (pending.length === 0) return;
-    pending.forEach((id) => loadingIds.current.add(id));
+  // Bilder werden nur für sichtbare Zeilen geholt ("on demand" beim Scrollen).
+  const queueRef = useRef(new Set<string>());
+  const timerRef = useRef<number | null>(null);
 
-    void (async () => {
-      // Sammelabfrage im Backend: alle Bildlisten in einem Zug.
-      const CHUNK = 25;
-      const batches: string[][] = [];
-      for (let index = 0; index < pending.length; index += CHUNK) {
-        batches.push(pending.slice(index, index + CHUNK));
-      }
-      const loadBatch = async (batch: string[], retry = true): Promise<void> => {
-        try {
-          const result = await getArticleImageMap({ data: { articleIds: batch } });
-          if (!result.ok) {
-            if (retry) {
-              await new Promise((resolve) => window.setTimeout(resolve, 400));
-              return loadBatch(batch, false);
-            }
-            batch.forEach((id) => loadingIds.current.delete(id));
-            return;
-          }
-          batch.forEach((id) => {
-            loadingIds.current.delete(id);
-            loadedIds.current.add(id);
-          });
-          if (Object.keys(result.images).length > 0) {
-            setImageMap((prev) => ({ ...prev, ...result.images }));
-          }
-          if (Object.keys(result.thumbs).length > 0) {
-            setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
-          }
-          setImageLookupDone((prev) => new Set([...prev, ...batch]));
-        } catch {
-          // Fehlgeschlagene Portionen bleiben erneut abrufbar.
-          batch.forEach((id) => loadingIds.current.delete(id));
+  const loadBatch = useCallback(async (batch: string[], retry = true): Promise<void> => {
+    try {
+      const result = await getArticleImageMap({ data: { articleIds: batch } });
+      if (!result.ok) {
+        if (retry) {
+          await new Promise((resolve) => window.setTimeout(resolve, 400));
+          return loadBatch(batch, false);
         }
-      };
-
-      const [first, ...rest] = batches;
-      if (first) await loadBatch(first);
-      if (rest.length > 0) {
-        await Promise.all(rest.map((batch) => loadBatch(batch)));
+        batch.forEach((id) => loadingIds.current.delete(id));
+        return;
       }
-    })();
-  }, [articles]);
+      batch.forEach((id) => {
+        loadingIds.current.delete(id);
+        loadedIds.current.add(id);
+      });
+      if (Object.keys(result.images).length > 0) {
+        setImageMap((prev) => ({ ...prev, ...result.images }));
+      }
+      if (Object.keys(result.thumbs).length > 0) {
+        setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
+      }
+      setImageLookupDone((prev) => new Set([...prev, ...batch]));
+    } catch {
+      // Fehlgeschlagene Portionen bleiben erneut abrufbar.
+      batch.forEach((id) => loadingIds.current.delete(id));
+    }
+  }, []);
+
+  /** Bild eines Artikels anfordern; kurz gesammelt, dann als Sammelabfrage. */
+  const requestImages = useCallback(
+    (articleId: string) => {
+      if (loadedIds.current.has(articleId) || loadingIds.current.has(articleId)) return;
+      queueRef.current.add(articleId);
+      if (timerRef.current !== null) return;
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const ids = [...queueRef.current];
+        queueRef.current.clear();
+        const pending = ids.filter(
+          (id) => !loadedIds.current.has(id) && !loadingIds.current.has(id),
+        );
+        if (pending.length === 0) return;
+        pending.forEach((id) => loadingIds.current.add(id));
+        const CHUNK = 15;
+        for (let index = 0; index < pending.length; index += CHUNK) {
+          void loadBatch(pending.slice(index, index + CHUNK));
+        }
+      }, 120);
+    },
+    [loadBatch],
+  );
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
   const imagesOf = (article: { id: string; sku: string }) => {
@@ -705,7 +760,10 @@ function Shop() {
     // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
     const thumb = thumbMap[article.id] ?? imagesOf(article)[0];
     const open = detailSku === article.sku;
-    const toggleDetail = () => setDetailSku(open ? null : article.sku);
+    const toggleDetail = () => {
+      if (!open) requestImages(article.id);
+      setDetailSku(open ? null : article.sku);
+    };
     return (
       <Fragment>
         <tr
@@ -746,19 +804,21 @@ function Shop() {
           </td>
           <td className="max-w-[320px] px-3 pt-3 align-top">
             <span className="flex items-start gap-3">
-              {thumb ? (
-                <ArticleImage
-                  src={thumb}
-                  alt={article.name}
-                  className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
-                />
-              ) : imageLookupDone.has(article.id) ? (
-                <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
-                  —
-                </span>
-              ) : (
-                <span className="size-11 shrink-0 rounded-sm border border-border bg-muted" />
-              )}
+              <ThumbSlot onVisible={() => requestImages(article.id)}>
+                {thumb ? (
+                  <ArticleImage
+                    src={thumb}
+                    alt={article.name}
+                    className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
+                  />
+                ) : imageLookupDone.has(article.id) ? (
+                  <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
+                    —
+                  </span>
+                ) : (
+                  <span className="block size-11 shrink-0 rounded-sm border border-border bg-muted" />
+                )}
+              </ThumbSlot>
               <button onClick={toggleDetail} className="text-left">
                 <span className="block font-semibold">{article.name}</span>
               </button>
