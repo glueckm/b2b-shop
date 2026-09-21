@@ -1447,9 +1447,7 @@ function Shop() {
                         </td>
                       </tr>
                       {openGroups[row.id] &&
-                        row.variants.map((variant) => (
-                          <ArticleRow key={variant.sku} article={variant} nested />
-                        ))}
+                        row.variants.map((variant) => renderArticleRow(variant, true))}
                     </Fragment>
                   ),
                 )}
