@@ -175,7 +175,7 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
 let bulkAvailable = true;
 
 /** Höchstens so viele Artikel-IDs pro Sammelabfrage (URL-Länge). */
-const BULK_CHUNK = 50;
+const BULK_CHUNK = 25;
 
 /**
  * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c
