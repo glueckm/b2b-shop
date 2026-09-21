@@ -805,19 +805,18 @@ function Shop() {
           <td className="max-w-[320px] px-3 pt-3 align-top">
             <span className="flex items-start gap-3">
               <ThumbSlot onVisible={() => requestImages(article.id)}>
-                {thumb ? (
-                  <ArticleImage
-                    src={thumb}
-                    alt={article.name}
-                    className="size-11 shrink-0 rounded-sm border border-border bg-panel object-contain p-0.5"
-                  />
-                ) : imageLookupDone.has(article.id) ? (
-                  <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-dashed border-border font-mono text-[10px] text-muted-foreground">
-                    —
-                  </span>
-                ) : (
-                  <span className="block size-11 shrink-0 rounded-sm border border-border bg-muted" />
-                )}
+                {/* Feste Größe: Rahmen bleibt gleich, nur der Inhalt wechselt. */}
+                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-sm border border-border bg-panel">
+                  {thumb ? (
+                    <ArticleImage
+                      src={thumb}
+                      alt={article.name}
+                      className="size-10 object-contain"
+                    />
+                  ) : imageLookupDone.has(article.id) ? (
+                    <span className="font-mono text-[10px] text-muted-foreground">—</span>
+                  ) : null}
+                </span>
               </ThumbSlot>
               <button onClick={toggleDetail} className="text-left">
                 <span className="block font-semibold">{article.name}</span>
