@@ -256,7 +256,7 @@ function ThumbSlot({
   }, []);
 
   return (
-    <span ref={holder} className="contents">
+    <span ref={holder} className="block shrink-0">
       {children}
     </span>
   );
