@@ -180,12 +180,13 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
 let bulkAvailable = true;
 
 /** Höchstens so viele Artikel-IDs pro Sammelabfrage (URL-Länge). */
-const BULK_CHUNK = 25;
+const BULK_CHUNK = 15;
 
 /**
- * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c
- * Liefert das Backend sie nicht (404/405), wird dauerhaft auf Einzelabfragen
- * umgeschaltet.
+ * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c&thumbnails=true
+ * Mit thumbnails=true liefert das Backend die Vorschaubilder als dataUri mit.
+ * Liefert das Backend die Abfrage nicht (404/405), wird dauerhaft auf
+ * Einzelabfragen umgeschaltet.
  */
 async function listImagesBulkChunk(
   ids: string[],
@@ -193,7 +194,7 @@ async function listImagesBulkChunk(
   if (!bulkAvailable || ids.length === 0) return null;
   try {
     const res = await fetch(
-      `${apiBase()}/v1/shop/articles/images?articleIds=${ids.map(encodeURIComponent).join(",")}`,
+      `${apiBase()}/v1/shop/articles/images?articleIds=${ids.map(encodeURIComponent).join(",")}&thumbnails=true`,
       { headers: await authHeaders(), signal: AbortSignal.timeout(20_000) },
     );
     if (res.status === 404 || res.status === 405) {

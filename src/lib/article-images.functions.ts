@@ -27,7 +27,10 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
         const grouped = await listArticleImages(data.articleIds);
         for (const [articleId, files] of Object.entries(grouped)) {
           const full = files.filter((file) => !isThumb(file.filename));
-          const thumb = files.find((file) => isThumb(file.filename));
+          const thumbs2 = files.filter((file) => isThumb(file.filename));
+          // webp-Vorschaubilder sind deutlich kleiner als png — bevorzugen.
+          const thumb =
+            thumbs2.find((file) => /webp$/i.test(file.contentType)) ?? thumbs2[0];
           if (full.length > 0)
             images[articleId] = full.map((file) => file.dataUrl ?? articleImageUrl(file.id));
           // Liefert das Backend die Vorschaubild-Daten mit, werden sie direkt
