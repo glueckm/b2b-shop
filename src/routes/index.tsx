@@ -41,14 +41,7 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
-  beforeLoad: async () => {
-    const user = await getShopUser().catch(() => null);
-    if (!user) {
-      throw redirect({ to: "/anmelden" });
-    }
-    return { shopUser: user };
-  },
-  loader: async ({ deps, context }) => {
+  loader: async ({ deps }) => {
     const catalog = await getCatalog({
       data: {
         channel: deps.channel,
@@ -57,8 +50,11 @@ export const Route = createFileRoute("/")({
         subsubcategory: deps.subsubcategory,
         search: deps.q,
       },
-    });
-    return { ...catalog, user: context.shopUser };
+    }).catch(() => null);
+    if (!catalog || !catalog.user) {
+      throw redirect({ to: "/anmelden" });
+    }
+    return catalog;
   },
 
 
