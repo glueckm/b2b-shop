@@ -1393,7 +1393,7 @@ function Shop() {
                 )}
                 {rows.map((row) =>
                   row.kind === "single" ? (
-                    <ArticleRow key={row.article.sku} article={row.article} />
+                    renderArticleRow(row.article)
                   ) : (
                     <Fragment key={`g-${row.id}`}>
                       <tr className="border-t border-border/70 bg-muted/30">
