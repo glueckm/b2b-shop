@@ -16,6 +16,8 @@ export type BackendFile = {
   contentType: string;
   entityId: string | null;
   createdAt: string | null;
+  /** Optional: Bilddaten direkt aus der Sammelabfrage (data:-URL). */
+  dataUrl?: string;
 };
 
 function apiBase(): string {
@@ -108,12 +110,24 @@ function mapFile(raw: Record<string, unknown>): BackendFile {
 
 /** Neues Shop-Backend: Bilder werden je Artikel abgefragt. */
 function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFile {
+  const contentType = String(raw["contentType"] ?? "application/octet-stream");
+  // Schickt das Backend die Bilddaten (Vorschaubild) mit, wird kein
+  // zusätzlicher Abruf je Bild mehr nötig.
+  const inline = str(
+    raw["data"] ?? raw["dataBase64"] ?? raw["contentBase64"] ?? raw["bytesBase64"],
+  );
+  const dataUrl = inline
+    ? inline.startsWith("data:")
+      ? inline
+      : `data:${contentType};base64,${inline}`
+    : undefined;
   return {
     id: String(raw["fileId"] ?? raw["id"] ?? ""),
     filename: String(raw["fileName"] ?? raw["filename"] ?? "Bild"),
-    contentType: String(raw["contentType"] ?? "application/octet-stream"),
+    contentType,
     entityId: articleId,
     createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
+    ...(dataUrl ? { dataUrl } : {}),
   };
 }
 
@@ -161,7 +175,7 @@ async function listImagesForArticle(articleId: string): Promise<BackendFile[]> {
 let bulkAvailable = true;
 
 /** Höchstens so viele Artikel-IDs pro Sammelabfrage (URL-Länge). */
-const BULK_CHUNK = 50;
+const BULK_CHUNK = 25;
 
 /**
  * Sammelabfrage: GET /v1/shop/articles/images?articleIds=a,b,c

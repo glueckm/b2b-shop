@@ -249,7 +249,7 @@ function Shop() {
 
     void (async () => {
       // Sammelabfrage im Backend: alle Bildlisten in einem Zug.
-      const CHUNK = 50;
+      const CHUNK = 25;
       const batches: string[][] = [];
       for (let index = 0; index < pending.length; index += CHUNK) {
         batches.push(pending.slice(index, index + CHUNK));
