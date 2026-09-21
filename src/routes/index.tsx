@@ -760,7 +760,10 @@ function Shop() {
     // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
     const thumb = thumbMap[article.id] ?? imagesOf(article)[0];
     const open = detailSku === article.sku;
-    const toggleDetail = () => setDetailSku(open ? null : article.sku);
+    const toggleDetail = () => {
+      if (!open) requestImages(article.id);
+      setDetailSku(open ? null : article.sku);
+    };
     return (
       <Fragment>
         <tr
