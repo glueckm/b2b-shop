@@ -745,27 +745,27 @@ function Shop() {
   );
   const savings = Math.max(0, listTotal - subtotal);
 
-  /** Artikelzeile — `nested` für Varianten innerhalb eines Variantenartikels. */
-  const ArticleRow = ({
-    article,
-    nested = false,
-  }: {
-    article: CatalogArticle;
-    nested?: boolean;
-  }) => {
+  /**
+   * Artikelzeile — `nested` für Varianten innerhalb eines Variantenartikels.
+   * Bewusst als Funktion (kein eigener Komponententyp), damit nachgeladene
+   * Bilder die Zeilen nicht neu aufbauen und dadurch flackern lassen.
+   */
+  const renderArticleRow = (article: CatalogArticle, nested = false) => {
     const q = getQty(article);
     const unit = priceForQty(article, q);
     const state = stockState(article.onHand);
     const spec = specText(article.spec);
-    // Kleines Vorschaubild bevorzugen, damit die Liste leicht bleibt.
-    const thumb = thumbMap[article.id] ?? imagesOf(article)[0];
+    // Kleines Vorschaubild bevorzugen; das große Foto nur als Ersatz, wenn die
+    // Abfrage abgeschlossen ist und kein Vorschaubild existiert.
+    const thumb =
+      thumbMap[article.id] ?? (imageLookupDone.has(article.id) ? imagesOf(article)[0] : undefined);
     const open = detailSku === article.sku;
     const toggleDetail = () => {
       if (!open) requestImages(article.id);
       setDetailSku(open ? null : article.sku);
     };
     return (
-      <Fragment>
+      <Fragment key={nested ? `v-${article.sku}` : article.sku}>
         <tr
           onClick={toggleDetail}
           className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
@@ -1393,7 +1393,7 @@ function Shop() {
                 )}
                 {rows.map((row) =>
                   row.kind === "single" ? (
-                    <ArticleRow key={row.article.sku} article={row.article} />
+                    renderArticleRow(row.article)
                   ) : (
                     <Fragment key={`g-${row.id}`}>
                       <tr className="border-t border-border/70 bg-muted/30">
@@ -1447,9 +1447,7 @@ function Shop() {
                         </td>
                       </tr>
                       {openGroups[row.id] &&
-                        row.variants.map((variant) => (
-                          <ArticleRow key={variant.sku} article={variant} nested />
-                        ))}
+                        row.variants.map((variant) => renderArticleRow(variant, true))}
                     </Fragment>
                   ),
                 )}
