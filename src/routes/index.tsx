@@ -236,55 +236,68 @@ function Shop() {
   const loadingIds = useRef(new Set<string>());
   const [imageLookupDone, setImageLookupDone] = useState<Set<string>>(() => new Set());
 
-  useEffect(() => {
-    const pending = articles
-      .map((article) => article.id)
-      .filter((id) => !loadedIds.current.has(id) && !loadingIds.current.has(id));
-    if (pending.length === 0) return;
-    pending.forEach((id) => loadingIds.current.add(id));
+  // Bilder werden nur für sichtbare Zeilen geholt ("on demand" beim Scrollen).
+  const queueRef = useRef(new Set<string>());
+  const timerRef = useRef<number | null>(null);
 
-    void (async () => {
-      // Sammelabfrage im Backend: alle Bildlisten in einem Zug.
-      const CHUNK = 25;
-      const batches: string[][] = [];
-      for (let index = 0; index < pending.length; index += CHUNK) {
-        batches.push(pending.slice(index, index + CHUNK));
-      }
-      const loadBatch = async (batch: string[], retry = true): Promise<void> => {
-        try {
-          const result = await getArticleImageMap({ data: { articleIds: batch } });
-          if (!result.ok) {
-            if (retry) {
-              await new Promise((resolve) => window.setTimeout(resolve, 400));
-              return loadBatch(batch, false);
-            }
-            batch.forEach((id) => loadingIds.current.delete(id));
-            return;
-          }
-          batch.forEach((id) => {
-            loadingIds.current.delete(id);
-            loadedIds.current.add(id);
-          });
-          if (Object.keys(result.images).length > 0) {
-            setImageMap((prev) => ({ ...prev, ...result.images }));
-          }
-          if (Object.keys(result.thumbs).length > 0) {
-            setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
-          }
-          setImageLookupDone((prev) => new Set([...prev, ...batch]));
-        } catch {
-          // Fehlgeschlagene Portionen bleiben erneut abrufbar.
-          batch.forEach((id) => loadingIds.current.delete(id));
+  const loadBatch = useCallback(async (batch: string[], retry = true): Promise<void> => {
+    try {
+      const result = await getArticleImageMap({ data: { articleIds: batch } });
+      if (!result.ok) {
+        if (retry) {
+          await new Promise((resolve) => window.setTimeout(resolve, 400));
+          return loadBatch(batch, false);
         }
-      };
-
-      const [first, ...rest] = batches;
-      if (first) await loadBatch(first);
-      if (rest.length > 0) {
-        await Promise.all(rest.map((batch) => loadBatch(batch)));
+        batch.forEach((id) => loadingIds.current.delete(id));
+        return;
       }
-    })();
-  }, [articles]);
+      batch.forEach((id) => {
+        loadingIds.current.delete(id);
+        loadedIds.current.add(id);
+      });
+      if (Object.keys(result.images).length > 0) {
+        setImageMap((prev) => ({ ...prev, ...result.images }));
+      }
+      if (Object.keys(result.thumbs).length > 0) {
+        setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
+      }
+      setImageLookupDone((prev) => new Set([...prev, ...batch]));
+    } catch {
+      // Fehlgeschlagene Portionen bleiben erneut abrufbar.
+      batch.forEach((id) => loadingIds.current.delete(id));
+    }
+  }, []);
+
+  /** Bild eines Artikels anfordern; kurz gesammelt, dann als Sammelabfrage. */
+  const requestImages = useCallback(
+    (articleId: string) => {
+      if (loadedIds.current.has(articleId) || loadingIds.current.has(articleId)) return;
+      queueRef.current.add(articleId);
+      if (timerRef.current !== null) return;
+      timerRef.current = window.setTimeout(() => {
+        timerRef.current = null;
+        const ids = [...queueRef.current];
+        queueRef.current.clear();
+        const pending = ids.filter(
+          (id) => !loadedIds.current.has(id) && !loadingIds.current.has(id),
+        );
+        if (pending.length === 0) return;
+        pending.forEach((id) => loadingIds.current.add(id));
+        const CHUNK = 15;
+        for (let index = 0; index < pending.length; index += CHUNK) {
+          void loadBatch(pending.slice(index, index + CHUNK));
+        }
+      }, 120);
+    },
+    [loadBatch],
+  );
+
+  useEffect(
+    () => () => {
+      if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
   const imagesOf = (article: { id: string; sku: string }) => {
