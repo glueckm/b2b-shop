@@ -28,8 +28,11 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
         for (const [articleId, files] of Object.entries(grouped)) {
           const full = files.filter((file) => !isThumb(file.filename));
           const thumb = files.find((file) => isThumb(file.filename));
-          if (full.length > 0) images[articleId] = full.map((file) => articleImageUrl(file.id));
-          if (thumb) thumbs[articleId] = articleImageUrl(thumb.id);
+          if (full.length > 0)
+            images[articleId] = full.map((file) => file.dataUrl ?? articleImageUrl(file.id));
+          // Liefert das Backend die Vorschaubild-Daten mit, werden sie direkt
+          // angezeigt — ohne weiteren Abruf je Bild.
+          if (thumb) thumbs[articleId] = thumb.dataUrl ?? articleImageUrl(thumb.id);
         }
         return { images, thumbs, ok: true };
       } catch {
