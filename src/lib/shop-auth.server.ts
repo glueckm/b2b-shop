@@ -124,16 +124,27 @@ export async function apiLogin(customerNumber: string, password: string): Promis
   return body.access_token;
 }
 
+/** Kurzzeit-Cache für die Kontoabfrage, damit jede Seite nicht erneut beim Backend nachfragt. */
+const userCacheRef = globalThis as typeof globalThis & {
+  __mawaShopUserCache?: Map<string, { at: number; value: ShopUser }>;
+};
+const USER_TTL = 30_000;
+
 export async function apiCurrentUser(): Promise<ShopUser | null> {
   const token = readToken();
   if (!token) return null;
+  const cache = (userCacheRef.__mawaShopUserCache ??= new Map());
+  const hit = cache.get(token);
+  if (hit && Date.now() - hit.at < USER_TTL) return hit.value;
   try {
     const res = await fetch(`${apiBase()}/v1/shop/auth/logins/me`, {
       headers: { authorization: `Bearer ${token}`, origin: appOrigin() },
       signal: AbortSignal.timeout(8_000),
     });
     if (!res.ok) return null;
-    return mapAccount((await res.json()) as Record<string, unknown>);
+    const value = mapAccount((await res.json()) as Record<string, unknown>);
+    cache.set(token, { at: Date.now(), value });
+    return value;
   } catch {
     return null;
   }
