@@ -16,6 +16,8 @@ export type BackendFile = {
   contentType: string;
   entityId: string | null;
   createdAt: string | null;
+  /** Optional: Bilddaten direkt aus der Sammelabfrage (data:-URL). */
+  dataUrl?: string;
 };
 
 function apiBase(): string {
