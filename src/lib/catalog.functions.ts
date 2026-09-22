@@ -216,38 +216,6 @@ limit 600
 
 `;
 
-const COUNT_SQL = `
-with ${GLEVEL_CTE},
-${CATEGORY_PATH_CTE}
--- Variantenartikel zählen als eine Position
-select count(distinct coalesce(
-         (select vv.variant_article_id from weclapp.variant_article_variant vv
-           where vv.article_id = a.id limit 1), a.id))::int as total
-from weclapp.article a
-left join cat on cat.id = a.article_category_id
-left join weclapp.variant_article_variant vg on vg.article_id = a.id
-left join glevel g on g.group_id = vg.variant_article_id
-
-where a.active and a.available_in_sale
-  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-  and (exists (select 1 from weclapp.variant_article_variant vv where vv.article_id = a.id)
-       or coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
-         where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0)
-
-  and exists (
-    select 1 from weclapp.article_price p
-    where p.article_id = a.id and p.sales_channel = $1 and p.price > 0
-      and (p.start_date is null or p.start_date <= now())
-      and (p.end_date is null or p.end_date > now())
-  )
-  and ($2 = '' or ${EFF_L1} = $2)
-  and ($4 = '' or ${EFF_L2} = $4)
-  and ($6 = '' or ${EFF_L3} = $6)
-
-  and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
-  and ($5::text is not null or true) -- $5 = Vertriebsweg für Rabatte (hier ungenutzt)
-`;
-
 const MAIN_STOCK_EXISTS = `
   coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
     where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
@@ -430,8 +398,7 @@ async function buildArticles(
     filter.subsubcategory,
   ];
 
-  const [articles, counts] = await Promise.all([
-    query<{
+  const articles = await query<{
       id: string;
       sku: string;
       name: string;
@@ -449,9 +416,7 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
-    }>(ARTICLES_SQL, params),
-    query<{ total: number }>(COUNT_SQL, params),
-  ]);
+    }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -483,7 +448,11 @@ async function buildArticles(
     };
   });
 
-  return { articles: mapped, total: counts[0]?.total ?? 0 };
+  // Die Liste enthält bereits alle sichtbaren Artikel (maximal 600). Varianten
+  // zählen wie in der Darstellung als eine Familie; eine zweite SQL-Abfrage
+  // nur für dieselbe Zahl ist daher unnötig.
+  const total = new Set(mapped.map((article) => article.groupId || article.id)).size;
+  return { articles: mapped, total };
 }
 
 async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promise<CatalogSnapshot> {
