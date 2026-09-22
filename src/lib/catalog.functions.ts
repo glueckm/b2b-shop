@@ -329,47 +329,34 @@ type CatalogSnapshot = {
 };
 
 /**
- * Kurzzeit-Cache der Katalogdaten: für alle Kunden derselben Preisgruppe und
- * desselben Filters sind die Daten identisch – so entfallen die 4 DB-Abfragen
- * bei jedem Seitenaufbau (z. B. direkt nach der Anmeldung).
+ * Katalog-Cache: für alle Kunden derselben Preisgruppe und desselben Filters
+ * sind die Daten identisch. Frische Daten werden direkt geliefert, ältere
+ * werden sofort ausgeliefert und im Hintergrund erneuert (stale-while-revalidate),
+ * damit niemand auf die Datenbank warten muss.
  */
-const snapshotCacheRef = globalThis as typeof globalThis & {
-  __mawaCatalogSnapshots?: Map<string, { at: number; value: CatalogSnapshot }>;
+type CacheEntry<T> = { at: number; value: T };
+
+const cacheRef = globalThis as typeof globalThis & {
+  __mawaCatalogSnapshots?: Map<string, CacheEntry<CatalogSnapshot>>;
+  __mawaCatalogInflight?: Map<string, Promise<CatalogSnapshot>>;
+  __mawaCatalogMeta?: CacheEntry<CatalogMeta>;
+  __mawaCatalogMetaInflight?: Promise<CatalogMeta> | undefined;
 };
-const SNAPSHOT_TTL = 120_000;
 
-async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promise<CatalogSnapshot> {
+/** Daten gelten so lange als frisch. */
+const SNAPSHOT_TTL = 300_000;
+/** Kategorien/Kennzahlen ändern sich selten. */
+const META_TTL = 900_000;
+
+type CatalogMeta = {
+  categories: { name: string; count: number }[];
+  categoryTree: CategoryNode[];
+  stats: { articles: number; categories: number; onHand: number };
+};
+
+async function buildMeta(): Promise<CatalogMeta> {
   const { query } = await import("./db.server");
-  const params = [
-    priceChannel,
-    filter.category,
-    "",
-    filter.subcategory,
-    priceChannel,
-    filter.subsubcategory,
-  ];
-
-  const [articles, counts, treeRows, stats] = await Promise.all([
-    query<{
-      id: string;
-      sku: string;
-      name: string;
-      spec: string;
-      scope: string;
-      category: string;
-      level1: string;
-      level2: string;
-      level3: string;
-      unit: string;
-      moq: number;
-      on_hand: number;
-      breaks: PriceBreak[];
-      rebate_pct: number;
-      group_id: string;
-      group_sku: string;
-      group_name: string;
-    }>(ARTICLES_SQL, params),
-    query<{ total: number }>(COUNT_SQL, params),
+  const [treeRows, stats] = await Promise.all([
     query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
     query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
   ]);
@@ -400,7 +387,71 @@ async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promi
     node.children.sort(byCount);
     for (const child of node.children) child.children.sort(byCount);
   }
-  const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
+  return {
+    categories: categoryTree.map((node) => ({ name: node.name, count: node.count })),
+    categoryTree,
+    stats: {
+      articles: stats[0]?.articles ?? 0,
+      categories: stats[0]?.categories ?? 0,
+      onHand: Math.round(stats[0]?.on_hand ?? 0),
+    },
+  };
+}
+
+function catalogMeta(): CatalogMeta | Promise<CatalogMeta> {
+  const hit = cacheRef.__mawaCatalogMeta;
+  const fresh = hit && Date.now() - hit.at < META_TTL;
+  if (!fresh && !cacheRef.__mawaCatalogMetaInflight) {
+    cacheRef.__mawaCatalogMetaInflight = buildMeta()
+      .then((value) => {
+        cacheRef.__mawaCatalogMeta = { at: Date.now(), value };
+        return value;
+      })
+      .finally(() => {
+        cacheRef.__mawaCatalogMetaInflight = undefined;
+      });
+  }
+  // Vorhandene Daten sofort ausliefern, auch wenn im Hintergrund erneuert wird.
+  if (hit) return hit.value;
+  return cacheRef.__mawaCatalogMetaInflight!;
+}
+
+async function buildArticles(
+  priceChannel: string,
+  filter: CatalogFilter,
+): Promise<{ articles: CatalogArticle[]; total: number }> {
+  const { query } = await import("./db.server");
+  const params = [
+    priceChannel,
+    filter.category,
+    "",
+    filter.subcategory,
+    priceChannel,
+    filter.subsubcategory,
+  ];
+
+  const [articles, counts] = await Promise.all([
+    query<{
+      id: string;
+      sku: string;
+      name: string;
+      spec: string;
+      scope: string;
+      category: string;
+      level1: string;
+      level2: string;
+      level3: string;
+      unit: string;
+      moq: number;
+      on_hand: number;
+      breaks: PriceBreak[];
+      rebate_pct: number;
+      group_id: string;
+      group_sku: string;
+      group_name: string;
+    }>(ARTICLES_SQL, params),
+    query<{ total: number }>(COUNT_SQL, params),
+  ]);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -432,31 +483,42 @@ async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promi
     };
   });
 
-  return {
-    articles: mapped,
-    total: counts[0]?.total ?? 0,
-    categories,
-    categoryTree,
-    stats: {
-      articles: stats[0]?.articles ?? 0,
-      categories: stats[0]?.categories ?? 0,
-      onHand: Math.round(stats[0]?.on_hand ?? 0),
-    },
-  };
+  return { articles: mapped, total: counts[0]?.total ?? 0 };
 }
 
-async function catalogSnapshot(
+async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promise<CatalogSnapshot> {
+  const [list, meta] = await Promise.all([buildArticles(priceChannel, filter), catalogMeta()]);
+  return { ...list, ...meta };
+}
+
+export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
 ): Promise<CatalogSnapshot> {
-  const cache = (snapshotCacheRef.__mawaCatalogSnapshots ??= new Map());
+  const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
+  const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
   const key = [priceChannel, filter.category, filter.subcategory, filter.subsubcategory].join("|");
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < SNAPSHOT_TTL) return hit.value;
-  const value = await buildSnapshot(priceChannel, filter);
-  cache.set(key, { at: Date.now(), value });
-  return value;
+  const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
+
+  if (!fresh && !inflight.has(key)) {
+    const task = buildSnapshot(priceChannel, filter)
+      .then((value) => {
+        cache.set(key, { at: Date.now(), value });
+        return value;
+      })
+      .finally(() => {
+        inflight.delete(key);
+      });
+    inflight.set(key, task);
+    // Hintergrund-Erneuerung darf keinen unbehandelten Fehler auslösen.
+    if (hit) void task.catch(() => undefined);
+  }
+
+  if (hit) return hit.value;
+  return inflight.get(key)!;
 }
+
 
 
 export const getCatalog = createServerFn({ method: "GET" })
