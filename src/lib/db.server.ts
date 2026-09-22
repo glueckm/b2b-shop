@@ -13,6 +13,8 @@ type DbSession = {
   client?: Client;
   connecting?: Promise<Client>;
   closed: boolean;
+  /** Laufende Abfragen – die Verbindung wird erst danach geschlossen. */
+  pending: Set<Promise<unknown>>;
 };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -83,11 +85,14 @@ async function sessionClient(session: DbSession): Promise<Client> {
 export async function withDbSession<T>(fn: () => Promise<T>): Promise<T> {
   const als = await getAls();
   if (!als) return fn();
-  const session: DbSession = { closed: false };
+  const session: DbSession = { closed: false, pending: new Set() };
   try {
     return await als.run({ session }, fn);
   } finally {
     session.closed = true;
+    while (session.pending.size) {
+      await Promise.allSettled([...session.pending]);
+    }
     const client = session.client ?? (await session.connecting?.catch(() => undefined));
     await client?.end().catch(() => undefined);
   }
@@ -103,8 +108,14 @@ export async function query<T extends Record<string, unknown>>(
   // Innerhalb einer Anfrage: gemeinsame Verbindung wiederverwenden.
   if (session && !session.closed) {
     const client = await sessionClient(session);
-    const result = await client.query(sql, params as never[]);
-    return result.rows as T[];
+    const task = client.query(sql, params as never[]);
+    session.pending.add(task);
+    try {
+      const result = await task;
+      return result.rows as T[];
+    } finally {
+      session.pending.delete(task);
+    }
   }
 
   // Außerhalb (Hintergrund-Erneuerung o. Ä.): kurzlebige Einzelverbindung.
