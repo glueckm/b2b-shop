@@ -46,6 +46,9 @@ const searchSchema = z.object({
 });
 
 export const Route = createFileRoute("/")({
+  // Der Katalog wird nur im Browser geladen. So führt der Wechsel von der
+  // Anmeldung nicht gleichzeitig einen SSR- und einen Client-Lader aus.
+  ssr: false,
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
   // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
