@@ -2,12 +2,20 @@ import { Pool } from "pg";
 
 const globalRef = globalThis as typeof globalThis & {
   __mawaPgPool?: Pool;
+  __mawaPgUrl?: string;
 };
 
 export function getPool(): Pool {
+  const connectionString = process.env["DATABASE_URL"];
+  if (!connectionString) throw new Error("DATABASE_URL is not configured");
+  // Wird der Zugang gewechselt, darf kein Pool mit den alten Zugangsdaten weiterlaufen.
+  if (globalRef.__mawaPgPool && globalRef.__mawaPgUrl !== connectionString) {
+    const stale = globalRef.__mawaPgPool;
+    globalRef.__mawaPgPool = undefined;
+    void stale.end().catch(() => undefined);
+  }
   if (!globalRef.__mawaPgPool) {
-    const connectionString = process.env["DATABASE_URL"];
-    if (!connectionString) throw new Error("DATABASE_URL is not configured");
+    globalRef.__mawaPgUrl = connectionString;
     globalRef.__mawaPgPool = new Pool({
       connectionString,
       ssl: { rejectUnauthorized: false },
