@@ -391,6 +391,7 @@ function catalogMeta(session?: DbSession): CatalogMeta | Promise<CatalogMeta> {
 async function buildArticles(
   priceChannel: string,
   filter: CatalogFilter,
+  session?: DbSession,
 ): Promise<{ articles: CatalogArticle[]; total: number }> {
   const { query } = await import("./db.server");
   const params = [
@@ -420,7 +421,7 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
-    }>(ARTICLES_SQL, params);
+    }>(ARTICLES_SQL, params, session);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -459,14 +460,22 @@ async function buildArticles(
   return { articles: mapped, total };
 }
 
-async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promise<CatalogSnapshot> {
-  const [list, meta] = await Promise.all([buildArticles(priceChannel, filter), catalogMeta()]);
+async function buildSnapshot(
+  priceChannel: string,
+  filter: CatalogFilter,
+  session?: DbSession,
+): Promise<CatalogSnapshot> {
+  const [list, meta] = await Promise.all([
+    buildArticles(priceChannel, filter, session),
+    catalogMeta(session),
+  ]);
   return { ...list, ...meta };
 }
 
 export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
+  session?: DbSession,
 ): Promise<CatalogSnapshot> {
   const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
@@ -475,7 +484,9 @@ export async function catalogSnapshot(
   const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
 
   if (!fresh && !inflight.has(key)) {
-    const task = buildSnapshot(priceChannel, filter)
+    // Nur wenn wir selbst auf die Daten warten, darf die Anfrage-Verbindung
+    // mitbenutzt werden – eine Hintergrund-Erneuerung überlebt die Anfrage.
+    const task = buildSnapshot(priceChannel, filter, hit ? undefined : session)
       .then((value) => {
         cache.set(key, { at: Date.now(), value });
         return value;
