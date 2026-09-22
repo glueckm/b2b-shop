@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+/** Anfrage-Verbindung (nur Typ – wird beim Bauen entfernt). */
+type DbSession = import("./db.server").DbSession;
 
 export const priceGroups = [
   { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
@@ -322,11 +324,15 @@ type CatalogMeta = {
   stats: { articles: number; categories: number; onHand: number };
 };
 
-async function buildMeta(): Promise<CatalogMeta> {
+async function buildMeta(session?: DbSession): Promise<CatalogMeta> {
   const { query } = await import("./db.server");
   const [treeRows, stats] = await Promise.all([
-    query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
-    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
+    query<{ level1: string; level2: string; level3: string; count: number }>(
+      CATEGORY_TREE_SQL,
+      [],
+      session,
+    ),
+    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL, [], session),
   ]);
 
   const treeMap = new Map<string, CategoryNode>();
@@ -366,11 +372,11 @@ async function buildMeta(): Promise<CatalogMeta> {
   };
 }
 
-function catalogMeta(): CatalogMeta | Promise<CatalogMeta> {
+function catalogMeta(session?: DbSession): CatalogMeta | Promise<CatalogMeta> {
   const hit = cacheRef.__mawaCatalogMeta;
   const fresh = hit && Date.now() - hit.at < META_TTL;
   if (!fresh && !cacheRef.__mawaCatalogMetaInflight) {
-    cacheRef.__mawaCatalogMetaInflight = buildMeta()
+    cacheRef.__mawaCatalogMetaInflight = buildMeta(session)
       .then((value) => {
         cacheRef.__mawaCatalogMeta = { at: Date.now(), value };
         return value;
@@ -387,6 +393,7 @@ function catalogMeta(): CatalogMeta | Promise<CatalogMeta> {
 async function buildArticles(
   priceChannel: string,
   filter: CatalogFilter,
+  session?: DbSession,
 ): Promise<{ articles: CatalogArticle[]; total: number }> {
   const { query } = await import("./db.server");
   const params = [
@@ -416,7 +423,7 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
-    }>(ARTICLES_SQL, params);
+    }>(ARTICLES_SQL, params, session);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -455,14 +462,22 @@ async function buildArticles(
   return { articles: mapped, total };
 }
 
-async function buildSnapshot(priceChannel: string, filter: CatalogFilter): Promise<CatalogSnapshot> {
-  const [list, meta] = await Promise.all([buildArticles(priceChannel, filter), catalogMeta()]);
+async function buildSnapshot(
+  priceChannel: string,
+  filter: CatalogFilter,
+  session?: DbSession,
+): Promise<CatalogSnapshot> {
+  const [list, meta] = await Promise.all([
+    buildArticles(priceChannel, filter, session),
+    catalogMeta(session),
+  ]);
   return { ...list, ...meta };
 }
 
 export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
+  session?: DbSession,
 ): Promise<CatalogSnapshot> {
   const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
@@ -471,7 +486,9 @@ export async function catalogSnapshot(
   const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
 
   if (!fresh && !inflight.has(key)) {
-    const task = buildSnapshot(priceChannel, filter)
+    // Nur wenn wir selbst auf die Daten warten, darf die Anfrage-Verbindung
+    // mitbenutzt werden – eine Hintergrund-Erneuerung überlebt die Anfrage.
+    const task = buildSnapshot(priceChannel, filter, hit ? undefined : session)
       .then((value) => {
         cache.set(key, { at: Date.now(), value });
         return value;
@@ -495,15 +512,18 @@ export const getCatalog = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { withDbSession } = await import("./db.server");
     // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
-    return withDbSession(() => buildPayload(data));
+    return withDbSession((session) => buildPayload(data, session));
   });
 
-async function buildPayload(data: {
-  category: string;
-  subcategory: string;
-  subsubcategory: string;
-  search: string;
-}): Promise<CatalogPayload> {
+async function buildPayload(
+  data: {
+    category: string;
+    subcategory: string;
+    subsubcategory: string;
+    search: string;
+  },
+  session?: DbSession,
+): Promise<CatalogPayload> {
   {
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
@@ -522,13 +542,17 @@ async function buildPayload(data: {
         stats: { articles: 0, categories: 0, onHand: 0 },
       };
     }
-    const pricing = await customerPricing(readCustomerNumber());
+    const pricing = await customerPricing(readCustomerNumber(), session);
     const priceChannel = pricing.channel || "NET1";
-    const snapshot = await catalogSnapshot(priceChannel, {
-      category: data.category,
-      subcategory: data.subcategory,
-      subsubcategory: data.subsubcategory,
-    });
+    const snapshot = await catalogSnapshot(
+      priceChannel,
+      {
+        category: data.category,
+        subcategory: data.subcategory,
+        subsubcategory: data.subsubcategory,
+      },
+      session,
+    );
     const { categories, categoryTree, stats } = snapshot;
     let mapped: CatalogArticle[] = snapshot.articles;
 

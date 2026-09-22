@@ -2,14 +2,16 @@ import { Client } from "pg";
 
 /**
  * Verbindungsstrategie: kein Pool über Anfragen hinweg (in der kurzlebigen
- * Server-Umgebung wird eine offene Verbindung nie wiederverwendet, aber
- * blockiert das Verbindungslimit). Innerhalb einer Anfrage teilen dagegen
- * alle Abfragen genau eine Verbindung — ein Handshake statt vier.
+ * Server-Umgebung wird eine offene Verbindung nie wiederverwendet, blockiert
+ * aber das Verbindungslimit). Innerhalb einer Anfrage teilen dagegen alle
+ * Abfragen genau eine Verbindung — ein Handshake statt vier.
  *
- * withDbSession() öffnet die Verbindung beim ersten query() und schließt sie,
- * sobald die Anfrage fertig ist.
+ * Die Session wird explizit weitergegeben (query(sql, params, session)), weil
+ * AsyncLocalStorage nicht in jeder Server-Umgebung verfügbar ist. Zusätzlich
+ * gibt es AsyncLocalStorage als Komfort-Fallback, falls eine Abfrage ohne
+ * Session-Parameter läuft.
  */
-type DbSession = {
+export type DbSession = {
   client?: Client;
   connecting?: Promise<Client>;
   closed: boolean;
@@ -80,14 +82,14 @@ async function sessionClient(session: DbSession): Promise<Client> {
 
 /**
  * Führt fn aus und teilt dabei eine einzige Datenbankverbindung zwischen allen
- * darin ausgelösten query()-Aufrufen. Die Verbindung wird danach geschlossen.
+ * Abfragen, die die übergebene Session verwenden. Die Verbindung wird danach
+ * geschlossen.
  */
-export async function withDbSession<T>(fn: () => Promise<T>): Promise<T> {
-  const als = await getAls();
-  if (!als) return fn();
+export async function withDbSession<T>(fn: (session: DbSession) => Promise<T>): Promise<T> {
   const session: DbSession = { closed: false, pending: new Set() };
+  const als = await getAls();
   try {
-    return await als.run({ session }, fn);
+    return als ? await als.run({ session }, () => fn(session)) : await fn(session);
   } finally {
     session.closed = true;
     while (session.pending.size) {
@@ -101,20 +103,24 @@ export async function withDbSession<T>(fn: () => Promise<T>): Promise<T> {
 export async function query<T extends Record<string, unknown>>(
   sql: string,
   params: unknown[] = [],
+  session?: DbSession,
 ): Promise<T[]> {
-  const als = await getAls();
-  const session = als?.getStore()?.session;
+  let active = session;
+  if (!active) {
+    const als = await getAls();
+    active = als?.getStore()?.session;
+  }
 
   // Innerhalb einer Anfrage: gemeinsame Verbindung wiederverwenden.
-  if (session && !session.closed) {
-    const client = await sessionClient(session);
+  if (active && !active.closed) {
+    const client = await sessionClient(active);
     const task = client.query(sql, params as never[]);
-    session.pending.add(task);
+    active.pending.add(task);
     try {
       const result = await task;
       return result.rows as T[];
     } finally {
-      session.pending.delete(task);
+      active.pending.delete(task);
     }
   }
 
