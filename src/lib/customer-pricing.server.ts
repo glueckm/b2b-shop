@@ -6,7 +6,7 @@
  * z. B. PLATIN). Der Shop rechnet ausschließlich mit diesen Werten – es gibt
  * keine Auswahl im Frontend mehr.
  */
-import { query, type DbQuery } from "./db.server";
+import type { DbQuery } from "./db.server";
 
 export type CustomerPricing = {
   /** Vertriebsweg für die Preise, z. B. "NET6". */
@@ -53,7 +53,7 @@ const PRICING_TTL = 5 * 60 * 1000;
 
 export async function customerPricing(
   customerNumber: string | null | undefined,
-  sessionQuery: DbQuery = query,
+  sessionQuery: DbQuery,
 ): Promise<CustomerPricing> {
   const number = (customerNumber ?? "").trim();
   if (!number) return FALLBACK;
