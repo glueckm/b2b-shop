@@ -48,6 +48,8 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/")({
   validateSearch: searchSchema,
   loaderDeps: ({ search }) => search,
+  // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
+  staleTime: 120_000,
   loader: async ({ deps }) => {
     const catalog = await getCatalog({
       data: {
