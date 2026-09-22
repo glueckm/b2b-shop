@@ -340,7 +340,7 @@ const cacheRef = globalThis as typeof globalThis & {
   __mawaCatalogSnapshots?: Map<string, CacheEntry<CatalogSnapshot>>;
   __mawaCatalogInflight?: Map<string, Promise<CatalogSnapshot>>;
   __mawaCatalogMeta?: CacheEntry<CatalogMeta>;
-  __mawaCatalogMetaInflight?: Promise<CatalogMeta>;
+  __mawaCatalogMetaInflight?: Promise<CatalogMeta> | undefined;
 };
 
 /** Daten gelten so lange als frisch. */
