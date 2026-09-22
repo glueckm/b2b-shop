@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import type { DbSession } from "./db.server";
 
 export const priceGroups = [
   { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
@@ -510,15 +511,18 @@ export const getCatalog = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { withDbSession } = await import("./db.server");
     // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
-    return withDbSession(() => buildPayload(data));
+    return withDbSession((session) => buildPayload(data, session));
   });
 
-async function buildPayload(data: {
-  category: string;
-  subcategory: string;
-  subsubcategory: string;
-  search: string;
-}): Promise<CatalogPayload> {
+async function buildPayload(
+  data: {
+    category: string;
+    subcategory: string;
+    subsubcategory: string;
+    search: string;
+  },
+  session?: DbSession,
+): Promise<CatalogPayload> {
   {
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
@@ -537,13 +541,17 @@ async function buildPayload(data: {
         stats: { articles: 0, categories: 0, onHand: 0 },
       };
     }
-    const pricing = await customerPricing(readCustomerNumber());
+    const pricing = await customerPricing(readCustomerNumber(), session);
     const priceChannel = pricing.channel || "NET1";
-    const snapshot = await catalogSnapshot(priceChannel, {
-      category: data.category,
-      subcategory: data.subcategory,
-      subsubcategory: data.subsubcategory,
-    });
+    const snapshot = await catalogSnapshot(
+      priceChannel,
+      {
+        category: data.category,
+        subcategory: data.subcategory,
+        subsubcategory: data.subsubcategory,
+      },
+      session,
+    );
     const { categories, categoryTree, stats } = snapshot;
     let mapped: CatalogArticle[] = snapshot.articles;
 
