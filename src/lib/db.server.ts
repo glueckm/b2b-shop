@@ -1,37 +1,10 @@
-import { Pool } from "pg";
+import { Client } from "pg";
 
-const globalRef = globalThis as typeof globalThis & {
-  __mawaPgPool?: Pool | undefined;
-  __mawaPgUrl?: string | undefined;
-};
-
-export function getPool(): Pool {
-  const connectionString = process.env["DATABASE_URL"];
-  if (!connectionString) throw new Error("DATABASE_URL is not configured");
-  // Wird der Zugang gewechselt, darf kein Pool mit den alten Zugangsdaten weiterlaufen.
-  if (globalRef.__mawaPgPool && globalRef.__mawaPgUrl !== connectionString) {
-    const stale = globalRef.__mawaPgPool;
-    globalRef.__mawaPgPool = undefined;
-    void stale.end().catch(() => undefined);
-  }
-  if (!globalRef.__mawaPgPool) {
-    globalRef.__mawaPgUrl = connectionString;
-    globalRef.__mawaPgPool = new Pool({
-      connectionString,
-      ssl: { rejectUnauthorized: false },
-      // Der Zugang erlaubt nur 5 gleichzeitige Verbindungen: eine je Instanz,
-      // und sie wird sofort nach der Abfrage wieder freigegeben.
-      max: 1,
-      idleTimeoutMillis: 500,
-      connectionTimeoutMillis: 15_000,
-      allowExitOnIdle: true,
-    });
-    globalRef.__mawaPgPool.on("error", () => {
-      // swallow idle-client errors so a dropped connection never crashes the server
-    });
-  }
-  return globalRef.__mawaPgPool;
-}
+// Ein Pool ist in der kurzlebigen Server-Umgebung kontraproduktiv: seine
+// Verbindung wird nach der Anfrage nicht wiederverwendet, aber bis zum
+// idleTimeout gehalten. Abfragen werden deshalb über genau eine kurzlebige
+// Verbindung ausgeführt und diese wird unmittelbar danach geschlossen.
+let queryQueue: Promise<void> = Promise.resolve();
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -44,16 +17,38 @@ export async function query<T extends Record<string, unknown>>(
   sql: string,
   params: unknown[] = [],
 ): Promise<T[]> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt < 6; attempt += 1) {
-    try {
-      const result = await getPool().query(sql, params as never[]);
-      return result.rows as T[];
-    } catch (error) {
-      lastError = error;
-      if (!isTooManyConnections(error)) throw error;
-      await sleep(200 * (attempt + 1));
+  const previous = queryQueue;
+  let release = () => {};
+  queryQueue = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await previous;
+
+  try {
+    const connectionString = process.env["DATABASE_URL"];
+    if (!connectionString) throw new Error("DATABASE_URL is not configured");
+
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const client = new Client({
+        connectionString,
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 15_000,
+      });
+      try {
+        await client.connect();
+        const result = await client.query(sql, params as never[]);
+        return result.rows as T[];
+      } catch (error) {
+        lastError = error;
+        if (!isTooManyConnections(error)) throw error;
+        await sleep(200 * (attempt + 1));
+      } finally {
+        await client.end().catch(() => undefined);
+      }
     }
+    throw lastError;
+  } finally {
+    release();
   }
-  throw lastError;
 }
