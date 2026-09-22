@@ -493,6 +493,18 @@ export async function catalogSnapshot(
 export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
+    const { withDbSession } = await import("./db.server");
+    // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
+    return withDbSession(() => buildPayload(data));
+  });
+
+async function buildPayload(data: {
+  category: string;
+  subcategory: string;
+  subsubcategory: string;
+  search: string;
+}): Promise<CatalogPayload> {
+  {
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
     // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
@@ -561,4 +573,5 @@ export const getCatalog = createServerFn({ method: "GET" })
       pricing: { channel: priceChannel, group: pricing.group, company: pricing.company },
       stats,
     };
-  });
+  }
+}
