@@ -1,4 +1,11 @@
-import { createFileRoute, Link, redirect, useNavigate, useRouter } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  Link,
+  redirect,
+  useNavigate,
+  useRouter,
+  useRouterState,
+} from "@tanstack/react-router";
 import { Star, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
@@ -267,6 +274,10 @@ function Shop() {
   const search = Route.useSearch();
   const navigate = useNavigate({ from: Route.fullPath });
   const router = useRouter();
+  // Läuft gerade ein Kategoriewechsel/Filterwechsel? Dann Ladeanzeige zeigen.
+  const navPending = useRouterState({
+    select: (state) => state.isLoading || state.isTransitioning,
+  });
 
   const articles = data.articles;
 
@@ -1363,13 +1374,27 @@ function Shop() {
                 </button>
               </form>
 
-              <p className="text-sm text-muted-foreground">
-                {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                {navPending ? (
+                  <>
+                    <span className="size-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
+                    Artikel werden geladen …
+                  </>
+                ) : (
+                  <>
+                    {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
+                  </>
+                )}
               </p>
             </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+          <div className="relative mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+            {navPending && (
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-card/70 pt-16">
+                <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
+              </div>
+            )}
             <table className="w-full min-w-[900px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-border bg-muted/60">
