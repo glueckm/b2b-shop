@@ -462,9 +462,9 @@ async function catalogSnapshot(
 export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
-    const { query } = await import("./db.server");
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
+    // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
     // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
     const user = await apiCurrentUser();
     if (!user) {
@@ -482,104 +482,13 @@ export const getCatalog = createServerFn({ method: "GET" })
     }
     const pricing = await customerPricing(readCustomerNumber());
     const priceChannel = pricing.channel || "NET1";
-    const params = [
-      priceChannel,
-      data.category,
-      "",
-      data.subcategory,
-      priceChannel,
-      data.subsubcategory,
-    ];
-
-
-    const [articles, counts, treeRows, stats] = await Promise.all([
-      query<{
-        id: string;
-        sku: string;
-        name: string;
-        spec: string;
-        scope: string;
-        category: string;
-        level1: string;
-        level2: string;
-        level3: string;
-        unit: string;
-        moq: number;
-        on_hand: number;
-        breaks: PriceBreak[];
-        rebate_pct: number;
-        group_id: string;
-        group_sku: string;
-        group_name: string;
-
-
-      }>(ARTICLES_SQL, params),
-      query<{ total: number }>(COUNT_SQL, params),
-      query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
-      query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
-    ]);
-
-    const treeMap = new Map<string, CategoryNode>();
-    for (const row of treeRows) {
-      const node = treeMap.get(row.level1) ?? { name: row.level1, count: 0, children: [] };
-      node.count += row.count;
-      if (row.level2) {
-        let child = node.children.find((c) => c.name === row.level2);
-        if (!child) {
-          child = { name: row.level2, count: 0, children: [] };
-          node.children.push(child);
-        }
-        child.count += row.count;
-        if (row.level3) {
-          const leaf = child.children.find((l) => l.name === row.level3);
-          if (leaf) leaf.count += row.count;
-          else child.children.push({ name: row.level3, count: row.count });
-        }
-      }
-      treeMap.set(row.level1, node);
-    }
-    const byCount = (a: { name: string; count: number }, b: { name: string; count: number }) =>
-      b.count - a.count || a.name.localeCompare(b.name);
-    const categoryTree = [...treeMap.values()].sort(byCount);
-    for (const node of categoryTree) {
-      node.children.sort(byCount);
-      for (const child of node.children) child.children.sort(byCount);
-    }
-    const categories = categoryTree.map((node) => ({ name: node.name, count: node.count }));
-
-
-
-    let mapped: CatalogArticle[] = articles.map((row) => {
-      // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
-      const pct = Number(row.rebate_pct ?? 0);
-      const factor = 1 - pct / 100;
-      return {
-        id: String(row.id),
-        sku: row.sku,
-        name: row.name,
-        spec: row.spec,
-        scope: row.scope ?? "",
-        category: row.category,
-        level1: row.level1,
-        level2: row.level2,
-        level3: row.level3 ?? "",
-
-
-        unit: row.unit,
-        moq: Math.max(1, Math.round(row.moq)),
-        onHand: Math.round(row.on_hand),
-        breaks: (row.breaks ?? [])
-          .map((b) => ({
-            from: Number(b.from),
-            price: Math.round(Number(b.price) * factor * 100) / 100,
-          }))
-          .sort((a, b) => a.from - b.from),
-        rebatePct: pct,
-        groupId: row.group_id ?? "",
-        groupSku: row.group_sku ?? "",
-        groupName: row.group_name ?? "",
-      };
+    const snapshot = await catalogSnapshot(priceChannel, {
+      category: data.category,
+      subcategory: data.subcategory,
+      subsubcategory: data.subsubcategory,
     });
+    const { categories, categoryTree, stats } = snapshot;
+    let mapped: CatalogArticle[] = snapshot.articles;
 
 
 
