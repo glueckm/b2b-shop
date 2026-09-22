@@ -6,18 +6,16 @@ import { Client } from "pg";
  * aber das Verbindungslimit). Innerhalb einer Anfrage teilen dagegen alle
  * Abfragen genau eine Verbindung — ein Handshake statt vier.
  *
- * Die Session wird explizit weitergegeben (query(sql, params, session)), weil
- * AsyncLocalStorage nicht in jeder Server-Umgebung verfügbar ist. Zusätzlich
- * gibt es AsyncLocalStorage als Komfort-Fallback, falls eine Abfrage ohne
- * Session-Parameter läuft.
+ * Die Session stellt eine an genau diesen Client gebundene query-Funktion
+ * bereit. Damit kann kein Laufzeit-Kontext und kein getrennt gebündeltes Modul
+ * unbemerkt auf eine zweite Verbindung ausweichen.
  */
-export type DbSession = {
-  client?: Client;
-  connecting?: Promise<Client>;
-  closed: boolean;
-  /** Laufende Abfragen – die Verbindung wird erst danach geschlossen. */
-  pending: Set<Promise<unknown>>;
-};
+export type DbQuery = <T extends Record<string, unknown>>(
+  sql: string,
+  params?: unknown[],
+) => Promise<T[]>;
+
+export type DbSession = { query: DbQuery };
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -53,78 +51,30 @@ async function openClient(): Promise<Client> {
   throw lastError;
 }
 
-/** Aktive Verbindung der laufenden Anfrage (AsyncLocalStorage, falls verfügbar). */
-type Store = { session: DbSession };
-
-const storeRef = globalThis as typeof globalThis & {
-  __mawaDbAls?: { getStore(): Store | undefined; run<T>(store: Store, fn: () => T): T } | null;
-};
-
-async function getAls() {
-  if (storeRef.__mawaDbAls !== undefined) return storeRef.__mawaDbAls;
-  try {
-    const { AsyncLocalStorage } = await import("node:async_hooks");
-    storeRef.__mawaDbAls = new AsyncLocalStorage<Store>();
-  } catch {
-    storeRef.__mawaDbAls = null;
-  }
-  return storeRef.__mawaDbAls;
-}
-
-async function sessionClient(session: DbSession): Promise<Client> {
-  if (session.client) return session.client;
-  session.connecting ??= openClient().then((client) => {
-    session.client = client;
-    return client;
-  });
-  return session.connecting;
-}
-
 /**
- * Führt fn aus und teilt dabei eine einzige Datenbankverbindung zwischen allen
- * Abfragen, die die übergebene Session verwenden. Die Verbindung wird danach
- * geschlossen.
+ * Öffnet genau eine Verbindung, bindet alle Abfragen direkt an diesen Client
+ * und schließt ihn unmittelbar nach der vollständigen Antwort.
  */
 export async function withDbSession<T>(fn: (session: DbSession) => Promise<T>): Promise<T> {
-  const session: DbSession = { closed: false, pending: new Set() };
-  const als = await getAls();
+  const client = await openClient();
+  const session: DbSession = {
+    query: async <R extends Record<string, unknown>>(sql: string, params: unknown[] = []) => {
+      const result = await client.query(sql, params as never[]);
+      return result.rows as R[];
+    },
+  };
   try {
-    return als ? await als.run({ session }, () => fn(session)) : await fn(session);
+    return await fn(session);
   } finally {
-    session.closed = true;
-    while (session.pending.size) {
-      await Promise.allSettled([...session.pending]);
-    }
-    const client = session.client ?? (await session.connecting?.catch(() => undefined));
-    await client?.end().catch(() => undefined);
+    await client.end().catch(() => undefined);
   }
 }
 
 export async function query<T extends Record<string, unknown>>(
   sql: string,
   params: unknown[] = [],
-  session?: DbSession,
 ): Promise<T[]> {
-  let active = session;
-  if (!active) {
-    const als = await getAls();
-    active = als?.getStore()?.session;
-  }
-
-  // Innerhalb einer Anfrage: gemeinsame Verbindung wiederverwenden.
-  if (active && !active.closed) {
-    const client = await sessionClient(active);
-    const task = client.query(sql, params as never[]);
-    active.pending.add(task);
-    try {
-      const result = await task;
-      return result.rows as T[];
-    } finally {
-      active.pending.delete(task);
-    }
-  }
-
-  // Außerhalb (Hintergrund-Erneuerung o. Ä.): kurzlebige Einzelverbindung.
+  // Bewusst unabhängige Aufgabe außerhalb eines Katalogaufrufs.
   const client = await openClient();
   try {
     const result = await client.query(sql, params as never[]);
