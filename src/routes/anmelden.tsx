@@ -32,6 +32,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // Zugang anfordern
   const [signupOpen, setSignupOpen] = useState(false);
@@ -107,15 +108,20 @@ function LoginPage() {
     try {
       const result = await shopLogin({ data: { customerNumber, password } });
       if (result.ok) {
-        void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
-      } else {
-        setError(result.error);
+        // Katalog wird geladen – Spinner bleibt bis zum Seitenwechsel sichtbar.
+        setLoadingCatalog(true);
+        await navigate({
+          to: "/",
+          search: { channel: "NET1", category: "", subcategory: "", q: "" },
+        });
+        return;
       }
+      setError(result.error);
     } catch {
       setError("Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.");
-    } finally {
-      setBusy(false);
+      setLoadingCatalog(false);
     }
+    setBusy(false);
   }
 
   return (
