@@ -56,9 +56,11 @@ async function openClient(): Promise<Client> {
  * und schließt ihn unmittelbar nach der vollständigen Antwort.
  */
 export async function withDbSession<T>(fn: (session: DbSession) => Promise<T>): Promise<T> {
-  const client = await openClient();
+  let clientPromise: Promise<Client> | undefined;
   const session: DbSession = {
     query: async <R extends Record<string, unknown>>(sql: string, params: unknown[] = []) => {
+      clientPromise ??= openClient();
+      const client = await clientPromise;
       const result = await client.query(sql, params as never[]);
       return result.rows as R[];
     },
@@ -66,7 +68,8 @@ export async function withDbSession<T>(fn: (session: DbSession) => Promise<T>): 
   try {
     return await fn(session);
   } finally {
-    await client.end().catch(() => undefined);
+    const client = await clientPromise?.catch(() => undefined);
+    await client?.end().catch(() => undefined);
   }
 }
 

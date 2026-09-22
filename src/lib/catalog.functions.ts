@@ -383,8 +383,7 @@ function catalogMeta(query: DbQuery): CatalogMeta | Promise<CatalogMeta> {
         cacheRef.__mawaCatalogMetaInflight = undefined;
       });
   }
-  // Vorhandene Daten sofort ausliefern, auch wenn im Hintergrund erneuert wird.
-  if (hit) return hit.value;
+  if (fresh && hit) return hit.value;
   return cacheRef.__mawaCatalogMetaInflight!;
 }
 
