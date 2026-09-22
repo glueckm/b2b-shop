@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-/** Anfrage-Verbindung (nur Typ – wird beim Bauen entfernt). */
-type DbSession = import("./db.server").DbSession;
+/** An genau eine Anfrage-Verbindung gebundene Abfragefunktion. */
+type DbQuery = import("./db.server").DbQuery;
 
 export const priceGroups = [
   { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
@@ -324,15 +324,13 @@ type CatalogMeta = {
   stats: { articles: number; categories: number; onHand: number };
 };
 
-async function buildMeta(session?: DbSession): Promise<CatalogMeta> {
-  const { query } = await import("./db.server");
+async function buildMeta(query: DbQuery): Promise<CatalogMeta> {
   const [treeRows, stats] = await Promise.all([
     query<{ level1: string; level2: string; level3: string; count: number }>(
       CATEGORY_TREE_SQL,
       [],
-      session,
     ),
-    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL, [], session),
+    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
   ]);
 
   const treeMap = new Map<string, CategoryNode>();
@@ -372,11 +370,11 @@ async function buildMeta(session?: DbSession): Promise<CatalogMeta> {
   };
 }
 
-function catalogMeta(session?: DbSession): CatalogMeta | Promise<CatalogMeta> {
+function catalogMeta(query: DbQuery): CatalogMeta | Promise<CatalogMeta> {
   const hit = cacheRef.__mawaCatalogMeta;
   const fresh = hit && Date.now() - hit.at < META_TTL;
   if (!fresh && !cacheRef.__mawaCatalogMetaInflight) {
-    cacheRef.__mawaCatalogMetaInflight = buildMeta(session)
+    cacheRef.__mawaCatalogMetaInflight = buildMeta(query)
       .then((value) => {
         cacheRef.__mawaCatalogMeta = { at: Date.now(), value };
         return value;
@@ -385,17 +383,15 @@ function catalogMeta(session?: DbSession): CatalogMeta | Promise<CatalogMeta> {
         cacheRef.__mawaCatalogMetaInflight = undefined;
       });
   }
-  // Vorhandene Daten sofort ausliefern, auch wenn im Hintergrund erneuert wird.
-  if (hit) return hit.value;
+  if (fresh && hit) return hit.value;
   return cacheRef.__mawaCatalogMetaInflight!;
 }
 
 async function buildArticles(
   priceChannel: string,
   filter: CatalogFilter,
-  session?: DbSession,
+  query: DbQuery,
 ): Promise<{ articles: CatalogArticle[]; total: number }> {
-  const { query } = await import("./db.server");
   const params = [
     priceChannel,
     filter.category,
@@ -423,7 +419,7 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
-    }>(ARTICLES_SQL, params, session);
+    }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -465,11 +461,11 @@ async function buildArticles(
 async function buildSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
-  session?: DbSession,
+  query: DbQuery,
 ): Promise<CatalogSnapshot> {
   const [list, meta] = await Promise.all([
-    buildArticles(priceChannel, filter, session),
-    catalogMeta(session),
+    buildArticles(priceChannel, filter, query),
+    catalogMeta(query),
   ]);
   return { ...list, ...meta };
 }
@@ -477,7 +473,7 @@ async function buildSnapshot(
 export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
-  session?: DbSession,
+  query: DbQuery,
 ): Promise<CatalogSnapshot> {
   const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
@@ -486,9 +482,7 @@ export async function catalogSnapshot(
   const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
 
   if (!fresh && !inflight.has(key)) {
-    // Nur wenn wir selbst auf die Daten warten, darf die Anfrage-Verbindung
-    // mitbenutzt werden – eine Hintergrund-Erneuerung überlebt die Anfrage.
-    const task = buildSnapshot(priceChannel, filter, hit ? undefined : session)
+    const task = buildSnapshot(priceChannel, filter, query)
       .then((value) => {
         cache.set(key, { at: Date.now(), value });
         return value;
@@ -497,11 +491,9 @@ export async function catalogSnapshot(
         inflight.delete(key);
       });
     inflight.set(key, task);
-    // Hintergrund-Erneuerung darf keinen unbehandelten Fehler auslösen.
-    if (hit) void task.catch(() => undefined);
   }
 
-  if (hit) return hit.value;
+  if (fresh && hit) return hit.value;
   return inflight.get(key)!;
 }
 
@@ -512,7 +504,7 @@ export const getCatalog = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<CatalogPayload> => {
     const { withDbSession } = await import("./db.server");
     // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
-    return withDbSession((session) => buildPayload(data, session));
+    return withDbSession((session) => buildPayload(data, session.query));
   });
 
 async function buildPayload(
@@ -522,7 +514,7 @@ async function buildPayload(
     subsubcategory: string;
     search: string;
   },
-  session?: DbSession,
+  query: DbQuery,
 ): Promise<CatalogPayload> {
   {
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
@@ -542,7 +534,7 @@ async function buildPayload(
         stats: { articles: 0, categories: 0, onHand: 0 },
       };
     }
-    const pricing = await customerPricing(readCustomerNumber(), session);
+    const pricing = await customerPricing(readCustomerNumber(), query);
     const priceChannel = pricing.channel || "NET1";
     const snapshot = await catalogSnapshot(
       priceChannel,
@@ -551,7 +543,7 @@ async function buildPayload(
         subcategory: data.subcategory,
         subsubcategory: data.subsubcategory,
       },
-      session,
+      query,
     );
     const { categories, categoryTree, stats } = snapshot;
     let mapped: CatalogArticle[] = snapshot.articles;
