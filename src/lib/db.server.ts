@@ -45,14 +45,14 @@ export async function query<T extends Record<string, unknown>>(
   params: unknown[] = [],
 ): Promise<T[]> {
   let lastError: unknown;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
     try {
       const result = await getPool().query(sql, params as never[]);
       return result.rows as T[];
     } catch (error) {
       lastError = error;
       if (!isTooManyConnections(error)) throw error;
-      await sleep(250 * (attempt + 1));
+      await sleep(200 * (attempt + 1));
     }
   }
   throw lastError;
