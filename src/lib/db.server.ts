@@ -19,8 +19,10 @@ export function getPool(): Pool {
     globalRef.__mawaPgPool = new Pool({
       connectionString,
       ssl: { rejectUnauthorized: false },
-      max: 2,
-      idleTimeoutMillis: 5_000,
+      // Der Zugang erlaubt nur 5 gleichzeitige Verbindungen: eine je Instanz,
+      // und sie wird sofort nach der Abfrage wieder freigegeben.
+      max: 1,
+      idleTimeoutMillis: 500,
       connectionTimeoutMillis: 15_000,
       allowExitOnIdle: true,
     });
