@@ -1,8 +1,8 @@
 import { Pool } from "pg";
 
 const globalRef = globalThis as typeof globalThis & {
-  __mawaPgPool?: Pool;
-  __mawaPgUrl?: string;
+  __mawaPgPool?: Pool | undefined;
+  __mawaPgUrl?: string | undefined;
 };
 
 export function getPool(): Pool {
