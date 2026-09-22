@@ -322,11 +322,15 @@ type CatalogMeta = {
   stats: { articles: number; categories: number; onHand: number };
 };
 
-async function buildMeta(): Promise<CatalogMeta> {
+async function buildMeta(session?: DbSession): Promise<CatalogMeta> {
   const { query } = await import("./db.server");
   const [treeRows, stats] = await Promise.all([
-    query<{ level1: string; level2: string; level3: string; count: number }>(CATEGORY_TREE_SQL),
-    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
+    query<{ level1: string; level2: string; level3: string; count: number }>(
+      CATEGORY_TREE_SQL,
+      [],
+      session,
+    ),
+    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL, [], session),
   ]);
 
   const treeMap = new Map<string, CategoryNode>();
@@ -366,11 +370,11 @@ async function buildMeta(): Promise<CatalogMeta> {
   };
 }
 
-function catalogMeta(): CatalogMeta | Promise<CatalogMeta> {
+function catalogMeta(session?: DbSession): CatalogMeta | Promise<CatalogMeta> {
   const hit = cacheRef.__mawaCatalogMeta;
   const fresh = hit && Date.now() - hit.at < META_TTL;
   if (!fresh && !cacheRef.__mawaCatalogMetaInflight) {
-    cacheRef.__mawaCatalogMetaInflight = buildMeta()
+    cacheRef.__mawaCatalogMetaInflight = buildMeta(session)
       .then((value) => {
         cacheRef.__mawaCatalogMeta = { at: Date.now(), value };
         return value;
