@@ -32,6 +32,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // Zugang anfordern
   const [signupOpen, setSignupOpen] = useState(false);
@@ -107,19 +108,30 @@ function LoginPage() {
     try {
       const result = await shopLogin({ data: { customerNumber, password } });
       if (result.ok) {
-        void navigate({ to: "/", search: { channel: "NET1", category: "", subcategory: "", q: "" } });
-      } else {
-        setError(result.error);
+        // Katalog wird geladen – Spinner bleibt bis zum Seitenwechsel sichtbar.
+        setLoadingCatalog(true);
+        await navigate({
+          to: "/",
+          search: { channel: "NET1", category: "", subcategory: "", q: "" },
+        });
+        return;
       }
+      setError(result.error);
     } catch {
       setError("Anmeldung derzeit nicht möglich. Bitte später erneut versuchen.");
-    } finally {
-      setBusy(false);
+      setLoadingCatalog(false);
     }
+    setBusy(false);
   }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
+      {loadingCatalog && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
+          <span className="size-10 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
+          <p className="text-sm text-muted-foreground">Katalog wird geladen …</p>
+        </div>
+      )}
       <Link to="/" className="label-mono text-muted-foreground hover:text-accent">
         ← Zum Katalog
       </Link>
@@ -166,9 +178,12 @@ function LoginPage() {
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
         >
-          {busy ? "Anmelden …" : "Anmelden"}
+          {busy && (
+            <span className="size-4 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
+          )}
+          {loadingCatalog ? "Katalog wird geladen …" : busy ? "Anmelden …" : "Anmelden"}
         </button>
       </form>
 
