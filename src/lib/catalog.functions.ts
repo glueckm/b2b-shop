@@ -465,7 +465,6 @@ export const getCatalog = createServerFn({ method: "GET" })
     const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
     const { customerPricing } = await import("./customer-pricing.server");
     // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
-    // Anmeldung und Preisgruppe in einem Zug – ein Aufruf statt zwei.
     const user = await apiCurrentUser();
     if (!user) {
       return {
@@ -525,16 +524,10 @@ export const getCatalog = createServerFn({ method: "GET" })
       images,
       thumbs,
       articles: mapped,
-      total: term ? mapped.length : (counts[0]?.total ?? 0),
+      total: term ? mapped.length : snapshot.total,
       categories,
       categoryTree,
       pricing: { channel: priceChannel, group: pricing.group, company: pricing.company },
-
-
-      stats: {
-        articles: stats[0]?.articles ?? 0,
-        categories: stats[0]?.categories ?? 0,
-        onHand: Math.round(stats[0]?.on_hand ?? 0),
-      },
+      stats,
     };
   });
