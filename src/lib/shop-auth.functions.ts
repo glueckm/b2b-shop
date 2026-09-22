@@ -27,21 +27,8 @@ export const shopLogin = createServerFn({ method: "POST" })
     try {
       storeToken(await apiLogin(data.customerNumber, data.password));
       storeCustomerNumber(data.customerNumber);
-      // Katalog im Hintergrund vorwärmen, damit die Liste nach dem Anmelden sofort steht.
-      void (async () => {
-        try {
-          const { customerPricing } = await import("./customer-pricing.server");
-          const { catalogSnapshot } = await import("./catalog.functions");
-          const pricing = await customerPricing(data.customerNumber);
-          await catalogSnapshot(pricing.channel || "NET1", {
-            category: "",
-            subcategory: "",
-            subsubcategory: "",
-          });
-        } catch {
-          /* Vorwärmen ist optional */
-        }
-      })();
+      // Kein Vorwärmen des Katalogs: der Seitenlader baut ihn ohnehin auf,
+      // ein zweiter Aufbau würde die gleichen Abfragen doppelt ausführen.
       return { ok: true };
     } catch (error) {
       const raw = error instanceof Error ? error.message : "";
