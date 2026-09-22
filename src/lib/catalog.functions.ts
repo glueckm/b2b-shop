@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { DbSession } from "./db.server";
+/** Anfrage-Verbindung (nur Typ – wird beim Bauen entfernt). */
+type DbSession = import("./db.server").DbSession;
 
 export const priceGroups = [
   { channel: "", label: "Kein Vertriebsweg (Listenpreis)" },
