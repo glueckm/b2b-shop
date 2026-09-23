@@ -736,16 +736,6 @@ function Shop() {
     void navigate({ search: (prev) => ({ ...prev, q: term.trim() }) });
   };
 
-  const submitQuick = (event: React.FormEvent) => {
-    event.preventDefault();
-    const [rawSku, rawQty] = quick.split(/[\s,]+/);
-    const article = articles.find(
-      (a) => a.sku.toLowerCase() === (rawSku ?? "").trim().toLowerCase(),
-    );
-    if (!article) return;
-    addLine(article.sku, Math.max(article.moq, Number(rawQty) || article.moq));
-    setQuick("");
-  };
 
   const detailedLines = lines.flatMap((line) => {
     const article = bySku.get(line.sku);
