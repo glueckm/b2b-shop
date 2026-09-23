@@ -6,7 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { ChevronDown, Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -642,6 +642,7 @@ function Shop() {
   const [favOnly, setFavOnly] = useState(false);
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
+  const [openFacets, setOpenFacets] = useState<string[]>([]);
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
 
   /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
@@ -1505,36 +1506,70 @@ function Shop() {
                 Optional – Auswahl einschränken nach Geräteeigenschaften.
               </p>
 
-              <div className="mt-3 space-y-4">
-                {specFacets.map((facet) => (
-                  <div key={facet.key}>
-                    <p className="label-mono text-muted-foreground">{facet.label}</p>
-                    <div className="mt-1.5 flex flex-col gap-1">
-                      {facet.values.map((option) => {
-                        const active = (specFilters[facet.key] ?? []).includes(option.value);
-                        return (
-                          <label
-                            key={option.value}
-                            className={`flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 text-[13px] transition-colors hover:bg-muted ${
-                              active ? "font-semibold text-accent" : "text-muted-foreground"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={active}
-                              onChange={() => toggleSpecValue(facet.key, option.value)}
-                              className="size-3.5 shrink-0 accent-accent"
-                            />
-                            <span className="min-w-0 truncate">{option.value}</span>
-                            <span className="ml-auto font-mono text-[11px] opacity-60">
-                              {option.count}
-                            </span>
-                          </label>
-                        );
-                      })}
+              <div className="mt-3 divide-y divide-border">
+                {specFacets.map((facet) => {
+                  const selected = specFilters[facet.key] ?? [];
+                  const open = openFacets.includes(facet.key) || selected.length > 0;
+                  return (
+                    <div key={facet.key} className="py-2">
+                      <button
+                        onClick={() =>
+                          setOpenFacets((prev) =>
+                            prev.includes(facet.key)
+                              ? prev.filter((k) => k !== facet.key)
+                              : [...prev, facet.key],
+                          )
+                        }
+                        aria-expanded={open}
+                        className="flex w-full items-center gap-2 text-left"
+                      >
+                        <ChevronDown
+                          className={`size-3.5 shrink-0 text-muted-foreground transition-transform ${
+                            open ? "" : "-rotate-90"
+                          }`}
+                        />
+                        <span
+                          className={`label-mono ${
+                            selected.length > 0 ? "text-accent" : "text-muted-foreground"
+                          }`}
+                        >
+                          {facet.label}
+                        </span>
+                        {selected.length > 0 && (
+                          <span className="ml-auto font-mono text-[11px] text-accent">
+                            {selected.length}
+                          </span>
+                        )}
+                      </button>
+                      {open && (
+                        <div className="mt-1.5 flex flex-col gap-1 pl-5">
+                          {facet.values.map((option) => {
+                            const active = selected.includes(option.value);
+                            return (
+                              <label
+                                key={option.value}
+                                className={`flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 text-[13px] transition-colors hover:bg-muted ${
+                                  active ? "font-semibold text-accent" : "text-muted-foreground"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={active}
+                                  onChange={() => toggleSpecValue(facet.key, option.value)}
+                                  className="size-3.5 shrink-0 accent-accent"
+                                />
+                                <span className="min-w-0 truncate">{option.value}</span>
+                                <span className="ml-auto font-mono text-[11px] opacity-60">
+                                  {option.count}
+                                </span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </aside>
