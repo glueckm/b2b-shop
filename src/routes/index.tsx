@@ -1390,8 +1390,7 @@ function Shop() {
             }`}
           >
             <Percent className="size-4" />
-            <Hourglass className="size-4" />
-            AKTIONEN
+            Aktion
           </button>
 
           <button
