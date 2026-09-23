@@ -566,7 +566,6 @@ function Shop() {
     void runBasket(() => loadBaskets({ data: {} }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.user?.id]);
-  const [quick, setQuick] = useState("");
   const [term, setTerm] = useState(search.q);
   const [detailSku, setDetailSku] = useState<string | null>(null);
   const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
