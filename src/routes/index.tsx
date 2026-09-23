@@ -6,7 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { ChevronDown, Heart, Hourglass, Percent, ShoppingCart, Trash2 } from "lucide-react";
+import { ChevronDown, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -1390,8 +1390,7 @@ function Shop() {
             }`}
           >
             <Percent className="size-4" />
-            <Hourglass className="size-4" />
-            AKTIONEN
+            Aktion
           </button>
 
           <button
