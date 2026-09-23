@@ -4,6 +4,7 @@ import { useState } from "react";
 import { shopLogin } from "@/lib/shop-auth.functions";
 import { requestShopPasswordReset } from "@/lib/shop-password.functions";
 import { requestShopAccess } from "@/lib/shop-signup.functions";
+import { SHOP_VERSION } from "@/lib/version";
 
 export const Route = createFileRoute("/anmelden")({
   head: () => ({
@@ -261,6 +262,8 @@ function LoginPage() {
           </form>
         )}
       </section>
+
+      <p className="mt-10 text-center text-xs text-muted-foreground">Version {SHOP_VERSION}</p>
     </main>
   );
 }
