@@ -815,7 +815,10 @@ function Shop() {
 
 
   const detailedLines = lines.flatMap((line) => {
-    const article = bySku.get(line.sku);
+    // Artikel außerhalb der aktuellen Ansicht (andere Kategorie/Suche) mit den
+    // im Warenkorb gespeicherten Daten darstellen — sonst würden Positionen
+    // aus Liste und Summe verschwinden, obwohl sie mitbestellt werden.
+    const article = articleForSku(line.sku);
     if (!article) return [];
     const unit = priceForQty(article, line.qty);
     return [{ ...line, article, unit, total: unit * line.qty }];
