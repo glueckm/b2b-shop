@@ -1378,21 +1378,22 @@ function Shop() {
             }}
             aria-pressed={promoOnly}
             title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
-            className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
+            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors ${
               promoOnly
-                ? "border-destructive bg-destructive/15 font-bold text-destructive"
-                : "border-transparent font-semibold text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+                ? "border-destructive bg-destructive text-destructive-foreground"
+                : "border-destructive/60 bg-destructive/10 text-destructive hover:bg-destructive/20"
             }`}
           >
+            <Percent className="size-4" />
+            <Hourglass className="size-4" />
             AKTIONEN
           </button>
-
 
           <button
             onClick={() => setFavOnly((prev) => !prev)}
             title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
             aria-pressed={favOnly}
-            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors lg:mr-[354px] ${
+            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors lg:mr-[354px] ${
               favOnly
                 ? "border-accent bg-accent text-accent-foreground"
                 : "border-accent/60 bg-accent/10 text-accent hover:bg-accent/20"
