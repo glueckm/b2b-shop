@@ -6,7 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Star, Trash2 } from "lucide-react";
+import { Heart, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -794,7 +794,7 @@ function Shop() {
                     : "text-muted-foreground/50 hover:text-accent"
                 }
               >
-                <Star
+                <Heart
                   className="size-4"
                   {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
                 />
