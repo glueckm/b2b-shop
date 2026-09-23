@@ -1620,24 +1620,6 @@ function Shop() {
             )}
 
 
-            <form onSubmit={submitQuick} className="border-b border-border px-4 py-3">
-              <label className="block text-xs font-medium text-muted-foreground" htmlFor="quick">
-                Schnellerfassung — Artikelnr. + Menge
-              </label>
-              <div className="mt-1.5 flex items-center gap-2 rounded-sm border border-border bg-card px-3 py-2">
-                <input
-                  id="quick"
-                  value={quick}
-                  onChange={(event) => setQuick(event.target.value)}
-                  placeholder="200-200-022 10"
-                  className="min-w-0 flex-1 bg-transparent font-mono text-[13px] outline-none placeholder:text-muted-foreground"
-                />
-                <button type="submit" className="text-sm font-semibold text-accent">
-                  Add
-                </button>
-              </div>
-            </form>
-
             <ul>
               {detailedLines.length === 0 && (
                 <li className="px-4 py-6 text-sm text-muted-foreground">
