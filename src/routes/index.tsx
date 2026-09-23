@@ -6,7 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Heart, ShoppingCart, Trash2 } from "lucide-react";
+import { ChevronDown, Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -642,6 +642,7 @@ function Shop() {
   const [favOnly, setFavOnly] = useState(false);
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
+  const [openFacets, setOpenFacets] = useState<string[]>([]);
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
 
   /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
