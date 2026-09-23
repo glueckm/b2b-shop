@@ -1745,9 +1745,6 @@ function Shop() {
                   {orderDone}
                 </p>
               )}
-              <button className="mt-2 w-full rounded-sm border border-border px-4 py-1.5 text-sm font-semibold text-foreground hover:bg-muted">
-                Stattdessen Angebot anfragen
-              </button>
               <p className="label-mono mt-3 text-muted-foreground">
                 Preise gemäß Preisgruppe {activeGroup} · netto
               </p>
