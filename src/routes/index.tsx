@@ -1254,27 +1254,15 @@ function Shop() {
           <div className="ml-auto flex items-center gap-4">
 
             {data.user ? (
-              <div className="flex items-center gap-3">
-                <Link
-                  to="/konto"
-                  className="flex flex-col rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 leading-tight text-primary-foreground transition-colors hover:bg-accent/30"
-                >
-                  <span className="text-sm font-semibold">Mein Konto</span>
-                  <span className="font-mono text-xs opacity-80">
-                    {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
-                  </span>
-                </Link>
-
-                <button
-                  onClick={async () => {
-                    await shopLogout({});
-                    await router.invalidate();
-                  }}
-                  className="label-mono text-primary-foreground/70 hover:text-accent"
-                >
-                  Abmelden
-                </button>
-              </div>
+              <Link
+                to="/konto"
+                className="flex flex-col rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 leading-tight text-primary-foreground transition-colors hover:bg-accent/30"
+              >
+                <span className="text-sm font-semibold">Mein Konto</span>
+                <span className="font-mono text-xs opacity-80">
+                  {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
+                </span>
+              </Link>
             ) : (
               <Link
                 to="/anmelden"
@@ -1291,6 +1279,18 @@ function Shop() {
               Warenkorb
               <span className="font-mono text-xs">{lines.length}</span>
             </a>
+            {data.user && (
+              <button
+                onClick={async () => {
+                  await shopLogout({});
+                  await router.invalidate();
+                }}
+                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:border-accent hover:text-accent"
+              >
+                Abmelden
+              </button>
+            )}
+
           </div>
         </div>
       </header>
