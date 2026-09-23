@@ -923,6 +923,13 @@ function Shop() {
                   {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
                 />
               </button>
+              {article.promo && (
+                <Percent
+                  className="size-4 shrink-0 text-destructive"
+                  aria-label="Aktionsartikel"
+                  title="Aktionsartikel"
+                />
+              )}
               <button
                 onClick={toggleDetail}
                 className="font-mono text-[12px] text-muted-foreground hover:text-accent"
