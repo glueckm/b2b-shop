@@ -1362,6 +1362,32 @@ function Shop() {
           })}
 
           <button
+            onClick={() => {
+              setPromoOnly((prev) => !prev);
+              setTerm("");
+              void navigate({
+                search: (prev) => ({
+                  ...prev,
+                  category: "",
+                  subcategory: "",
+                  subsubcategory: "",
+                  q: "",
+                }),
+              });
+            }}
+            aria-pressed={promoOnly}
+            title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
+            className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
+              promoOnly
+                ? "border-destructive bg-destructive/15 font-bold text-destructive"
+                : "border-transparent font-semibold text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+            }`}
+          >
+            AKTIONEN
+          </button>
+
+
+          <button
             onClick={() => setFavOnly((prev) => !prev)}
             title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
             aria-pressed={favOnly}
