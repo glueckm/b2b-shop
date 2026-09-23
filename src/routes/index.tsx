@@ -586,6 +586,41 @@ function Shop() {
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
 
+  /**
+   * Ersatzartikel aus den im Warenkorb gespeicherten Daten: der Katalog zeigt
+   * nur die aktuelle Kategorie/Suche, der Warenkorb aber alle Positionen.
+   */
+  const basketFallback = useMemo(() => {
+    const out = new Map<string, CatalogArticle>();
+    for (const line of activeBasket?.lines ?? []) {
+      if (!line.articleNumber || bySku.has(line.articleNumber)) continue;
+      out.set(line.articleNumber, {
+        id: line.articleId,
+        sku: line.articleNumber,
+        name: line.name ?? line.articleNumber,
+        spec: "",
+        scope: "",
+        category: "",
+        level1: "",
+        level2: "",
+        level3: "",
+        unit: "Stk.",
+        moq: 1,
+        onHand: 0,
+        breaks: [{ from: 1, price: line.priceShown ?? 0 }],
+        rebatePct: 0,
+        groupId: "",
+        groupSku: "",
+        groupName: "",
+        specs: {},
+      });
+    }
+    return out;
+  }, [activeBasket, bySku]);
+
+  /** Artikel für eine Warenkorbposition — Katalog zuerst, sonst Warenkorbdaten. */
+  const articleForSku = (sku: string) => bySku.get(sku) ?? basketFallback.get(sku);
+
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
   const subCategories = useMemo(
