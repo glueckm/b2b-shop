@@ -453,6 +453,7 @@ async function buildArticles(
       spec_framerate: string;
       spec_display: string;
       spec_battery: string;
+      promo: boolean;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
