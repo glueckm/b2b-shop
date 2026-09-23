@@ -615,6 +615,7 @@ function Shop() {
         groupSku: "",
         groupName: "",
         specs: {},
+        promo: false,
       });
     }
     return out;
