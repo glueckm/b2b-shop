@@ -44,6 +44,7 @@ function LoginPage() {
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
 
   // Passwort vergessen
+  const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
@@ -203,32 +204,67 @@ function LoginPage() {
         </button>
       </form>
 
-      <section className="mt-8 border-t border-border pt-6">
-        <h2 className="text-base font-semibold tracking-tight">Passwort vergessen?</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Geben Sie Ihre E-Mail-Adresse ein – wir senden Ihnen einen Link zum Setzen eines neuen
-          Passworts.
-        </p>
-        <form onSubmit={requestReset} className="mt-4 space-y-3">
-          <input
-            type="email"
-            required
-            value={resetEmail}
-            placeholder="ihre@firma.at"
-            onChange={(event) => setResetEmail(event.target.value)}
-            className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-          {resetError && <p className="text-sm text-destructive">{resetError}</p>}
-          {resetInfo && <p className="text-sm text-stock">{resetInfo}</p>}
-          <button
-            type="submit"
-            disabled={resetBusy}
-            className="w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+      <div className="mt-4 text-center">
+        <button
+          type="button"
+          onClick={() => {
+            setResetOpen(true);
+            setResetError(null);
+            setResetInfo(null);
+          }}
+          className="text-sm font-semibold text-accent hover:underline"
+        >
+          Passwort vergessen?
+        </button>
+      </div>
+
+      {resetOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setResetOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-sm border border-border bg-background p-6 shadow-lg"
+            onClick={(event) => event.stopPropagation()}
           >
-            {resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}
-          </button>
-        </form>
-      </section>
+            <div className="flex items-start justify-between gap-4">
+              <h2 className="text-base font-semibold tracking-tight">Passwort vergessen?</h2>
+              <button
+                type="button"
+                onClick={() => setResetOpen(false)}
+                aria-label="Schließen"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ×
+              </button>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Geben Sie Ihre E-Mail-Adresse ein – wir senden Ihnen einen Link zum Setzen eines neuen
+              Passworts.
+            </p>
+            <form onSubmit={requestReset} className="mt-4 space-y-3">
+              <input
+                type="email"
+                required
+                value={resetEmail}
+                placeholder="ihre@firma.at"
+                onChange={(event) => setResetEmail(event.target.value)}
+                className="w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
+              />
+              {resetError && <p className="text-sm text-destructive">{resetError}</p>}
+              {resetInfo && <p className="text-sm text-stock">{resetInfo}</p>}
+              <button
+                type="submit"
+                disabled={resetBusy}
+                className="w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
+              >
+                {resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
 
       <section className="mt-10 border-t border-border pt-6">
         <h2 className="text-base font-semibold tracking-tight">Noch kein Zugang?</h2>
