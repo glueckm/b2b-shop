@@ -498,6 +498,7 @@ async function buildArticles(
       groupSku: row.group_sku ?? "",
       groupName: row.group_name ?? "",
       specs,
+      promo: Boolean(row.promo),
     };
   });
 
