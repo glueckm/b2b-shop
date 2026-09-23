@@ -216,7 +216,8 @@ select a.id as id,
        coalesce(a.ca_erkennungsdistanz_m::text, '') as spec_detection,
        coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
        coalesce(a.ca_display, '') as spec_display,
-       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery
+       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery,
+       coalesce(a.ca_aktion, false) as promo
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
