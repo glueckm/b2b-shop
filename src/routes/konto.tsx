@@ -130,8 +130,6 @@ function AccountPage() {
             <Field label="Mobil" value={profile.mobile} />
             <Field label="Website" value={profile.website} />
             <Field label="UID-Nummer" value={profile.vatId} />
-            <Field label="Preisgruppe" value={profile.category} />
-            <Field label="Vertriebsweg" value={profile.salesChannel} />
             <Field label="Zahlungsbedingung" value={profile.paymentTerm} />
             <Field label="Währung" value={profile.currency} />
           </div>
