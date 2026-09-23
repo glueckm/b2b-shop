@@ -616,6 +616,7 @@ function Shop() {
         groupName: "",
         specs: {},
         promo: false,
+        isPrimary: false,
       });
     }
     return out;
