@@ -135,7 +135,22 @@ function LoginPage() {
           <p className="text-sm text-muted-foreground">Katalog wird geladen …</p>
         </div>
       )}
-      <h1 className="text-2xl font-semibold tracking-tight">Kundenanmeldung</h1>
+      <div className="rounded-lg bg-primary px-5 py-6 text-primary-foreground">
+        <img
+          src={mawaLogo}
+          alt="MAWA Trading"
+          width={369}
+          height={77}
+          className="h-9 w-auto"
+        />
+        <p className="label-mono mt-3 text-primary-foreground/55">Distribution B2B</p>
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight">B2B Shop</h1>
+        <p className="mt-1 text-sm text-primary-foreground/70">
+          Der Partner-Shop für Fachhändler und Distributoren.
+        </p>
+      </div>
+
+      <h2 className="mt-8 text-xl font-semibold tracking-tight">Kundenanmeldung</h2>
       <p className="mt-2 text-sm text-muted-foreground">
         Mit Ihrer Kundennummer und Ihrem Passwort anmelden. Nach der Anmeldung erkennen wir Ihre
         Kundendaten und Konditionen.
