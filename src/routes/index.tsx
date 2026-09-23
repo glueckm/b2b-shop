@@ -474,6 +474,8 @@ function Shop() {
     const fresh = await loadBaskets({ data: { basketId } });
     if (!fresh.ok || !fresh.active) return [];
     return (fresh.active.lines ?? []).flatMap((line) => {
+      // Nur Artikel der aktuellen Ansicht prüfen; für die übrigen liegt kein
+      // aktueller Katalogpreis vor.
       const article = bySku.get(line.articleNumber);
       if (!article || line.priceShown === null) return [];
       const current = priceForQty(article, line.quantity);
@@ -490,7 +492,7 @@ function Shop() {
     setBasketBusy(true);
     try {
       for (const diff of priceDiffs) {
-        const article = bySku.get(diff.sku);
+        const article = articleForSku(diff.sku);
         if (!article) continue;
         await setBasketLine({
           data: {
@@ -585,6 +587,41 @@ function Shop() {
     );
 
   const bySku = useMemo(() => new Map(articles.map((a) => [a.sku, a])), [articles]);
+
+  /**
+   * Ersatzartikel aus den im Warenkorb gespeicherten Daten: der Katalog zeigt
+   * nur die aktuelle Kategorie/Suche, der Warenkorb aber alle Positionen.
+   */
+  const basketFallback = useMemo(() => {
+    const out = new Map<string, CatalogArticle>();
+    for (const line of activeBasket?.lines ?? []) {
+      if (!line.articleNumber || bySku.has(line.articleNumber)) continue;
+      out.set(line.articleNumber, {
+        id: line.articleId,
+        sku: line.articleNumber,
+        name: line.name ?? line.articleNumber,
+        spec: "",
+        scope: "",
+        category: "",
+        level1: "",
+        level2: "",
+        level3: "",
+        unit: "Stk.",
+        moq: 1,
+        onHand: 0,
+        breaks: [{ from: 1, price: line.priceShown ?? 0 }],
+        rebatePct: 0,
+        groupId: "",
+        groupSku: "",
+        groupName: "",
+        specs: {},
+      });
+    }
+    return out;
+  }, [activeBasket, bySku]);
+
+  /** Artikel für eine Warenkorbposition — Katalog zuerst, sonst Warenkorbdaten. */
+  const articleForSku = (sku: string) => bySku.get(sku) ?? basketFallback.get(sku);
 
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
@@ -747,7 +784,7 @@ function Shop() {
 
   /** Menge im Backend setzen (Upsert) — ohne Warenkorb nur lokal. */
   const saveLine = async (sku: string, quantity: number) => {
-    const article = bySku.get(sku);
+    const article = articleForSku(sku);
     if (!activeBasket || !article) return;
     await runBasket(() =>
       setBasketLine({
@@ -778,7 +815,7 @@ function Shop() {
   };
 
   const removeLine = (sku: string) => {
-    const article = bySku.get(sku);
+    const article = articleForSku(sku);
     if (activeBasket && article) {
       void runBasket(() =>
         removeBasketLine({ data: { basketId: activeBasket.id, articleId: article.id } }),
@@ -815,7 +852,10 @@ function Shop() {
 
 
   const detailedLines = lines.flatMap((line) => {
-    const article = bySku.get(line.sku);
+    // Artikel außerhalb der aktuellen Ansicht (andere Kategorie/Suche) mit den
+    // im Warenkorb gespeicherten Daten darstellen — sonst würden Positionen
+    // aus Liste und Summe verschwinden, obwohl sie mitbestellt werden.
+    const article = articleForSku(line.sku);
     if (!article) return [];
     const unit = priceForQty(article, line.qty);
     return [{ ...line, article, unit, total: unit * line.qty }];
