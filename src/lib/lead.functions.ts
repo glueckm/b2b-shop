@@ -36,6 +36,15 @@ export type LeadResult =
 export const submitCustomerLead = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => leadSchema.parse(input))
   .handler(async ({ data }): Promise<LeadResult> => {
-    const { sendCustomerLeadEmails } = await import("./lead.server");
-    return sendCustomerLeadEmails(data);
+    // Der E-Mail-Versand wird aktiviert, sobald die Absenderdomain eingerichtet ist.
+    console.log("[lead] Neukunden-Anfrage", {
+      company: data.company,
+      email: data.email,
+      country: data.country,
+    });
+    return {
+      ok: false,
+      message:
+        "Der automatische Versand ist noch nicht freigeschaltet. Bitte wenden Sie sich vorerst direkt an office@mawa-trading.com.",
+    };
   });
