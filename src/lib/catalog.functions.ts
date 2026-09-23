@@ -40,7 +40,21 @@ export type CatalogArticle = {
   groupId: string;
   groupSku: string;
   groupName: string;
+  /** Technische Merkmale (z. B. Sensor, NETD, Objektiv) für die Zusatzfilter. */
+  specs: Record<string, string>;
 };
+
+/** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
+export const SPEC_FIELDS = [
+  { key: "sensor", label: "Sensor" },
+  { key: "netd", label: "NETD (mK)" },
+  { key: "lens", label: "Objektiv/Linse (mm)" },
+  { key: "magnification", label: "Optische Vergrößerung" },
+  { key: "detection", label: "Erkennungsdistanz (m)" },
+  { key: "framerate", label: "Bildfrequenz (Hz)" },
+  { key: "display", label: "Display" },
+  { key: "battery", label: "Akkulaufzeit (h)" },
+] as const;
 
 
 export type CategoryLeaf = { name: string; count: number };
@@ -193,7 +207,16 @@ select a.id as id,
        coalesce(vr.group_id, '') as group_id,
        coalesce(vr.group_sku, '') as group_sku,
        coalesce(vr.group_name, '') as group_name,
-       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct
+       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct,
+       -- Technische Merkmale für die Zusatzfilter (leer, wenn nicht gepflegt)
+       coalesce(a.ca_sensor, '') as spec_sensor,
+       coalesce(a.ca_netd_m_k::text, '') as spec_netd,
+       coalesce(a.ca_objektiv_linse_mm::text, '') as spec_lens,
+       coalesce(a.ca_optische_vergroesserung::text, '') as spec_magnification,
+       coalesce(a.ca_erkennungsdistanz_m::text, '') as spec_detection,
+       coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
+       coalesce(a.ca_display, '') as spec_display,
+       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -419,12 +442,34 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
+      spec_sensor: string;
+      spec_netd: string;
+      spec_lens: string;
+      spec_magnification: string;
+      spec_detection: string;
+      spec_framerate: string;
+      spec_display: string;
+      spec_battery: string;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
     const pct = Number(row.rebate_pct ?? 0);
     const factor = 1 - pct / 100;
+    const specs: Record<string, string> = {};
+    for (const [key, value] of [
+      ["sensor", row.spec_sensor],
+      ["netd", row.spec_netd],
+      ["lens", row.spec_lens],
+      ["magnification", row.spec_magnification],
+      ["detection", row.spec_detection],
+      ["framerate", row.spec_framerate],
+      ["display", row.spec_display],
+      ["battery", row.spec_battery],
+    ] as const) {
+      const text = (value ?? "").trim();
+      if (text) specs[key] = text;
+    }
     return {
       id: String(row.id),
       sku: row.sku,
@@ -448,6 +493,7 @@ async function buildArticles(
       groupId: row.group_id ?? "",
       groupSku: row.group_sku ?? "",
       groupName: row.group_name ?? "",
+      specs,
     };
   });
 

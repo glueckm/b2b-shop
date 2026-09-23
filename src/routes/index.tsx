@@ -26,7 +26,7 @@ import {
   type Basket,
   type BasketState,
 } from "@/lib/basket.functions";
-import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
+import { getCatalog, SPEC_FIELDS, type CatalogArticle } from "@/lib/catalog.functions";
 import {
   loadFavourites,
   markFavourite,
@@ -604,6 +604,72 @@ function Shop() {
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
 
+  /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
+  const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
+
+  /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
+  const specFacets = useMemo(() => {
+    const numeric = (value: string) => Number(value.replace(",", "."));
+    return SPEC_FIELDS.map((field) => {
+      const counts = new Map<string, number>();
+      for (const article of articles) {
+        const value = article.specs?.[field.key];
+        if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+      const values = [...counts.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => {
+          const na = numeric(a.value);
+          const nb = numeric(b.value);
+          if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+          return a.value.localeCompare(b.value, "de");
+        });
+      return { ...field, values };
+    }).filter((facet) => facet.values.length > 1);
+  }, [articles]);
+
+  // Auswahl verwerfen, sobald sie in der aktuellen Kategorie nicht mehr vorkommt.
+  useEffect(() => {
+    setSpecFilters((prev) => {
+      const next: Record<string, string[]> = {};
+      let changed = false;
+      for (const [key, values] of Object.entries(prev)) {
+        const facet = specFacets.find((f) => f.key === key);
+        const kept = facet ? values.filter((v) => facet.values.some((o) => o.value === v)) : [];
+        if (kept.length !== values.length) changed = true;
+        if (kept.length > 0) next[key] = kept;
+      }
+      return changed ? next : prev;
+    });
+  }, [specFacets]);
+
+  const toggleSpecValue = (key: string, value: string) =>
+    setSpecFilters((prev) => {
+      const current = prev[key] ?? [];
+      const kept = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      const next = { ...prev };
+      if (kept.length > 0) next[key] = kept;
+      else delete next[key];
+      return next;
+    });
+
+  const activeSpecCount = useMemo(
+    () => Object.values(specFilters).reduce((sum, values) => sum + values.length, 0),
+    [specFilters],
+  );
+
+  /** Passt ein Artikel zu allen gesetzten Zusatzfiltern? */
+  const matchesSpecs = useCallback(
+    (article: CatalogArticle) =>
+      Object.entries(specFilters).every(([key, values]) => {
+        const value = article.specs?.[key];
+        return value ? values.includes(value) : false;
+      }),
+    [specFilters],
+  );
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
@@ -641,14 +707,16 @@ function Shop() {
       );
     }
 
-    if (!favOnly) return out;
-    // Nur mit Herz markierte Artikel zeigen; bei Varianten nur die markierten.
+    if (!favOnly && activeSpecCount === 0) return out;
+    // Favoriten (Herz) und Zusatzfilter anwenden; bei Varianten nur die passenden.
+    const keep = (article: CatalogArticle) =>
+      (!favOnly || favourites.has(article.id)) && matchesSpecs(article);
     return out.flatMap((row): Row[] => {
-      if (row.kind === "single") return favourites.has(row.article.id) ? [row] : [];
-      const variants = row.variants.filter((v) => favourites.has(v.id));
+      if (row.kind === "single") return keep(row.article) ? [row] : [];
+      const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, favourites]);
+  }, [articles, favOnly, favourites, activeSpecCount, matchesSpecs]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -1371,7 +1439,61 @@ function Shop() {
 
       </nav>
 
-      <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
+      <div
+        className={`mx-auto grid max-w-[1440px] gap-6 px-5 py-7 ${
+          specFacets.length > 0
+            ? "lg:grid-cols-[240px_minmax(0,1fr)_330px]"
+            : "lg:grid-cols-[minmax(0,1fr)_330px]"
+        }`}
+      >
+        {specFacets.length > 0 && (
+          <aside className="lg:sticky lg:top-36 lg:self-start">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold tracking-tight">Technische Filter</h3>
+                {activeSpecCount > 0 && (
+                  <button
+                    onClick={() => setSpecFilters({})}
+                    className="text-[12px] font-semibold text-accent hover:underline"
+                  >
+                    zurücksetzen
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                Optional – Auswahl einschränken nach Geräteeigenschaften.
+              </p>
+
+              <div className="mt-3 space-y-4">
+                {specFacets.map((facet) => (
+                  <div key={facet.key}>
+                    <p className="label-mono text-muted-foreground">{facet.label}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {facet.values.map((option) => {
+                        const active = (specFilters[facet.key] ?? []).includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => toggleSpecValue(facet.key, option.value)}
+                            aria-pressed={active}
+                            className={`rounded-sm border px-2 py-1 text-[12px] transition-colors ${
+                              active
+                                ? "border-accent bg-accent text-accent-foreground font-semibold"
+                                : "border-border bg-panel text-muted-foreground hover:border-accent/60 hover:text-foreground"
+                            }`}
+                          >
+                            {option.value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
+
         <main className="min-w-0">
           <div>
             <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
