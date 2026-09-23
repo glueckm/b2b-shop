@@ -40,7 +40,21 @@ export type CatalogArticle = {
   groupId: string;
   groupSku: string;
   groupName: string;
+  /** Technische Merkmale (z. B. Sensor, NETD, Objektiv) für die Zusatzfilter. */
+  specs: Record<string, string>;
 };
+
+/** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
+export const SPEC_FIELDS = [
+  { key: "sensor", label: "Sensor" },
+  { key: "netd", label: "NETD (mK)" },
+  { key: "lens", label: "Objektiv/Linse (mm)" },
+  { key: "magnification", label: "Optische Vergrößerung" },
+  { key: "detection", label: "Erkennungsdistanz (m)" },
+  { key: "framerate", label: "Bildfrequenz (Hz)" },
+  { key: "display", label: "Display" },
+  { key: "battery", label: "Akkulaufzeit (h)" },
+] as const;
 
 
 export type CategoryLeaf = { name: string; count: number };
