@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import mawaLogo from "@/assets/mawa-logo-white.png";
 import { useState } from "react";
 
 import { shopLogin } from "@/lib/shop-auth.functions";
