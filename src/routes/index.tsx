@@ -1362,7 +1362,7 @@ function Shop() {
             onClick={() => setFavOnly((prev) => !prev)}
             title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
             aria-pressed={favOnly}
-            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors ${
+            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors lg:mr-[354px] ${
               favOnly
                 ? "border-accent bg-accent text-accent-foreground"
                 : "border-accent/60 bg-accent/10 text-accent hover:bg-accent/20"
