@@ -1450,7 +1450,7 @@ function Shop() {
           <aside className="lg:sticky lg:top-36 lg:self-start">
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold tracking-tight">技Technische Filter</h3>
+                <h3 className="text-sm font-semibold tracking-tight">Technische Filter</h3>
                 {activeSpecCount > 0 && (
                   <button
                     onClick={() => setSpecFilters({})}
