@@ -42,6 +42,8 @@ export type CatalogArticle = {
   groupName: string;
   /** Technische Merkmale (z. B. Sensor, NETD, Objektiv) für die Zusatzfilter. */
   specs: Record<string, string>;
+  /** weclapp-Feld „Aktion": Artikel ist Teil einer laufenden Aktion. */
+  promo: boolean;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
