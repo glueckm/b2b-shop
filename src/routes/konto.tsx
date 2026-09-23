@@ -1,6 +1,7 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 
+import { getCustomerProfile } from "@/lib/customer-profile.functions";
 import { getShopUser, shopUpdateAccount } from "@/lib/shop-auth.functions";
 
 export const Route = createFileRoute("/konto")({
@@ -9,7 +10,7 @@ export const Route = createFileRoute("/konto")({
       { title: "Mein Konto — MAWA Trading Distribution" },
       {
         name: "description",
-        content: "Anzeigename und Passwort Ihres MAWA-Kundenkontos ändern.",
+        content: "Stammdaten, Anzeigename und Passwort Ihres MAWA-Kundenkontos.",
       },
       { property: "og:title", content: "Mein Konto — MAWA Trading Distribution" },
       {
@@ -23,15 +24,27 @@ export const Route = createFileRoute("/konto")({
   loader: async () => {
     const user = await getShopUser().catch(() => null);
     if (!user) throw redirect({ to: "/anmelden" });
-    return { user };
+    const profile = await getCustomerProfile().catch(() => null);
+    return { user, profile };
   },
   component: AccountPage,
 });
 
+function Field({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex gap-3 border-b border-border py-2 last:border-b-0">
+      <span className="label-mono w-40 shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 break-words text-sm text-foreground">{value}</span>
+    </div>
+  );
+}
+
 function AccountPage() {
-  const { user } = Route.useLoaderData();
+  const { user, profile } = Route.useLoaderData();
   const router = useRouter();
   const [displayName, setDisplayName] = useState(user.displayName ?? "");
+  const [showPassword, setShowPassword] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
   const [repeat, setRepeat] = useState("");
@@ -61,6 +74,7 @@ function AccountPage() {
         setPassword("");
         setRepeat("");
         setCurrentPassword("");
+        setShowPassword(false);
         await router.invalidate();
       } else {
         setError(result.error);
@@ -75,18 +89,65 @@ function AccountPage() {
   const inputClass =
     "mt-1 w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent";
 
+  const addressLine = profile?.address
+    ? [
+        profile.address.street,
+        [profile.address.zipcode, profile.address.city].filter(Boolean).join(" "),
+        [profile.address.state, profile.address.countryCode].filter(Boolean).join(" · "),
+      ]
+        .filter(Boolean)
+        .join(", ")
+    : null;
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
-      <Link to="/" className="label-mono text-muted-foreground hover:text-accent">
-        ← Zum Katalog
-      </Link>
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight">Mein Konto</h1>
+    <main className="mx-auto min-h-screen max-w-2xl px-5 py-12">
+      <div className="flex items-center justify-between gap-3">
+        <Link
+          to="/"
+          className="rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
+        >
+          ← Zurück zum Einkaufen
+        </Link>
+        <span className="label-mono text-muted-foreground">
+          {profile?.customerNumber ?? user.customerNumber ?? ""}
+        </span>
+      </div>
+
+      <h1 className="mt-8 text-2xl font-semibold tracking-tight">Mein Konto</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        Angemeldet als <span className="text-foreground">{user.email}</span>
+        Angemeldet als <span className="text-foreground">{user.displayName ?? user.email}</span>
       </p>
 
-      <form onSubmit={submit} className="mt-8 space-y-4">
-        <div>
+      <section className="mt-8 rounded-sm border border-border bg-card p-5">
+        <h2 className="text-lg font-semibold">Stammdaten</h2>
+        {profile ? (
+          <div className="mt-3">
+            <Field label="Kundennummer" value={profile.customerNumber} />
+            <Field label="Firma" value={profile.company} />
+            <Field label="Adresse" value={addressLine} />
+            <Field label="E-Mail" value={profile.email} />
+            <Field label="Telefon" value={profile.phone} />
+            <Field label="Mobil" value={profile.mobile} />
+            <Field label="Website" value={profile.website} />
+            <Field label="UID-Nummer" value={profile.vatId} />
+            <Field label="Preisgruppe" value={profile.category} />
+            <Field label="Vertriebsweg" value={profile.salesChannel} />
+            <Field label="Zahlungsbedingung" value={profile.paymentTerm} />
+            <Field label="Währung" value={profile.currency} />
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-muted-foreground">
+            Stammdaten sind derzeit nicht abrufbar.
+          </p>
+        )}
+        <p className="mt-4 text-xs text-muted-foreground">
+          Änderungen an den Stammdaten nimmt Ihr MAWA-Ansprechpartner vor.
+        </p>
+      </section>
+
+      <form onSubmit={submit} className="mt-6 rounded-sm border border-border bg-card p-5">
+        <h2 className="text-lg font-semibold">Zugang</h2>
+        <div className="mt-3">
           <label className="label-mono text-muted-foreground" htmlFor="displayName">
             Anzeigename
           </label>
@@ -98,53 +159,82 @@ function AccountPage() {
           />
         </div>
 
-        <div className="border-t border-border pt-4">
-          <label className="label-mono text-muted-foreground" htmlFor="currentPassword">
-            Aktuelles Passwort
-          </label>
-          <input
-            id="currentPassword"
-            type="password"
-            autoComplete="current-password"
-            value={currentPassword}
-            onChange={(event) => setCurrentPassword(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="label-mono text-muted-foreground" htmlFor="password">
-            Neues Passwort
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className="label-mono text-muted-foreground" htmlFor="repeat">
-            Neues Passwort wiederholen
-          </label>
-          <input
-            id="repeat"
-            type="password"
-            autoComplete="new-password"
-            value={repeat}
-            onChange={(event) => setRepeat(event.target.value)}
-            className={inputClass}
-          />
+        <div className="mt-5 border-t border-border pt-4">
+          {showPassword ? (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold">Passwort erneuern</h3>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPassword(false);
+                    setCurrentPassword("");
+                    setPassword("");
+                    setRepeat("");
+                  }}
+                  className="label-mono text-muted-foreground hover:text-accent"
+                >
+                  Abbrechen
+                </button>
+              </div>
+              <div>
+                <label className="label-mono text-muted-foreground" htmlFor="currentPassword">
+                  Aktuelles Passwort
+                </label>
+                <input
+                  id="currentPassword"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(event) => setCurrentPassword(event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="label-mono text-muted-foreground" htmlFor="password">
+                  Neues Passwort
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="label-mono text-muted-foreground" htmlFor="repeat">
+                  Neues Passwort wiederholen
+                </label>
+                <input
+                  id="repeat"
+                  type="password"
+                  autoComplete="new-password"
+                  value={repeat}
+                  onChange={(event) => setRepeat(event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowPassword(true)}
+              className="rounded-sm border border-border bg-panel px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-accent/60 hover:text-foreground"
+            >
+              Passwort erneuern
+            </button>
+          )}
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
-        {done && <p className="text-sm text-stock">{done}</p>}
+        {error && <p className="mt-4 text-sm text-destructive">{error}</p>}
+        {done && <p className="mt-4 text-sm text-stock">{done}</p>}
 
         <button
           type="submit"
           disabled={busy}
-          className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
+          className="mt-5 w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
         >
           {busy ? "Speichern …" : "Speichern"}
         </button>
