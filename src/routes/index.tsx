@@ -638,8 +638,15 @@ function Shop() {
       );
     }
 
-    return out;
-  }, [articles]);
+    if (!favOnly) return out;
+    // Nur mit Herz markierte Artikel zeigen; bei Varianten nur die markierten.
+    return out.flatMap((row) => {
+      if (row.kind === "single") return favourites.has(row.article.id) ? [row] : [];
+      const variants = row.variants.filter((v) => favourites.has(v.id));
+      return variants.length > 0 ? [{ ...row, variants }] : [];
+    });
+  }, [articles, favOnly, favourites]);
+
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
