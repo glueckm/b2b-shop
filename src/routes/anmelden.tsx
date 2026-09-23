@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { shopLogin } from "@/lib/shop-auth.functions";
@@ -135,10 +135,7 @@ function LoginPage() {
           <p className="text-sm text-muted-foreground">Katalog wird geladen …</p>
         </div>
       )}
-      <Link to="/" className="label-mono text-muted-foreground hover:text-accent">
-        ← Zum Katalog
-      </Link>
-      <h1 className="mt-6 text-2xl font-semibold tracking-tight">Kundenanmeldung</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Kundenanmeldung</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         Mit Ihrer Kundennummer und Ihrem Passwort anmelden. Nach der Anmeldung erkennen wir Ihre
         Kundendaten und Konditionen.
