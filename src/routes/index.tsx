@@ -604,6 +604,72 @@ function Shop() {
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
 
+  /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
+  const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
+
+  /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
+  const specFacets = useMemo(() => {
+    const numeric = (value: string) => Number(value.replace(",", "."));
+    return SPEC_FIELDS.map((field) => {
+      const counts = new Map<string, number>();
+      for (const article of articles) {
+        const value = article.specs?.[field.key];
+        if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+      const values = [...counts.entries()]
+        .map(([value, count]) => ({ value, count }))
+        .sort((a, b) => {
+          const na = numeric(a.value);
+          const nb = numeric(b.value);
+          if (Number.isFinite(na) && Number.isFinite(nb)) return na - nb;
+          return a.value.localeCompare(b.value, "de");
+        });
+      return { ...field, values };
+    }).filter((facet) => facet.values.length > 1);
+  }, [articles]);
+
+  // Auswahl verwerfen, sobald sie in der aktuellen Kategorie nicht mehr vorkommt.
+  useEffect(() => {
+    setSpecFilters((prev) => {
+      const next: Record<string, string[]> = {};
+      let changed = false;
+      for (const [key, values] of Object.entries(prev)) {
+        const facet = specFacets.find((f) => f.key === key);
+        const kept = facet ? values.filter((v) => facet.values.some((o) => o.value === v)) : [];
+        if (kept.length !== values.length) changed = true;
+        if (kept.length > 0) next[key] = kept;
+      }
+      return changed ? next : prev;
+    });
+  }, [specFacets]);
+
+  const toggleSpecValue = (key: string, value: string) =>
+    setSpecFilters((prev) => {
+      const current = prev[key] ?? [];
+      const kept = current.includes(value)
+        ? current.filter((v) => v !== value)
+        : [...current, value];
+      const next = { ...prev };
+      if (kept.length > 0) next[key] = kept;
+      else delete next[key];
+      return next;
+    });
+
+  const activeSpecCount = useMemo(
+    () => Object.values(specFilters).reduce((sum, values) => sum + values.length, 0),
+    [specFilters],
+  );
+
+  /** Passt ein Artikel zu allen gesetzten Zusatzfiltern? */
+  const matchesSpecs = useCallback(
+    (article: CatalogArticle) =>
+      Object.entries(specFilters).every(([key, values]) => {
+        const value = article.specs?.[key];
+        return value ? values.includes(value) : false;
+      }),
+    [specFilters],
+  );
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
