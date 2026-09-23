@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { useState } from "react";
 
@@ -282,12 +282,12 @@ function LoginPage() {
           Sie haben noch keine Kundennummer bei MAWA? Fordern Sie ein Händlerkonto samt Shop-Zugang
           an – wir melden uns mit den nächsten Schritten.
         </p>
-        <a
-          href="mailto:office@mawa-trading.at?subject=Kundenlogin%20anfordern%20-%20MAWA%20B2B%20Shop"
+        <Link
+          to="/kundenanfrage"
           className="mt-4 block w-full rounded-sm border border-accent px-4 py-2.5 text-center text-sm font-semibold text-accent hover:bg-accent/10"
         >
           Kundenlogin anfordern
-        </a>
+        </Link>
       </section>
 
       <p className="mt-10 text-center text-xs text-muted-foreground">Version {SHOP_VERSION}</p>
