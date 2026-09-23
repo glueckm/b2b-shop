@@ -1263,10 +1263,10 @@ function Shop() {
               <div className="flex items-center gap-3">
                 <Link
                   to="/konto"
-                  className="flex flex-col leading-tight text-primary-foreground/70 hover:text-accent"
+                  className="flex flex-col rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 leading-tight text-primary-foreground transition-colors hover:bg-accent/30"
                 >
-                  <span className="label-mono">Mein Konto</span>
-                  <span className="font-mono text-[11px] opacity-80">
+                  <span className="text-sm font-semibold">Mein Konto</span>
+                  <span className="font-mono text-xs opacity-80">
                     {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
                   </span>
                 </Link>
