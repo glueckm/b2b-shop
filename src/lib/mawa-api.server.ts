@@ -18,6 +18,8 @@ export type BackendFile = {
   createdAt: string | null;
   /** Optional: Bilddaten direkt aus der Sammelabfrage (data:-URL). */
   dataUrl?: string;
+  /** Vom Backend als Vorschaubild gekennzeichnet. */
+  isThumbnail?: boolean;
 };
 
 function apiBase(): string {
@@ -133,6 +135,7 @@ function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFi
     entityId: articleId,
     createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
     ...(dataUrl ? { dataUrl } : {}),
+    ...(raw["isThumbnail"] === true ? { isThumbnail: true } : {}),
   };
 }
 

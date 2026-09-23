@@ -23,14 +23,19 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
       try {
         const { listArticleImages } = await import("./mawa-api.server");
         // Vorschaubilder (_thumb) werden im CRM erzeugt und hier nur erkannt.
-        const isThumb = (name: string) => /_thumb\.[^.]+$/i.test(name);
+        const isThumbName = (name: string) => /_thumb\.[^.]+$/i.test(name);
+        const isThumb = (file: { filename: string; isThumbnail?: boolean; dataUrl?: string }) =>
+          file.isThumbnail === true || !!file.dataUrl || isThumbName(file.filename);
         const grouped = await listArticleImages(data.articleIds);
         for (const [articleId, files] of Object.entries(grouped)) {
-          const full = files.filter((file) => !isThumb(file.filename));
-          const thumbs2 = files.filter((file) => isThumb(file.filename));
+          const full = files.filter((file) => !isThumb(file));
+          const thumbs2 = files.filter((file) => isThumb(file));
           // webp-Vorschaubilder sind deutlich kleiner als png — bevorzugen.
           const thumb =
-            thumbs2.find((file) => /webp$/i.test(file.contentType)) ?? thumbs2[0];
+            thumbs2.find((file) => file.dataUrl && /webp$/i.test(file.contentType)) ??
+            thumbs2.find((file) => file.dataUrl) ??
+            thumbs2.find((file) => /webp$/i.test(file.contentType)) ??
+            thumbs2[0];
           if (full.length > 0)
             images[articleId] = full.map((file) => file.dataUrl ?? articleImageUrl(file.id));
           // Liefert das Backend die Vorschaubild-Daten mit, werden sie direkt
