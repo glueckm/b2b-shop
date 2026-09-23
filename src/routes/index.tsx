@@ -1668,7 +1668,7 @@ function Shop() {
                       }`}
                     />
                   </span>
-                  Technische Filter
+                  Tech. Filter
                   {activeSpecCount > 0 && showSpecFilters && (
                     <span className="font-mono text-[11px]">{activeSpecCount}</span>
                   )}
