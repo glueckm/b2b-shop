@@ -643,6 +643,7 @@ function Shop() {
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
   const [openFacets, setOpenFacets] = useState<string[]>([]);
+  const [showSpecFilters, setShowSpecFilters] = useState(false);
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
 
   /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
