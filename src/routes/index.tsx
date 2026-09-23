@@ -474,6 +474,8 @@ function Shop() {
     const fresh = await loadBaskets({ data: { basketId } });
     if (!fresh.ok || !fresh.active) return [];
     return (fresh.active.lines ?? []).flatMap((line) => {
+      // Nur Artikel der aktuellen Ansicht prüfen; für die übrigen liegt kein
+      // aktueller Katalogpreis vor.
       const article = bySku.get(line.articleNumber);
       if (!article || line.priceShown === null) return [];
       const current = priceForQty(article, line.quantity);
@@ -490,7 +492,7 @@ function Shop() {
     setBasketBusy(true);
     try {
       for (const diff of priceDiffs) {
-        const article = bySku.get(diff.sku);
+        const article = articleForSku(diff.sku);
         if (!article) continue;
         await setBasketLine({
           data: {
@@ -782,7 +784,7 @@ function Shop() {
 
   /** Menge im Backend setzen (Upsert) — ohne Warenkorb nur lokal. */
   const saveLine = async (sku: string, quantity: number) => {
-    const article = bySku.get(sku);
+    const article = articleForSku(sku);
     if (!activeBasket || !article) return;
     await runBasket(() =>
       setBasketLine({
@@ -813,7 +815,7 @@ function Shop() {
   };
 
   const removeLine = (sku: string) => {
-    const article = bySku.get(sku);
+    const article = articleForSku(sku);
     if (activeBasket && article) {
       void runBasket(() =>
         removeBasketLine({ data: { basketId: activeBasket.id, articleId: article.id } }),
