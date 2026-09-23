@@ -924,11 +924,9 @@ function Shop() {
                 />
               </button>
               {article.promo && (
-                <Percent
-                  className="size-4 shrink-0 text-destructive"
-                  aria-label="Aktionsartikel"
-                  title="Aktionsartikel"
-                />
+                <span className="text-destructive" title="Aktionsartikel">
+                  <Percent className="size-4 shrink-0" aria-label="Aktionsartikel" />
+                </span>
               )}
               <button
                 onClick={toggleDetail}
