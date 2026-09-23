@@ -601,6 +601,9 @@ function Shop() {
   );
 
 
+  // Umschalter „Favoriten" in der Kategorieleiste.
+  const [favOnly, setFavOnly] = useState(false);
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
