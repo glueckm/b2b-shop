@@ -1350,10 +1350,10 @@ function Shop() {
                   });
                 }}
 
-                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
                   search.subcategory === ""
-                    ? "bg-accent/15 font-semibold text-accent"
-                    : "bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "border-accent bg-accent/15 font-bold text-accent"
+                    : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
                 Alle
@@ -1375,10 +1375,10 @@ function Shop() {
                       });
                     }}
 
-                    className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
                       active
-                        ? "bg-accent/15 font-semibold text-accent"
-                        : "bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "border-accent bg-accent/15 font-bold text-accent"
+                        : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     {sub.name}
@@ -1400,10 +1400,10 @@ function Shop() {
                   setTerm("");
                   void navigate({ search: (prev) => ({ ...prev, subsubcategory: "", q: "" }) });
                 }}
-                className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
                   search.subsubcategory === ""
-                    ? "bg-stock/20 font-semibold text-stock"
-                    : "bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
+                    ? "border-stock bg-stock/20 font-bold text-stock"
+                    : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
                 }`}
               >
                 Alle
@@ -1423,10 +1423,10 @@ function Shop() {
                         }),
                       });
                     }}
-                    className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-[14px] transition-colors ${
+                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
                       active
-                        ? "bg-stock/20 font-semibold text-stock"
-                        : "bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
+                        ? "border-stock bg-stock/20 font-bold text-stock"
+                        : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
                     }`}
                   >
                     {leaf.name}
