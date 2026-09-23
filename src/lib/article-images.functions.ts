@@ -22,10 +22,11 @@ export const getArticleImageMap = createServerFn({ method: "POST" })
       const thumbs: Record<string, string> = {};
       try {
         const { listArticleImages } = await import("./mawa-api.server");
-        // Vorschaubilder (_thumb) werden im CRM erzeugt und hier nur erkannt.
+        // Das Backend-Kennzeichen ist maßgeblich; ältere Daten werden weiterhin
+        // über den Dateinamen erkannt.
         const isThumbName = (name: string) => /_thumb\.[^.]+$/i.test(name);
-        const isThumb = (file: { filename: string; isThumbnail?: boolean; dataUrl?: string }) =>
-          file.isThumbnail === true || !!file.dataUrl || isThumbName(file.filename);
+        const isThumb = (file: { filename: string; isThumbnail?: boolean }) =>
+          file.isThumbnail === true || isThumbName(file.filename);
         const grouped = await listArticleImages(data.articleIds);
         for (const [articleId, files] of Object.entries(grouped)) {
           const full = files.filter((file) => !isThumb(file));

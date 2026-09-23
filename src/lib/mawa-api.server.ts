@@ -112,17 +112,21 @@ function mapFile(raw: Record<string, unknown>): BackendFile {
 
 /** Neues Shop-Backend: Bilder werden je Artikel abgefragt. */
 function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFile {
-  const contentType = String(raw["contentType"] ?? "application/octet-stream");
-  // Schickt das Backend die Bilddaten (Vorschaubild) mit, wird kein
-  // zusätzlicher Abruf je Bild mehr nötig.
   const inline = str(
     raw["dataUri"] ??
+      raw["data_uri"] ??
       raw["dataUrl"] ??
       raw["data"] ??
       raw["dataBase64"] ??
       raw["contentBase64"] ??
       raw["bytesBase64"],
   );
+  const inlineContentType = inline?.match(/^data:([^;,]+)/i)?.[1];
+  const contentType = String(
+    raw["contentType"] ?? raw["content_type"] ?? inlineContentType ?? "application/octet-stream",
+  );
+  // Schickt das Backend die Bilddaten (Vorschaubild) mit, wird kein
+  // zusätzlicher Abruf je Bild mehr nötig.
   const dataUrl = inline
     ? inline.startsWith("data:")
       ? inline
@@ -135,7 +139,9 @@ function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFi
     entityId: articleId,
     createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
     ...(dataUrl ? { dataUrl } : {}),
-    ...(raw["isThumbnail"] === true ? { isThumbnail: true } : {}),
+    ...(raw["isThumbnail"] === true || raw["is_thumbnail"] === true
+      ? { isThumbnail: true }
+      : {}),
   };
 }
 
@@ -220,7 +226,10 @@ async function listImagesBulkChunk(
       const articleId = String(entry["articleId"] ?? entry["article_id"] ?? "");
       if (!articleId) continue;
       const listRaw = entry["images"] ?? entry["files"];
-      const files = (Array.isArray(listRaw) ? listRaw : [])
+      // Das Backend kann entweder je Artikel eine `images`-Liste oder flache
+      // Bildzeilen mit `articleId` liefern. Beide Formen werden unterstützt.
+      const fileRows = Array.isArray(listRaw) ? listRaw : [entry];
+      const files = fileRows
         .map((file) => mapShopFile((file ?? {}) as Record<string, unknown>, articleId))
         .filter((file) => file.id !== "")
         .sort(
@@ -228,7 +237,7 @@ async function listImagesBulkChunk(
             (a.createdAt ?? "").localeCompare(b.createdAt ?? "") ||
             a.filename.localeCompare(b.filename),
         );
-      grouped[articleId] = files;
+      grouped[articleId] = [...(grouped[articleId] ?? []), ...files];
     }
     // Auch leere Ergebnisse merken, damit nicht einzeln nachgefragt wird.
     for (const id of ids) {
