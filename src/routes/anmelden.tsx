@@ -276,6 +276,20 @@ function LoginPage() {
         )}
       </section>
 
+      <section className="mt-10 border-t border-border pt-6">
+        <h2 className="text-base font-semibold tracking-tight">Noch kein Kunde?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Sie haben noch keine Kundennummer bei MAWA? Fordern Sie ein Händlerkonto samt Shop-Zugang
+          an – wir melden uns mit den nächsten Schritten.
+        </p>
+        <a
+          href="mailto:office@mawa-trading.at?subject=Kundenlogin%20anfordern%20-%20MAWA%20B2B%20Shop"
+          className="mt-4 block w-full rounded-sm border border-accent px-4 py-2.5 text-center text-sm font-semibold text-accent hover:bg-accent/10"
+        >
+          Kundenlogin anfordern
+        </a>
+      </section>
+
       <p className="mt-10 text-center text-xs text-muted-foreground">Version {SHOP_VERSION}</p>
     </main>
   );
