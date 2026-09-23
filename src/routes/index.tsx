@@ -707,14 +707,16 @@ function Shop() {
       );
     }
 
-    if (!favOnly) return out;
-    // Nur mit Herz markierte Artikel zeigen; bei Varianten nur die markierten.
+    if (!favOnly && activeSpecCount === 0) return out;
+    // Favoriten (Herz) und Zusatzfilter anwenden; bei Varianten nur die passenden.
+    const keep = (article: CatalogArticle) =>
+      (!favOnly || favourites.has(article.id)) && matchesSpecs(article);
     return out.flatMap((row): Row[] => {
-      if (row.kind === "single") return favourites.has(row.article.id) ? [row] : [];
-      const variants = row.variants.filter((v) => favourites.has(v.id));
+      if (row.kind === "single") return keep(row.article) ? [row] : [];
+      const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, favourites]);
+  }, [articles, favOnly, favourites, activeSpecCount, matchesSpecs]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
