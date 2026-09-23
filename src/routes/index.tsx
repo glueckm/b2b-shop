@@ -6,7 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { Heart, Trash2 } from "lucide-react";
+import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -1289,6 +1289,7 @@ function Shop() {
               href="#order"
               className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
             >
+              <ShoppingCart className="size-4" />
               Warenkorb
               <span className="font-mono text-xs">{lines.length}</span>
             </a>
