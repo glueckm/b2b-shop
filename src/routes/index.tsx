@@ -601,6 +601,9 @@ function Shop() {
   );
 
 
+  // Umschalter „Favoriten" in der Kategorieleiste.
+  const [favOnly, setFavOnly] = useState(false);
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
@@ -638,8 +641,15 @@ function Shop() {
       );
     }
 
-    return out;
-  }, [articles]);
+    if (!favOnly) return out;
+    // Nur mit Herz markierte Artikel zeigen; bei Varianten nur die markierten.
+    return out.flatMap((row): Row[] => {
+      if (row.kind === "single") return favourites.has(row.article.id) ? [row] : [];
+      const variants = row.variants.filter((v) => favourites.has(v.id));
+      return variants.length > 0 ? [{ ...row, variants }] : [];
+    });
+  }, [articles, favOnly, favourites]);
+
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
@@ -1239,6 +1249,23 @@ function Shop() {
               </button>
             );
           })}
+
+          <button
+            onClick={() => setFavOnly((prev) => !prev)}
+            title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
+            aria-pressed={favOnly}
+            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors ${
+              favOnly
+                ? "border-accent bg-accent text-accent-foreground"
+                : "border-accent/60 bg-accent/10 text-accent hover:bg-accent/20"
+            }`}
+          >
+            <Heart className="size-4" {...(favOnly ? { fill: "currentColor" } : {})} />
+            Favoriten
+            {favourites.size > 0 && (
+              <span className="font-mono text-[12px] opacity-80">{favourites.size}</span>
+            )}
+          </button>
         </div>
 
         {subCategories.length > 0 && (
