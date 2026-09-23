@@ -44,6 +44,8 @@ export type CatalogArticle = {
   specs: Record<string, string>;
   /** weclapp-Feld „Aktion": Artikel ist Teil einer laufenden Aktion. */
   promo: boolean;
+  /** In weclapp als Hauptartikel des Variantenartikels markiert. */
+  isPrimary: boolean;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -184,7 +186,8 @@ variant as (
   select vv.article_id,
          v.id as group_id,
          v.variant_article_number as group_sku,
-         v.variant_article_name as group_name
+         v.variant_article_name as group_name,
+         (v.primary_article_id = vv.article_id) as is_primary
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
@@ -219,7 +222,8 @@ select a.id as id,
        coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
        coalesce(a.ca_display, '') as spec_display,
        coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery,
-       coalesce(a.ca_aktion, false) as promo
+       coalesce(a.ca_aktion, false) as promo,
+       coalesce(vr.is_primary, false) as is_primary
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -454,6 +458,7 @@ async function buildArticles(
       spec_display: string;
       spec_battery: string;
       promo: boolean;
+      is_primary: boolean;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -499,6 +504,7 @@ async function buildArticles(
       groupName: row.group_name ?? "",
       specs,
       promo: Boolean(row.promo),
+      isPrimary: Boolean(row.is_primary),
     };
   });
 

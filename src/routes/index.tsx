@@ -737,14 +737,12 @@ function Shop() {
       }
       group.variants.push(article);
     }
-    // Varianten nach der Größenzahl im Namen sortieren (z. B. ARM52-30 vor ARM52-50).
-    const sizeOf = (value: string) => {
-      const match = /-\s*(\d+(?:[.,]\d+)?)/.exec(value);
-      return match ? Number(match[1]!.replace(",", ".")) : Number.POSITIVE_INFINITY;
-    };
+    // Hauptartikel (weclapp primary_article) zuerst, danach nach Namen.
     for (const group of groups.values()) {
       group.variants.sort(
-        (a, b) => sizeOf(a.name) - sizeOf(b.name) || a.name.localeCompare(b.name),
+        (a, b) =>
+          Number(b.isPrimary) - Number(a.isPrimary) ||
+          a.name.localeCompare(b.name, "de", { numeric: true }),
       );
     }
 
