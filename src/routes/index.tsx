@@ -1479,41 +1479,6 @@ function Shop() {
 
       </nav>
 
-      {specFacets.length > 0 && (
-        <div className="mx-auto flex max-w-[1440px] items-center gap-3 px-5 pt-5">
-          <button
-            type="button"
-            onClick={() => {
-              setShowSpecFilters((v) => {
-                if (v) setSpecFilters({});
-                return !v;
-              });
-            }}
-            aria-pressed={showSpecFilters}
-            className={`flex items-center gap-2 rounded-sm border px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-              showSpecFilters
-                ? "border-accent bg-accent/15 text-accent"
-                : "border-border bg-card text-muted-foreground hover:border-accent/60 hover:text-foreground"
-            }`}
-          >
-            <span
-              className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
-                showSpecFilters ? "bg-accent" : "bg-muted-foreground/40"
-              }`}
-            >
-              <span
-                className={`absolute size-3 rounded-full bg-background transition-all ${
-                  showSpecFilters ? "left-[14px]" : "left-[2px]"
-                }`}
-              />
-            </span>
-            Technische Filter
-            {activeSpecCount > 0 && showSpecFilters && (
-              <span className="font-mono text-[11px]">{activeSpecCount}</span>
-            )}
-          </button>
-        </div>
-      )}
 
       <div
         className={`mx-auto grid max-w-[1440px] gap-6 px-5 py-7 ${
