@@ -262,6 +262,8 @@ function LoginPage() {
           </form>
         )}
       </section>
+
+      <p className="mt-10 text-center text-xs text-muted-foreground">Version {SHOP_VERSION}</p>
     </main>
   );
 }
