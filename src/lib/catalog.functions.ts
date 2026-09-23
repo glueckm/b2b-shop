@@ -442,12 +442,34 @@ async function buildArticles(
       group_id: string;
       group_sku: string;
       group_name: string;
+      spec_sensor: string;
+      spec_netd: string;
+      spec_lens: string;
+      spec_magnification: string;
+      spec_detection: string;
+      spec_framerate: string;
+      spec_display: string;
+      spec_battery: string;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
     const pct = Number(row.rebate_pct ?? 0);
     const factor = 1 - pct / 100;
+    const specs: Record<string, string> = {};
+    for (const [key, value] of [
+      ["sensor", row.spec_sensor],
+      ["netd", row.spec_netd],
+      ["lens", row.spec_lens],
+      ["magnification", row.spec_magnification],
+      ["detection", row.spec_detection],
+      ["framerate", row.spec_framerate],
+      ["display", row.spec_display],
+      ["battery", row.spec_battery],
+    ] as const) {
+      const text = (value ?? "").trim();
+      if (text) specs[key] = text;
+    }
     return {
       id: String(row.id),
       sku: row.sku,
@@ -471,6 +493,7 @@ async function buildArticles(
       groupId: row.group_id ?? "",
       groupSku: row.group_sku ?? "",
       groupName: row.group_name ?? "",
+      specs,
     };
   });
 
