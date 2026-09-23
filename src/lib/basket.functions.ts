@@ -29,6 +29,20 @@ async function state(activeId?: string): Promise<BasketState> {
       const created = await api.createBasket(`Warenkorb ${new Date().toLocaleDateString("de-AT")}`);
       baskets = [created];
     }
+    // Es soll nur der zuletzt bearbeitete Warenkorb offen bleiben; ältere
+    // werden aufgegeben (sie bleiben im Backend erhalten).
+    if (baskets.length > 1) {
+      const sorted = [...baskets].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      const keep = (activeId && sorted.find((b) => b.id === activeId)) || sorted[0]!;
+      for (const stale of sorted.filter((b) => b.id !== keep.id)) {
+        try {
+          await api.abandonBasket(stale.id);
+        } catch {
+          /* bleibt sonst einfach sichtbar */
+        }
+      }
+      baskets = [keep];
+    }
     const wanted = activeId && baskets.some((b) => b.id === activeId) ? activeId : baskets[0]?.id;
     const active = wanted ? await api.getBasket(wanted) : null;
     return { ok: true, baskets, active };
