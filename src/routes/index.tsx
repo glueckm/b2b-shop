@@ -1522,7 +1522,7 @@ function Shop() {
 
             <div className="rounded-lg border border-border bg-card p-4">
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold tracking-tight">Technische Filter</h3>
+                <h3 className="text-sm font-semibold tracking-tight">Tech. Filter</h3>
                 {activeSpecCount > 0 && (
                   <button
                     onClick={() => setSpecFilters({})}
@@ -1668,7 +1668,7 @@ function Shop() {
                       }`}
                     />
                   </span>
-                  Technische Filter
+                  Tech. Filter
                   {activeSpecCount > 0 && showSpecFilters && (
                     <span className="font-mono text-[11px]">{activeSpecCount}</span>
                   )}
