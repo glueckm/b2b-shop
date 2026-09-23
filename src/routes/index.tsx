@@ -1468,22 +1468,27 @@ function Shop() {
                 {specFacets.map((facet) => (
                   <div key={facet.key}>
                     <p className="label-mono text-muted-foreground">{facet.label}</p>
-                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <div className="mt-1.5 flex flex-col gap-1">
                       {facet.values.map((option) => {
                         const active = (specFilters[facet.key] ?? []).includes(option.value);
                         return (
-                          <button
+                          <label
                             key={option.value}
-                            onClick={() => toggleSpecValue(facet.key, option.value)}
-                            aria-pressed={active}
-                            className={`rounded-sm border px-2 py-1 text-[12px] transition-colors ${
-                              active
-                                ? "border-accent bg-accent text-accent-foreground font-semibold"
-                                : "border-border bg-panel text-muted-foreground hover:border-accent/60 hover:text-foreground"
+                            className={`flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 text-[13px] transition-colors hover:bg-muted ${
+                              active ? "font-semibold text-accent" : "text-muted-foreground"
                             }`}
                           >
-                            {option.value}
-                          </button>
+                            <input
+                              type="checkbox"
+                              checked={active}
+                              onChange={() => toggleSpecValue(facet.key, option.value)}
+                              className="size-3.5 shrink-0 accent-accent"
+                            />
+                            <span className="min-w-0 truncate">{option.value}</span>
+                            <span className="ml-auto font-mono text-[11px] opacity-60">
+                              {option.count}
+                            </span>
+                          </label>
                         );
                       })}
                     </div>
