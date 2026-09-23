@@ -207,7 +207,16 @@ select a.id as id,
        coalesce(vr.group_id, '') as group_id,
        coalesce(vr.group_sku, '') as group_sku,
        coalesce(vr.group_name, '') as group_name,
-       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct
+       coalesce(r1.pct, r2.pct, r3.pct, 0)::float8 as rebate_pct,
+       -- Technische Merkmale für die Zusatzfilter (leer, wenn nicht gepflegt)
+       coalesce(a.ca_sensor, '') as spec_sensor,
+       coalesce(a.ca_netd_m_k::text, '') as spec_netd,
+       coalesce(a.ca_objektiv_linse_mm::text, '') as spec_lens,
+       coalesce(a.ca_optische_vergroesserung::text, '') as spec_magnification,
+       coalesce(a.ca_erkennungsdistanz_m::text, '') as spec_detection,
+       coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
+       coalesce(a.ca_display, '') as spec_display,
+       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
