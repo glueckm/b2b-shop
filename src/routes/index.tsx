@@ -1252,12 +1252,6 @@ function Shop() {
             </span>
           </div>
           <div className="ml-auto flex items-center gap-4">
-            <span className="hidden items-center gap-2 sm:flex">
-              <span className="label-mono text-primary-foreground/55">Preisgruppe</span>
-              <span className="rounded-sm bg-primary-foreground/10 px-2 py-1.5 text-xs font-semibold text-primary-foreground">
-                {activeGroup}
-              </span>
-            </span>
 
             {data.user ? (
               <div className="flex items-center gap-3">
