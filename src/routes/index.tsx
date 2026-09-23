@@ -615,6 +615,7 @@ function Shop() {
         groupSku: "",
         groupName: "",
         specs: {},
+        promo: false,
       });
     }
     return out;
@@ -640,6 +641,7 @@ function Shop() {
 
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
+  const [promoOnly, setPromoOnly] = useState(false);
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
   const [openFacets, setOpenFacets] = useState<string[]>([]);
@@ -746,16 +748,18 @@ function Shop() {
       );
     }
 
-    if (!favOnly && activeSpecCount === 0) return out;
-    // Favoriten (Herz) und Zusatzfilter anwenden; bei Varianten nur die passenden.
+    if (!favOnly && !promoOnly && activeSpecCount === 0) return out;
+    // Favoriten (Herz), Aktionen und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
-      (!favOnly || favourites.has(article.id)) && matchesSpecs(article);
+      (!favOnly || favourites.has(article.id)) &&
+      (!promoOnly || article.promo) &&
+      matchesSpecs(article);
     return out.flatMap((row): Row[] => {
       if (row.kind === "single") return keep(row.article) ? [row] : [];
       const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, favourites, activeSpecCount, matchesSpecs]);
+  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -1357,6 +1361,32 @@ function Shop() {
               </button>
             );
           })}
+
+          <button
+            onClick={() => {
+              setPromoOnly((prev) => !prev);
+              setTerm("");
+              void navigate({
+                search: (prev) => ({
+                  ...prev,
+                  category: "",
+                  subcategory: "",
+                  subsubcategory: "",
+                  q: "",
+                }),
+              });
+            }}
+            aria-pressed={promoOnly}
+            title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
+            className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
+              promoOnly
+                ? "border-destructive bg-destructive/15 font-bold text-destructive"
+                : "border-transparent font-semibold text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+            }`}
+          >
+            AKTIONEN
+          </button>
+
 
           <button
             onClick={() => setFavOnly((prev) => !prev)}

@@ -42,6 +42,8 @@ export type CatalogArticle = {
   groupName: string;
   /** Technische Merkmale (z. B. Sensor, NETD, Objektiv) für die Zusatzfilter. */
   specs: Record<string, string>;
+  /** weclapp-Feld „Aktion": Artikel ist Teil einer laufenden Aktion. */
+  promo: boolean;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -216,7 +218,8 @@ select a.id as id,
        coalesce(a.ca_erkennungsdistanz_m::text, '') as spec_detection,
        coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
        coalesce(a.ca_display, '') as spec_display,
-       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery
+       coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery,
+       coalesce(a.ca_aktion, false) as promo
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -450,6 +453,7 @@ async function buildArticles(
       spec_framerate: string;
       spec_display: string;
       spec_battery: string;
+      promo: boolean;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -494,6 +498,7 @@ async function buildArticles(
       groupSku: row.group_sku ?? "",
       groupName: row.group_name ?? "",
       specs,
+      promo: Boolean(row.promo),
     };
   });
 
