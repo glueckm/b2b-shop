@@ -643,7 +643,7 @@ function Shop() {
 
     if (!favOnly) return out;
     // Nur mit Herz markierte Artikel zeigen; bei Varianten nur die markierten.
-    return out.flatMap((row) => {
+    return out.flatMap((row): Row[] => {
       if (row.kind === "single") return favourites.has(row.article.id) ? [row] : [];
       const variants = row.variants.filter((v) => favourites.has(v.id));
       return variants.length > 0 ? [{ ...row, variants }] : [];
