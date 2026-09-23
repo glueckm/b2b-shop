@@ -1439,7 +1439,61 @@ function Shop() {
 
       </nav>
 
-      <div className="mx-auto grid max-w-[1440px] gap-6 px-5 py-7 lg:grid-cols-[minmax(0,1fr)_330px]">
+      <div
+        className={`mx-auto grid max-w-[1440px] gap-6 px-5 py-7 ${
+          specFacets.length > 0
+            ? "lg:grid-cols-[240px_minmax(0,1fr)_330px]"
+            : "lg:grid-cols-[minmax(0,1fr)_330px]"
+        }`}
+      >
+        {specFacets.length > 0 && (
+          <aside className="lg:sticky lg:top-36 lg:self-start">
+            <div className="rounded-lg border border-border bg-card p-4">
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-sm font-semibold tracking-tight">技Technische Filter</h3>
+                {activeSpecCount > 0 && (
+                  <button
+                    onClick={() => setSpecFilters({})}
+                    className="text-[12px] font-semibold text-accent hover:underline"
+                  >
+                    zurücksetzen
+                  </button>
+                )}
+              </div>
+              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
+                Optional – Auswahl einschränken nach Geräteeigenschaften.
+              </p>
+
+              <div className="mt-3 space-y-4">
+                {specFacets.map((facet) => (
+                  <div key={facet.key}>
+                    <p className="label-mono text-muted-foreground">{facet.label}</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {facet.values.map((option) => {
+                        const active = (specFilters[facet.key] ?? []).includes(option.value);
+                        return (
+                          <button
+                            key={option.value}
+                            onClick={() => toggleSpecValue(facet.key, option.value)}
+                            aria-pressed={active}
+                            className={`rounded-sm border px-2 py-1 text-[12px] transition-colors ${
+                              active
+                                ? "border-accent bg-accent text-accent-foreground font-semibold"
+                                : "border-border bg-panel text-muted-foreground hover:border-accent/60 hover:text-foreground"
+                            }`}
+                          >
+                            {option.value}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
+        )}
+
         <main className="min-w-0">
           <div>
             <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
