@@ -133,6 +133,7 @@ function mapShopFile(raw: Record<string, unknown>, articleId: string): BackendFi
     entityId: articleId,
     createdAt: str(raw["uploadedAt"] ?? raw["createdAt"]),
     ...(dataUrl ? { dataUrl } : {}),
+    ...(raw["isThumbnail"] === true ? { isThumbnail: true } : {}),
   };
 }
 
