@@ -44,6 +44,7 @@ function LoginPage() {
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
 
   // Passwort vergessen
+  const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
