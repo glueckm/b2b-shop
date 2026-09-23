@@ -640,6 +640,7 @@ function Shop() {
 
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
+  const [promoOnly, setPromoOnly] = useState(false);
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
   const [openFacets, setOpenFacets] = useState<string[]>([]);
