@@ -1263,9 +1263,12 @@ function Shop() {
               <div className="flex items-center gap-3">
                 <Link
                   to="/konto"
-                  className="label-mono text-primary-foreground/70 hover:text-accent"
+                  className="flex flex-col leading-tight text-primary-foreground/70 hover:text-accent"
                 >
-                  {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
+                  <span className="label-mono">Mein Konto</span>
+                  <span className="font-mono text-[11px] opacity-80">
+                    {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
+                  </span>
                 </Link>
 
                 <button
