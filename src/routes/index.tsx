@@ -26,7 +26,7 @@ import {
   type Basket,
   type BasketState,
 } from "@/lib/basket.functions";
-import { getCatalog, type CatalogArticle } from "@/lib/catalog.functions";
+import { getCatalog, SPEC_FIELDS, type CatalogArticle } from "@/lib/catalog.functions";
 import {
   loadFavourites,
   markFavourite,
