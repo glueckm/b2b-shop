@@ -32,7 +32,7 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     const res = await fetch(`${apiBase()}/v1/service/emails`, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${token}`,
+        "x-api-key": token,
         "content-type": "application/json",
         origin: process.env["APP_PUBLIC_URL"] ?? "https://mawashop.lovable.app",
       },
