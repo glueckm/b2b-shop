@@ -265,7 +265,12 @@ left join weclapp.variant_article_variant vg on vg.article_id = a.id
 left join glevel g on g.group_id = vg.variant_article_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-  and ${MAIN_STOCK_EXISTS}
+  -- gleiche Regeln wie die Artikelliste: Varianten immer, Einzelartikel nur mit Bestand; gültiger Preis
+  and (vg.variant_article_id is not null or ${MAIN_STOCK_EXISTS})
+  and exists (select 1 from weclapp.article_price p
+    where p.article_id = a.id and p.price > 0
+      and (p.start_date is null or p.start_date <= now())
+      and (p.end_date is null or p.end_date > now()))
 group by 1, 2, 3
 order by 1, 2, 3
 `;
