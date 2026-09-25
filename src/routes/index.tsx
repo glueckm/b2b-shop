@@ -1797,98 +1797,12 @@ function Shop() {
 
             {data.user && (
               <div className="border-b border-border px-4 py-3">
-                {renaming && activeBasket ? (
-                  <form
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      const name = renameValue.trim();
-                      setRenaming(false);
-                      if (name.length > 0) {
-                        void runBasket(() =>
-                          renameBasket({ data: { basketId: activeBasket.id, name } }),
-                        );
-                      }
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <input
-                      value={renameValue}
-                      onChange={(event) => setRenameValue(event.target.value)}
-                      maxLength={80}
-                      autoFocus
-                      placeholder="Name des Warenkorbs"
-                      className="min-w-0 flex-1 rounded-sm border border-border bg-card px-2 py-1.5 text-[13px] outline-none focus:border-accent"
-                    />
-                    <button type="submit" className="text-sm font-semibold text-accent">
-                      Speichern
-                    </button>
-                  </form>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={activeBasket?.id ?? ""}
-                      disabled={basketBusy || baskets.length === 0}
-                      onChange={(event) =>
-                        void runBasket(() => loadBaskets({ data: { basketId: event.target.value } }))
-                      }
-                      className="min-w-0 flex-1 rounded-sm border border-border bg-card px-2 py-1.5 text-[13px] outline-none focus:border-accent"
-                    >
-                      {baskets.length === 0 && <option value="">Kein Warenkorb</option>}
-                      {baskets.map((basket) => (
-                        <option key={basket.id} value={basket.id}>
-                          {basket.name} · {basket.lineCount} Pos.
-                        </option>
-                      ))}
-                    </select>
-                    {activeBasket && (
-                      <button
-                        onClick={() => {
-                          setRenameValue(activeBasket.name);
-                          setRenaming(true);
-                        }}
-                        className="rounded-sm border border-border px-2 py-1.5 text-[12px] font-semibold hover:bg-muted"
-                      >
-                        Umbenennen
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <button
-                    disabled={basketBusy}
-                    onClick={() => void runBasket(() => createBasket({ data: {} }))}
-                    className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:bg-muted disabled:opacity-50"
-                  >
-                    Neuer Warenkorb
-                  </button>
-                  {activeBasket && (
-                    <>
-                      <button
-                        disabled={basketBusy}
-                        onClick={() =>
-                          void runBasket(() =>
-                            copyBasket({ data: { basketId: activeBasket.id } }),
-                          )
-                        }
-                        className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:bg-muted disabled:opacity-50"
-                      >
-                        Kopieren
-                      </button>
-                      <button
-                        disabled={basketBusy}
-                        onClick={() =>
-                          void runBasket(() =>
-                            abandonBasket({ data: { basketId: activeBasket.id } }),
-                          )
-                        }
-                        className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold text-muted-foreground hover:text-destructive disabled:opacity-50"
-                      >
-                        Aufgeben
-                      </button>
-                    </>
-                  )}
-                </div>
+                <Link
+                  to="/bestellungen"
+                  className="block rounded-sm border border-border px-3 py-2 text-center text-[13px] font-semibold hover:border-accent hover:text-accent"
+                >
+                  Meine Bestellungen
+                </Link>
               </div>
             )}
 
