@@ -1,15 +1,11 @@
 /**
  * Generischer E-Mail-Versand über das MAWA-Backend.
  *
- * Erwarteter Endpunkt (Backend):
- *   POST /v1/shop/emails
- *   Body: { to, subject, text, html?, replyTo?, cc?, bcc? }
- *   Antwort: 202 { status: "accepted" }  |  400 { error: "…" }
- *
- * Der Aufruf erfolgt serverseitig mit dem Shop-Servicekonto-Token,
- * damit auch öffentliche Seiten (z. B. /kundenanfrage) senden können.
+ * Endpunkt: POST /v1/service/emails
+ * Authentifizierung: festes Service-Token (Secret MAWA_SERVICE_TOKEN),
+ * kein Login nötig.
+ * Body: { to, subject, text, html?, replyTo?, cc?, bcc? }
  */
-import { serviceAuthHeaders } from "./mawa-api.server";
 
 export type MailMessage = {
   to: string | string[];
@@ -30,10 +26,16 @@ function apiBase(): string {
 export type MailResult = { ok: true } | { ok: false; error: string };
 
 export async function sendMail(message: MailMessage): Promise<MailResult> {
+  const token = process.env["MAWA_SERVICE_TOKEN"];
+  if (!token) return { ok: false, error: "MAWA_SERVICE_TOKEN_MISSING" };
   try {
-    const res = await fetch(`${apiBase()}/v1/shop/emails`, {
+    const res = await fetch(`${apiBase()}/v1/service/emails`, {
       method: "POST",
-      headers: { ...(await serviceAuthHeaders()), "content-type": "application/json" },
+      headers: {
+        authorization: `Bearer ${token}`,
+        "content-type": "application/json",
+        origin: process.env["APP_PUBLIC_URL"] ?? "https://mawashop.lovable.app",
+      },
       body: JSON.stringify(message),
       signal: AbortSignal.timeout(20_000),
     });
