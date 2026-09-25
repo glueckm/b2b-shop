@@ -93,10 +93,6 @@ export async function checkEligibility(customerNumber: string): Promise<Eligibil
   };
 }
 
-async function serviceHeaders(): Promise<Record<string, string>> {
-  const { serviceAuthHeaders } = await import("./mawa-api.server");
-  return serviceAuthHeaders();
-}
 
 /** Shop-Zugang beim Backend anlegen lassen. */
 export async function apiSignup(
@@ -124,7 +120,7 @@ export async function apiRecordRegistration(input: {
 }): Promise<void> {
   const res = await fetch(`${apiBase()}/v1/shop-registrations`, {
     method: "POST",
-    headers: { ...(await serviceHeaders()), "content-type": "application/json" },
+    headers: { origin: appOrigin(), "content-type": "application/json" },
     body: JSON.stringify({
       customerNumber: input.customerNumber,
       email: input.email ?? null,
