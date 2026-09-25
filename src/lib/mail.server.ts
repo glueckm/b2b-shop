@@ -32,12 +32,12 @@ export async function sendMail(message: MailMessage): Promise<MailResult> {
     const res = await fetch(`${apiBase()}/v1/service/emails`, {
       method: "POST",
       headers: {
-        authorization: `Bearer ${token}`,
+        "x-api-key": token,
         "content-type": "application/json",
         origin: process.env["APP_PUBLIC_URL"] ?? "https://mawashop.lovable.app",
       },
       body: JSON.stringify(message),
-      signal: AbortSignal.timeout(20_000),
+      signal: AbortSignal.timeout(45_000),
     });
     if (res.status === 202 || res.ok) return { ok: true };
     const body = await res.text();
