@@ -2014,9 +2014,6 @@ function Shop() {
                   {orderDone}
                 </p>
               )}
-              <p className="label-mono mt-3 text-muted-foreground">
-                Preise gemäß Preisgruppe {activeGroup} · netto
-              </p>
             </div>
           </div>
         </aside>
