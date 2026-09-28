@@ -1514,19 +1514,64 @@ function Shop() {
       </nav>
 
 
-      <div
-        className={`mx-auto grid max-w-[1440px] gap-6 px-5 py-7 ${
-          specFacets.length > 0 && showSpecFilters
-            ? "lg:grid-cols-[240px_minmax(0,1fr)_330px]"
-            : "lg:grid-cols-[minmax(0,1fr)_330px]"
-        }`}
-      >
-        {specFacets.length > 0 && showSpecFilters && (
-          <aside className="lg:sticky lg:top-36 lg:self-start">
+      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
+        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+          {(() => {
+            const block = (
+              title: string,
+              items: { name: string; count?: number }[],
+              current: string,
+              pick: (name: string) => void,
+            ) =>
+              items.length > 0 && (
+                <div>
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">{title}</h3>
+                  <ul className="mt-2 space-y-0.5">
+                    {items.map((item) => {
+                      const active = item.name === current;
+                      return (
+                        <li key={item.name}>
+                          <button
+                            onClick={() => pick(active ? "" : item.name)}
+                            className={`flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left text-sm transition-colors hover:bg-muted ${
+                              active ? "font-semibold text-accent" : "text-foreground/85"
+                            }`}
+                          >
+                            <span className="min-w-0 truncate">{item.name}</span>
+                            {item.count !== undefined && (
+                              <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                                {item.count}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            return (
+              <>
+                {block(search.category || "Kategorie", subCategories, search.subcategory, (name) => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({ ...prev, subcategory: name, subsubcategory: "", q: "" }),
+                  });
+                })}
+                {block(search.subcategory, subSubCategories, search.subsubcategory, (name) => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({ ...prev, subsubcategory: name, q: "" }),
+                  });
+                })}
+              </>
+            );
+          })()}
 
-            <div className="rounded-lg border border-border bg-card p-4">
+          {specFacets.length > 0 && (
+            <div>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold tracking-tight">Tech. Filter</h3>
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Tech. Filter</h3>
                 {activeSpecCount > 0 && (
                   <button
                     onClick={() => setSpecFilters({})}
@@ -1536,11 +1581,8 @@ function Shop() {
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-                Optional – Auswahl einschränken nach Geräteeigenschaften.
-              </p>
 
-              <div className="mt-3 divide-y divide-border">
+              <div className="mt-2 divide-y divide-border">
                 {specFacets.map((facet) => {
                   const selected = specFilters[facet.key] ?? [];
                   const open = openFacets.includes(facet.key) || selected.length > 0;
