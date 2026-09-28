@@ -876,7 +876,7 @@ function Shop() {
       const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter]);
+  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, search.category, search.q]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
