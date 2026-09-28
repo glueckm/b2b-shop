@@ -46,6 +46,7 @@ export type CatalogArticle = {
   promo: boolean;
   /** In weclapp als Hauptartikel des Variantenartikels markiert. */
   isPrimary: boolean;
+  manufacturer: string;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -251,7 +252,8 @@ select a.id as id,
        coalesce(nullif(a.ca_akku::text, '0'), '') as spec_cell,
        coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
        coalesce(a.ca_aktion, false) as promo,
-       coalesce(vr.is_primary, false) as is_primary
+       coalesce(vr.is_primary, false) as is_primary,
+       coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -509,6 +511,7 @@ async function buildArticles(
       spec_storage: string;
       promo: boolean;
       is_primary: boolean;
+      manufacturer: string;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -569,6 +572,7 @@ async function buildArticles(
       specs,
       promo: Boolean(row.promo),
       isPrimary: Boolean(row.is_primary),
+      manufacturer: (row.manufacturer ?? "").trim(),
     };
   });
 
