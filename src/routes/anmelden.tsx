@@ -267,7 +267,9 @@ function LoginPage() {
 
 
       <section className="mt-10 border-t border-border pt-6">
-        <h2 className="text-base font-semibold tracking-tight">Noch kein Zugang?</h2>
+        <h2 className="text-base font-semibold tracking-tight">
+          Bereits Kunde, aber noch keinen B2B Shop Zugang?
+        </h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Fordern Sie Ihren Shop-Zugang mit Ihrer Kundennummer an. Wir prüfen Ihr Kundenkonto und
           senden Ihnen einen Link zum Setzen Ihres Passworts.
