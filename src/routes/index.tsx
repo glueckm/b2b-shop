@@ -316,12 +316,12 @@ function Shop() {
         loadedIds.current.add(id);
       });
       if (Object.keys(result.images).length > 0) {
-        setImageMap((prev) => ({ ...prev, artikel: "", ...result.images }));
+        setImageMap((prev) => ({ ...prev, ...result.images }));
       }
       if (Object.keys(result.thumbs).length > 0) {
-        setThumbMap((prev) => ({ ...prev, artikel: "", ...result.thumbs }));
+        setThumbMap((prev) => ({ ...prev, ...result.thumbs }));
       }
-      setImageLookupDone((prev) => new Set([...prev, artikel: "", ...batch]));
+      setImageLookupDone((prev) => new Set([...prev, ...batch]));
     } catch {
       // Fehlgeschlagene Portionen bleiben erneut abrufbar.
       batch.forEach((id) => loadingIds.current.delete(id));
@@ -769,7 +769,7 @@ function Shop() {
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
-    setOpenGroups((prev) => ({ ...prev, artikel: "", [id]: !prev[id] }));
+    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
 
 
 
@@ -784,7 +784,7 @@ function Shop() {
 
   const step = (article: CatalogArticle, delta: number) =>
     setQty((prev) => ({
-      ...prev, artikel: "",
+      ...prev,
       [article.sku]: Math.max(article.moq, getQty(article) + delta * article.moq),
     }));
 
@@ -821,7 +821,7 @@ function Shop() {
     setLocalLines((prev) => {
       const existing = prev.find((l) => l.sku === sku);
       if (existing) return prev.map((l) => (l.sku === sku ? { ...l, qty: l.qty + amount } : l));
-      return [...prev, artikel: "", { sku, qty: amount }];
+      return [...prev, { sku, qty: amount }];
     });
   };
 
@@ -1519,7 +1519,7 @@ function Shop() {
                           setOpenFacets((prev) =>
                             prev.includes(facet.key)
                               ? prev.filter((k) => k !== facet.key)
-                              : [...prev, artikel: "", facet.key],
+                              : [...prev, facet.key],
                           )
                         }
                         aria-expanded={open}
