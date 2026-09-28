@@ -1916,7 +1916,6 @@ function Shop() {
                   <div className="mt-4 grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
                     <div>
                       {renderGallery(a)}
-                    </div>
                       {(() => {
                         if (!a.groupId) return null;
                         const siblings = articles
@@ -1928,7 +1927,7 @@ function Shop() {
                           );
                         if (siblings.length < 2) return null;
                         return (
-                          <div className="xl:order-last xl:col-span-2">
+                          <div className="mt-6">
                             <p className="label-mono text-muted-foreground">
                               {siblings.length} Varianten
                             </p>
@@ -1963,6 +1962,7 @@ function Shop() {
                           </div>
                         );
                       })()}
+                    </div>
                     <div>
                       <p className="label-mono text-muted-foreground">
                         {[a.level1, a.level2].filter(Boolean).join(" · ")}
