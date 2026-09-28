@@ -1098,7 +1098,7 @@ function Shop() {
                   <div className="mr-[206px]">
                     <div className="relative grid h-[420px] place-items-center rounded-md border border-border bg-muted">
                       <ArticleImage
-                        src={imgs[current]}
+                        src={imgs[current] ?? ""}
                         alt={`${article.name} — Bild ${current + 1}`}
                         className="max-h-[400px] max-w-full object-contain"
                       />
