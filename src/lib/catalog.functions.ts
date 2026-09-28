@@ -696,14 +696,37 @@ export const getAccessories = createServerFn({ method: "POST" })
       );
       const bySku = new Map(snapshot.articles.map((a) => [a.sku, a]));
       const self = bySku.get(data.sku);
+      const isBattery = (a: CatalogArticle) => /batter|akku|accu|ladeger|powerbank|18650|21700|cr123/i.test(a.name);
+      const usable = (a: CatalogArticle | undefined): a is CatalogArticle =>
+        !!a && a.sku !== data.sku && !(self?.groupId && a.groupId === self.groupId);
+      const bought = rows.map((r) => bySku.get(r.sku)).filter(usable);
       const out: CatalogArticle[] = [];
-      for (const row of rows) {
-        const article = bySku.get(row.sku);
-        if (!article) continue;
-        if (self?.groupId && article.groupId === self.groupId) continue;
-        out.push(article);
-        if (out.length >= 4) break;
+      const push = (a: CatalogArticle) => {
+        if (out.length < 8 && !out.some((o) => o.sku === a.sku)) out.push(a);
+      };
+      const thermal = self?.level1 === "Wärmebild & Nachtsicht";
+      if (thermal) {
+        // Batterien/Akkus aus dem Jagdbedarf zuerst – mitgekaufte vorrangig,
+        // sonst die meistverkauften Batterien im Jagdbedarf.
+        bought.filter((a) => a.level1 === "Jagdbedarf" && isBattery(a)).forEach(push);
+        if (out.length < 2) {
+          const top = await query<{ sku: string }>(
+            `select regexp_replace(i.article_number, '^VO\\s*-\\s*', '') as sku
+               from weclapp.sales_order_item i
+               join weclapp.sales_order o on o._rid = i._parent_rid
+              where o.status <> 'CANCELLED' and o.order_date > now() - interval '52 months'
+              group by 1 order by count(distinct i._parent_rid) desc limit 400`,
+          );
+          top
+            .map((r) => bySku.get(r.sku))
+            .filter(usable)
+            .filter((a) => a.level1 === "Jagdbedarf" && isBattery(a))
+            .slice(0, 2 - out.length)
+            .forEach(push);
+        }
       }
+      bought.filter((a) => a.level1 === "Jagdbedarf").forEach((a) => out.length < 4 && push(a));
+      bought.forEach(push);
       return out;
     });
   });
