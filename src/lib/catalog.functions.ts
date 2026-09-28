@@ -653,3 +653,57 @@ async function buildPayload(
     };
   }
 }
+
+/**
+ * „Kunden kauften auch" / passendes Zubehör: Artikel, die in den letzten
+ * 52 Monaten am häufigsten im selben Auftrag mit diesem Artikel verkauft
+ * wurden. Nur im Shop sichtbare Artikel mit Kundenpreis werden geliefert.
+ */
+export const getAccessories = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    z.object({ sku: z.string().min(1).max(64) }).parse(raw ?? {}),
+  )
+  .handler(async ({ data }): Promise<CatalogArticle[]> => {
+    const { withDbSession } = await import("./db.server");
+    return withDbSession(async ({ query }) => {
+      const { apiCurrentUser, readCustomerNumber } = await import("./shop-auth.server");
+      const { customerPricing } = await import("./customer-pricing.server");
+      const user = await apiCurrentUser();
+      if (!user) return [];
+      const rows = await query<{ sku: string; n: number }>(
+        `with src as (
+           select distinct i._parent_rid
+             from weclapp.sales_order_item i
+             join weclapp.sales_order o on o._rid = i._parent_rid
+            where regexp_replace(i.article_number, '^VO\\s*-\\s*', '') = $1
+              and o.status <> 'CANCELLED' and coalesce(o.template, false) = false
+              and o.order_date > now() - interval '52 months')
+         select regexp_replace(i.article_number, '^VO\\s*-\\s*', '') as sku,
+                count(distinct i._parent_rid)::int as n
+           from weclapp.sales_order_item i
+           join src on src._parent_rid = i._parent_rid
+          where i.article_number is not null
+            and regexp_replace(i.article_number, '^VO\\s*-\\s*', '') <> $1
+          group by 1 order by 2 desc limit 40`,
+        [data.sku],
+      );
+      if (rows.length === 0) return [];
+      const pricing = await customerPricing(readCustomerNumber(), query);
+      const snapshot = await catalogSnapshot(
+        pricing.channel || "NET1",
+        { category: "", subcategory: "", subsubcategory: "" },
+        query,
+      );
+      const bySku = new Map(snapshot.articles.map((a) => [a.sku, a]));
+      const self = bySku.get(data.sku);
+      const out: CatalogArticle[] = [];
+      for (const row of rows) {
+        const article = bySku.get(row.sku);
+        if (!article) continue;
+        if (self?.groupId && article.groupId === self.groupId) continue;
+        out.push(article);
+        if (out.length >= 4) break;
+      }
+      return out;
+    });
+  });
