@@ -43,6 +43,7 @@ const searchSchema = z.object({
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
+  artikel: z.string().default(""),
 });
 
 export const Route = createFileRoute("/")({
@@ -50,7 +51,8 @@ export const Route = createFileRoute("/")({
   // Anmeldung nicht gleichzeitig einen SSR- und einen Client-Lader aus.
   ssr: false,
   validateSearch: searchSchema,
-  loaderDeps: ({ search }) => search,
+  // Die Artikel-Detailseite (artikel) löst keinen neuen Katalogabruf aus.
+  loaderDeps: ({ search: { artikel: _artikel, ...rest } }) => rest,
   // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
   staleTime: 120_000,
   loader: async ({ deps }) => {
@@ -569,7 +571,11 @@ function Shop() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.user?.id]);
   const [term, setTerm] = useState(search.q);
-  const [detailSku, setDetailSku] = useState<string | null>(null);
+  const detailSku = search.artikel || null;
+  const setDetailSku = (sku: string | null) => {
+    void navigate({ search: (prev) => ({ ...prev, artikel: sku ?? "" }) });
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  };
   const [scopeArticle, setScopeArticle] = useState<CatalogArticle | null>(null);
   const [lightbox, setLightbox] = useState<{
     images: string[];
@@ -852,7 +858,7 @@ function Shop() {
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
-    void navigate({ search: (prev) => ({ ...prev, q: term.trim() }) });
+    void navigate({ search: (prev) => ({ ...prev, artikel: "", q: term.trim() }) });
   };
 
 
@@ -1274,34 +1280,6 @@ function Shop() {
           </div>
         </div>
       )}
-      {detailArticle && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/60 p-4 sm:py-12"
-          onClick={() => setDetailSku(null)}
-        >
-          <div
-            className="w-full max-w-3xl rounded-lg border border-border bg-background p-6 shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="label-mono text-muted-foreground">
-                  {detailArticle.level1} · {detailArticle.sku}
-                </p>
-                <h2 className="mt-1 text-xl font-bold tracking-tight">{detailArticle.name}</h2>
-              </div>
-              <button
-                onClick={() => setDetailSku(null)}
-                aria-label="Schließen"
-                className="text-xl text-muted-foreground hover:text-foreground"
-              >
-                ×
-              </button>
-            </div>
-            <div className="mt-4">{renderDetail(detailArticle)}</div>
-          </div>
-        </div>
-      )}
 
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
@@ -1406,7 +1384,7 @@ function Shop() {
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
-                      ...prev,
+                      ...prev, artikel: "",
                       category: active ? "" : category.name,
                       subcategory: "",
                       subsubcategory: "",
@@ -1431,7 +1409,7 @@ function Shop() {
               setTerm("");
               void navigate({
                 search: (prev) => ({
-                  ...prev,
+                  ...prev, artikel: "",
                   category: "",
                   subcategory: "",
                   subsubcategory: "",
@@ -1493,13 +1471,13 @@ function Shop() {
                 {block(search.category || "Kategorie", subCategories, search.subcategory, (name) => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({ ...prev, subcategory: name, subsubcategory: "", q: "" }),
+                    search: (prev) => ({ ...prev, artikel: "", subcategory: name, subsubcategory: "", q: "" }),
                   });
                 })}
                 {block(search.subcategory, subSubCategories, search.subsubcategory, (name) => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({ ...prev, subsubcategory: name, q: "" }),
+                    search: (prev) => ({ ...prev, artikel: "", subsubcategory: name, q: "" }),
                   });
                 })}
               </>
@@ -1607,7 +1585,7 @@ function Shop() {
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
-                      ...prev,
+                      ...prev, artikel: "",
                       category: "",
                       subcategory: "",
                       subsubcategory: "",
@@ -1622,9 +1600,21 @@ function Shop() {
               {[search.category, search.subcategory, search.subsubcategory]
                 .filter(Boolean)
                 .map((crumb) => (
-                  <span key={crumb}>› {crumb}</span>
+                  <span key={crumb}>
+                    ›{" "}
+                    {detailArticle ? (
+                      <button onClick={() => setDetailSku(null)} className="hover:text-foreground">
+                        {crumb}
+                      </button>
+                    ) : (
+                      crumb
+                    )}
+                  </span>
                 ))}
               {search.q && <span>› „{search.q}“</span>}
+              {detailArticle ? (
+                <span className="font-semibold text-foreground">› {detailArticle.name}</span>
+              ) : (
               <span>
                 ·{" "}
                 {navPending ? (
@@ -1636,10 +1626,26 @@ function Shop() {
                   <>{num(data.total)} Artikel</>
                 )}
               </span>
+              )}
             </p>
             <p className="text-sm text-muted-foreground">Preise netto ohne USt.</p>
           </div>
 
+          {detailArticle ? (
+            <div className="mt-4 rounded-lg border border-border bg-card p-6 shadow-sm">
+              <button
+                onClick={() => setDetailSku(null)}
+                className="text-sm font-semibold text-muted-foreground hover:text-accent"
+              >
+                ← Zurück zur Übersicht
+              </button>
+              <p className="label-mono mt-4 text-muted-foreground">
+                {detailArticle.level1} · {detailArticle.sku}
+              </p>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight">{detailArticle.name}</h1>
+              <div className="mt-4">{renderDetail(detailArticle)}</div>
+            </div>
+          ) : (
           <div className="relative mt-4">
             {navPending && (
               <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-background/60 pt-16">
@@ -1686,6 +1692,7 @@ function Shop() {
               )}
             </div>
           </div>
+          )}
         </main>
 
         <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
