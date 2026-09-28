@@ -693,7 +693,13 @@ function Shop() {
     return [...counts.entries()]
       .map(([name, set]) => ({ name, count: set.size }))
       .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name))
-      .slice(0, 4);
+      .slice(0, 4)
+      .sort((x, y) => {
+        // Gewünschte Reihenfolge: NOCPIX immer vor PARD.
+        if (x.name === "NOCPIX" && y.name === "PARD") return -1;
+        if (x.name === "PARD" && y.name === "NOCPIX") return 1;
+        return 0;
+      });
   }, [articles]);
   useEffect(() => {
     setMakerFilter((prev) => {
