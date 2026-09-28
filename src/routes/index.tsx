@@ -1916,17 +1916,6 @@ function Shop() {
                   <div className="mt-4 grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
                     <div>
                       {renderGallery(a)}
-                    </div>
-                    <div>
-                      <p className="label-mono text-muted-foreground">
-                        {[a.level1, a.level2].filter(Boolean).join(" · ")}
-                      </p>
-                      <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
-                      <p className="mt-2 font-mono text-[13px] text-muted-foreground">
-                        Art.-Nr.{" "}
-                        <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
-                        {a.groupSku && a.groupSku !== a.sku && <> · Variante von {a.groupSku}</>}
-                      </p>
                       {(() => {
                         if (!a.groupId) return null;
                         const siblings = articles
@@ -1938,11 +1927,11 @@ function Shop() {
                           );
                         if (siblings.length < 2) return null;
                         return (
-                          <div className="mt-4">
+                          <div className="mt-6">
                             <p className="label-mono text-muted-foreground">
                               {siblings.length} Varianten
                             </p>
-                            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border">
+                            <div className="mt-2 max-h-[32rem] overflow-y-auto rounded-md border border-border">
                               {siblings.map((v) => {
                                 const current = v.sku === a.sku;
                                 const vs = stockState(v.onHand);
@@ -1973,6 +1962,17 @@ function Shop() {
                           </div>
                         );
                       })()}
+                    </div>
+                    <div>
+                      <p className="label-mono text-muted-foreground">
+                        {[a.level1, a.level2].filter(Boolean).join(" · ")}
+                      </p>
+                      <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                      <p className="mt-2 font-mono text-[13px] text-muted-foreground">
+                        Art.-Nr.{" "}
+                        <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
+                        {a.groupSku && a.groupSku !== a.sku && <> · Variante von {a.groupSku}</>}
+                      </p>
                       {chips.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {chips.map((c) => (
