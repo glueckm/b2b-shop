@@ -26,7 +26,7 @@ import {
   type Basket,
   type BasketState,
 } from "@/lib/basket.functions";
-import { getCatalog, SPEC_FIELDS, type CatalogArticle } from "@/lib/catalog.functions";
+import { getAccessories, getCatalog, SPEC_FIELDS, type CatalogArticle } from "@/lib/catalog.functions";
 import {
   loadFavourites,
   markFavourite,
@@ -574,6 +574,23 @@ function Shop() {
   const detailSku = search.artikel || null;
   const [detailImage, setDetailImage] = useState(0);
   const [detailTab, setDetailTab] = useState("beschreibung");
+  const [accessories, setAccessories] = useState<Record<string, CatalogArticle[]>>({});
+  const [extraArticles, setExtraArticles] = useState<Map<string, CatalogArticle>>(new Map());
+  useEffect(() => {
+    if (!detailSku || accessories[detailSku]) return;
+    const sku = detailSku;
+    void getAccessories({ data: { sku } })
+      .then((list) => {
+        setAccessories((prev) => ({ ...prev, [sku]: list }));
+        setExtraArticles((prev) => {
+          const next = new Map(prev);
+          list.forEach((a) => next.set(a.sku, a));
+          return next;
+        });
+      })
+      .catch(() => setAccessories((prev) => ({ ...prev, [sku]: [] })));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detailSku]);
   useEffect(() => {
     setDetailImage(0);
     setDetailTab("beschreibung");
@@ -635,7 +652,8 @@ function Shop() {
   }, [activeBasket, bySku]);
 
   /** Artikel für eine Warenkorbposition — Katalog zuerst, sonst Warenkorbdaten. */
-  const articleForSku = (sku: string) => bySku.get(sku) ?? basketFallback.get(sku);
+  const articleForSku = (sku: string) =>
+    bySku.get(sku) ?? basketFallback.get(sku) ?? extraArticles.get(sku);
 
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
@@ -1850,6 +1868,46 @@ function Shop() {
                         )}
                       </div>
                     </div>
+                    {(accessories[a.sku]?.length ?? 0) > 0 && (
+                      <div className="xl:col-span-2">
+                        <h2 className="text-xl font-bold tracking-tight">Passendes Zubehör</h2>
+                        <p className="text-[13px] text-muted-foreground">Kunden, die diesen Artikel gekauft haben, kauften auch</p>
+                        <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
+                          {accessories[a.sku]!.map((acc) => {
+                            const t = thumbMap[acc.id] ?? imagesOf(acc)[0];
+                            return (
+                              <div key={acc.sku} className="flex flex-col rounded-lg border border-border bg-background p-3">
+                                <ThumbSlot onVisible={() => requestImages(acc.id)}>
+                                  <button
+                                    onClick={() => { requestImages(acc.id); setDetailSku(acc.sku); }}
+                                    className="grid h-28 w-full place-items-center overflow-hidden rounded-md bg-muted"
+                                  >
+                                    {t ? (
+                                      <ArticleImage src={t} alt={acc.name} className="max-h-24 max-w-[70%] object-contain" />
+                                    ) : (
+                                      <span className="label-mono text-muted-foreground">Produktbild</span>
+                                    )}
+                                  </button>
+                                </ThumbSlot>
+                                <span className="label-mono mt-3 truncate text-muted-foreground">{acc.level1}</span>
+                                <button onClick={() => setDetailSku(acc.sku)} className="mt-1 text-left text-sm font-semibold leading-snug hover:text-accent">
+                                  <span className="line-clamp-2">{acc.name}</span>
+                                </button>
+                                <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+                                  <span className="font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>
+                                  <button
+                                    onClick={() => addLine(acc.sku, acc.moq)}
+                                    className="rounded-md border border-border px-2.5 py-1 text-[13px] font-bold hover:border-accent hover:text-accent"
+                                  >
+                                    + Korb
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
