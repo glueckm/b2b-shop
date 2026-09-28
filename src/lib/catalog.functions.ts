@@ -47,6 +47,8 @@ export type CatalogArticle = {
   /** In weclapp als Hauptartikel des Variantenartikels markiert. */
   isPrimary: boolean;
   manufacturer: string;
+  /** Verkaufte Menge der letzten 52 Monate (für die Sortierung nach Serien). */
+  sold: number;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -206,6 +208,14 @@ variant as (
   from weclapp.variant_article_variant vv
   join weclapp.variant_article v on v.id = vv.variant_article_id
 ),
+sold as (
+  select i.article_id, sum(coalesce(i.quantity, 0))::float8 as qty
+  from weclapp.sales_order_item i
+  join weclapp.sales_order o on o._rid = i._parent_rid
+  where o.status <> 'CANCELLED' and coalesce(o.template, false) = false
+    and o.order_date > now() - interval '52 months'
+  group by 1
+),
 ${GLEVEL_CTE},
 ${REBATE_CTE},
 ${CATEGORY_PATH_CTE}
@@ -253,7 +263,8 @@ select a.id as id,
        coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
        coalesce(a.ca_aktion, false) as promo,
        coalesce(vr.is_primary, false) as is_primary,
-       coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer
+       coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer,
+       coalesce(so.qty, 0)::float8 as sold
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -263,6 +274,7 @@ left join reb r3 on r3.category_id = cat.ppid
 left join variant vr on vr.article_id = a.id
 left join glevel g on g.group_id = vr.group_id
 left join stock s on s.article_id = a.id
+left join sold so on so.article_id = a.id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- Einzelartikel nur mit Bestand im Hauptlager; Varianten immer (auch nicht lagernd, bestellbar)
@@ -512,6 +524,7 @@ async function buildArticles(
       promo: boolean;
       is_primary: boolean;
       manufacturer: string;
+      sold: number;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -573,6 +586,7 @@ async function buildArticles(
       promo: Boolean(row.promo),
       isPrimary: Boolean(row.is_primary),
       manufacturer: (row.manufacturer ?? "").trim(),
+      sold: Number(row.sold ?? 0),
     };
   });
 

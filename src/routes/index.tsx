@@ -647,6 +647,7 @@ function Shop() {
         promo: false,
         isPrimary: false,
         manufacturer: "",
+        sold: 0,
       });
     }
     return out;
