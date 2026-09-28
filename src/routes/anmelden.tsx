@@ -141,7 +141,8 @@ function LoginPage() {
   ];
 
   return (
-    <main className="grid min-h-screen lg:grid-cols-2">
+    <main className="flex min-h-screen items-center justify-center bg-muted/60 p-4 lg:p-10">
+      <div className="grid w-full max-w-6xl overflow-hidden rounded-lg border border-border shadow-2xl lg:min-h-[640px] lg:grid-cols-2">
       {loadingCatalog && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
           <span className="size-10 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
@@ -185,7 +186,7 @@ function LoginPage() {
       </section>
 
       {/* Rechte Seite: Formular */}
-      <section className="flex items-center justify-center bg-muted/40 px-6 py-12">
+      <section className="flex items-center justify-center bg-background px-6 py-12 lg:px-12">
         <div className="w-full max-w-md">
           <h2 className="text-3xl font-bold tracking-tight">Anmelden</h2>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -326,6 +327,7 @@ function LoginPage() {
           <p className="label-mono mt-8 text-right text-muted-foreground">Version {SHOP_VERSION}</p>
         </div>
       </section>
+      </div>
 
       {resetOpen && (
         <div
