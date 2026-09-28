@@ -1896,7 +1896,11 @@ function Shop() {
                 const activeFrom = [...a.breaks]
                   .filter((t) => Math.max(t.from, a.moq) <= q)
                   .pop()?.from;
-                const chips = SPEC_FIELDS.filter((f) => a.specs[f.key]).map((f) => ({
+                // Nur die wichtigsten Merkmale als Chips; alles Weitere steht unter „Technische Daten".
+                const chipKeys = ["sensor", "netd", "lens", "nv_sensor", "nv_lens", "lrf", "cell"];
+                const chips = SPEC_FIELDS.filter(
+                  (f) => chipKeys.includes(f.key) && a.specs[f.key] && Number(a.specs[f.key]!.replace(",", ".")) !== 0,
+                ).map((f) => ({
                   label: f.label.replace(/\s*\(.*\)/, ""),
                   value: a.specs[f.key],
                 }));
