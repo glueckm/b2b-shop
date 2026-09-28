@@ -697,7 +697,7 @@ function Shop() {
     // Gewünschte Reihenfolge: NOCPIX immer vor PARD (Plätze tauschen).
     const n = top.findIndex((m) => m.name === "NOCPIX");
     const p = top.findIndex((m) => m.name === "PARD");
-    if (n > p && p >= 0) [top[n], top[p]] = [top[p], top[n]];
+    if (n > p && p >= 0) [top[n], top[p]] = [top[p]!, top[n]!];
     return top;
   }, [articles]);
   useEffect(() => {
