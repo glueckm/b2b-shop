@@ -178,8 +178,8 @@ function LoginPage() {
             ))}
           </ul>
         </div>
-        <p className="label-mono relative mt-12 flex flex-wrap gap-x-5 gap-y-2 text-primary-foreground/45">
-          {["NOCPIX", "PARD", "INFIRAY", "RECKNAGEL", "ERA", "NITECORE"].map((b) => (
+        <p className="label-mono relative mt-12 flex gap-x-4 overflow-hidden whitespace-nowrap text-primary-foreground/45">
+          {["NOCPIX", "INFIRAY", "PARD", "RUSAN", "NITECORE", "KEEPPOWER", "RECKNAGEL"].map((b) => (
             <span key={b}>{b}</span>
           ))}
         </p>
