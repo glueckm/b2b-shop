@@ -742,6 +742,15 @@ function Shop() {
     [specFilters],
   );
 
+  // Suche nach exakter Artikelnummer einer Variante: direkt in den Variantenartikel springen.
+  useEffect(() => {
+    const q = search.q.trim().toLowerCase();
+    if (!q || search.artikel) return;
+    const hit = articles.find((a) => a.groupId && a.sku.toLowerCase() === q);
+    if (hit) setDetailSku(hit.sku);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.q, articles]);
+
   /** Variantenartikel (Mutter) als eine Zeile, Einzelartikel im Drill-down. */
   const rows = useMemo(() => {
     type Row =
@@ -1030,7 +1039,12 @@ function Shop() {
     name: string;
     variants: CatalogArticle[];
   }) => {
-    const first = row.variants[0];
+    const q = search.q.trim().toLowerCase();
+    const first =
+      (q &&
+        (row.variants.find((v) => v.sku.toLowerCase() === q) ??
+          row.variants.find((v) => v.sku.toLowerCase().includes(q) || v.name.toLowerCase().includes(q)))) ||
+      row.variants[0];
     const thumbArticle = row.variants.find((v) => thumbMap[v.id]) ?? first;
     const thumb = thumbArticle ? thumbMap[thumbArticle.id] : undefined;
     const open = !!openGroups[row.id];
