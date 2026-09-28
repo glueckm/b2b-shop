@@ -699,7 +699,27 @@ export const getAccessories = createServerFn({ method: "POST" })
       const isBattery = (a: CatalogArticle) => /batter|akku|accu|ladeger|powerbank|18650|21700|cr123/i.test(a.name);
       const usable = (a: CatalogArticle | undefined): a is CatalogArticle =>
         !!a && a.sku !== data.sku && !(self?.groupId && a.groupId === self.groupId);
-      const bought = rows.map((r) => bySku.get(r.sku)).filter(usable);
+      // Akkutyp des Geräts aus seinem Artikeltext (z.B. "Akku: 21700 IMR").
+      const CELL = /\b(18650|21700|16340|14500|26650|CR123A?|CR2|AAA|AA)\b/gi;
+      const norm = (t: string) => (t.toUpperCase() === "CR123" ? "CR123A" : t.toUpperCase());
+      const selfText = await query<{ t: string }>(
+        `select a::text as t from weclapp.article a where a.article_number = $1 limit 1`,
+        [data.sku],
+      );
+      const cellTypes = new Set(
+        [...(selfText[0]?.t ?? "").matchAll(CELL)].map((m) => norm(m[1]!)),
+      );
+      const cellsOf = (a: CatalogArticle) => new Set([...a.name.matchAll(CELL)].map((m) => norm(m[1]!)));
+      const fitsCell = (a: CatalogArticle) => {
+        if (cellTypes.size === 0) return true;
+        const own = cellsOf(a);
+        if (own.size === 0) return true;
+        return [...own].some((c) => cellTypes.has(c));
+      };
+      const bought = rows
+        .map((r) => bySku.get(r.sku))
+        .filter(usable)
+        .filter((a) => !isBattery(a) || fitsCell(a));
       const out: CatalogArticle[] = [];
       const push = (a: CatalogArticle) => {
         if (out.length < 8 && !out.some((o) => o.sku === a.sku)) out.push(a);
@@ -720,7 +740,8 @@ export const getAccessories = createServerFn({ method: "POST" })
           top
             .map((r) => bySku.get(r.sku))
             .filter(usable)
-            .filter((a) => a.level1 === "Jagdbedarf" && isBattery(a))
+            .filter((a) => a.level1 === "Jagdbedarf" && isBattery(a) && fitsCell(a))
+            .filter((a) => cellTypes.size === 0 || [...cellsOf(a)].some((c) => cellTypes.has(c)))
             .slice(0, 2 - out.length)
             .forEach(push);
         }
