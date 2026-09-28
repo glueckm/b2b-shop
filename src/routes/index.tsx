@@ -2200,6 +2200,14 @@ function Shop() {
                 <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
               </div>
             )}
+            {brandPick && (
+              <p className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
+                <span>Alle Artikel von <strong>{brandPick}</strong></span>
+                <button type="button" className="font-medium underline" onClick={() => setBrandPick(null)}>
+                  Hersteller-Auswahl aufheben
+                </button>
+              </p>
+            )}
             {searchFallback && !search.category && search.q.trim() === searchFallback.q && (
               <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
                 Im Bereich <strong>{searchFallback.from}</strong> wurde für „{searchFallback.q}“ nichts gefunden.{" "}

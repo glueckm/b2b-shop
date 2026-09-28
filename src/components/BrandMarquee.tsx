@@ -20,11 +20,12 @@ const BRANDS: Brand[] = [
 ];
 
 /** Laufband mit Markenlogos – nur am PC, stoppt beim Überfahren mit der Maus. */
-export function BrandMarquee() {
+export function BrandMarquee({ onSelect }: { onSelect: (brand: string) => void }) {
   const row = (hidden: boolean) => (
     <ul className="flex shrink-0 items-center gap-16 pr-16" aria-hidden={hidden || undefined}>
       {BRANDS.map((b) => (
-        <li key={b.name} className="flex h-7 items-center">
+        <li key={b.name}>
+          <button type="button" tabIndex={hidden ? -1 : 0} onClick={() => onSelect(b.name)} title={`Alle Produkte von ${b.name}`} className="flex h-5 items-center transition-transform hover:scale-110">
           {b.logo ? (
             <img
               src={b.logo}
@@ -33,10 +34,11 @@ export function BrandMarquee() {
               loading="lazy"
             />
           ) : (
-            <span className="text-xl font-black tracking-[0.2em] text-primary-foreground">
+            <span className="text-base font-black tracking-[0.2em] text-primary-foreground">
               {b.name}
             </span>
           )}
+          </button>
         </li>
       ))}
     </ul>
@@ -44,7 +46,7 @@ export function BrandMarquee() {
   return (
     <section
       aria-label="Unsere Marken"
-      className="group hidden overflow-hidden bg-primary py-3 opacity-60 transition-opacity hover:opacity-90 md:block"
+      className="group hidden overflow-hidden bg-primary py-2 opacity-60 transition-opacity hover:opacity-90 md:block"
     >
       <div className="flex w-max animate-brand-marquee group-hover:[animation-play-state:paused]">
         {row(false)}
