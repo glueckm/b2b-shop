@@ -1041,7 +1041,7 @@ function Shop() {
       >
         <ThumbSlot onVisible={() => row.variants.slice(0, 3).forEach((v) => requestImages(v.id))}>
           <button
-            onClick={() => toggleGroup(row.id)}
+            onClick={() => first && setDetailSku(first.sku)}
             className="grid h-28 w-full place-items-center overflow-hidden rounded-md bg-muted"
           >
             {thumb ? (
@@ -1055,7 +1055,7 @@ function Shop() {
           <span className="label-mono truncate text-muted-foreground">{first?.level1}</span>
           <span className="font-mono text-[11px] text-muted-foreground">{row.sku}</span>
         </div>
-        <button onClick={() => toggleGroup(row.id)} className="mt-1 text-left">
+        <button onClick={() => first && setDetailSku(first.sku)} className="mt-1 text-left">
           <span className="line-clamp-2 text-[15px] font-bold leading-snug">{row.name}</span>
         </button>
         <p className="label-mono mt-1 text-muted-foreground">{row.variants.length} Varianten</p>
@@ -1071,10 +1071,10 @@ function Shop() {
             {row.variants.filter((v) => v.onHand > 0).length} von {row.variants.length} lagernd
           </span>
           <button
-            onClick={() => toggleGroup(row.id)}
+            onClick={() => first && setDetailSku(first.sku)}
             className="rounded-sm border border-primary px-3 py-2 text-sm font-bold transition-colors hover:bg-primary hover:text-primary-foreground"
           >
-            {open ? "Schließen" : "Varianten"}
+            Varianten ansehen
           </button>
         </div>
       </div>
@@ -1780,6 +1780,52 @@ function Shop() {
                         <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
                         {a.groupSku && a.groupSku !== a.sku && <> · Variante von {a.groupSku}</>}
                       </p>
+                      {(() => {
+                        if (!a.groupId) return null;
+                        const siblings = articles
+                          .filter((v) => v.groupId === a.groupId)
+                          .sort(
+                            (x, y) =>
+                              Number(y.isPrimary) - Number(x.isPrimary) ||
+                              x.name.localeCompare(y.name, "de", { numeric: true }),
+                          );
+                        if (siblings.length < 2) return null;
+                        return (
+                          <div className="mt-4">
+                            <p className="label-mono text-muted-foreground">
+                              {siblings.length} Varianten
+                            </p>
+                            <div className="mt-2 max-h-72 overflow-y-auto rounded-md border border-border">
+                              {siblings.map((v) => {
+                                const current = v.sku === a.sku;
+                                const vs = stockState(v.onHand);
+                                return (
+                                  <button
+                                    key={v.sku}
+                                    onClick={() => setDetailSku(v.sku)}
+                                    aria-current={current}
+                                    className={`grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border px-3 py-2 text-left text-sm last:border-0 ${
+                                      current ? "bg-accent/15" : "hover:bg-muted"
+                                    }`}
+                                  >
+                                    <span className="min-w-0">
+                                      <span className={`block truncate ${current ? "font-semibold" : ""}`}>{v.name}</span>
+                                      <span className="flex items-center gap-2 font-mono text-[11px] text-muted-foreground">
+                                        {v.sku}
+                                        <span className={`inline-flex items-center gap-1 ${stockTone[vs]}`}>
+                                          <span className={`size-1.5 rounded-full ${stockDot[vs]}`} />
+                                          {v.onHand > 0 ? stockDisplay(v.onHand) : "nicht lagernd"}
+                                        </span>
+                                      </span>
+                                    </span>
+                                    <span className="shrink-0 font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {chips.length > 0 && (
                         <div className="mt-4 flex flex-wrap gap-2">
                           {chips.map((c) => (
