@@ -10,7 +10,6 @@ import { ChevronDown, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react"
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
-import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getArticleImageData, getArticleImageMap } from "@/lib/article-images.functions";
@@ -874,114 +873,97 @@ function Shop() {
   const savings = Math.max(0, listTotal - subtotal);
 
   /**
-   * Artikelzeile — `nested` für Varianten innerhalb eines Variantenartikels.
-   * Bewusst als Funktion (kein eigener Komponententyp), damit nachgeladene
-   * Bilder die Zeilen nicht neu aufbauen und dadurch flackern lassen.
+   * Artikelkachel. Bewusst als Funktion (kein eigener Komponententyp), damit
+   * nachgeladene Bilder die Kacheln nicht neu aufbauen und flackern lassen.
    */
-  const renderArticleRow = (article: CatalogArticle, nested = false) => {
+  const renderArticleCard = (article: CatalogArticle) => {
     const q = getQty(article);
     const unit = priceForQty(article, q);
+    const listPrice = article.breaks[0]?.price ?? unit;
     const state = stockState(article.onHand);
     const spec = specText(article.spec);
-    // Kleines Vorschaubild bevorzugen; das große Foto nur als Ersatz, wenn die
-    // Abfrage abgeschlossen ist und kein Vorschaubild existiert.
     const thumb =
       thumbMap[article.id] ?? (imageLookupDone.has(article.id) ? imagesOf(article)[0] : undefined);
-    const open = detailSku === article.sku;
-    const toggleDetail = () => {
-      if (!open) requestImages(article.id);
-      setDetailSku(open ? null : article.sku);
+    const fav = favourites.has(article.id);
+    const openDetail = () => {
+      requestImages(article.id);
+      setDetailSku(article.sku);
     };
     return (
-      <Fragment key={nested ? `v-${article.sku}` : article.sku}>
-        <tr
-          onClick={toggleDetail}
-          className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
-        >
-          <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
-            <span className="flex items-center gap-1.5">
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleFavourite(article);
-                }}
-                aria-label={
-                  favourites.has(article.id)
-                    ? `Favorit entfernen ${article.sku}`
-                    : `Als Favorit merken ${article.sku}`
-                }
-                title={favourites.has(article.id) ? "Favorit entfernen" : "Als Favorit merken"}
-                className={
-                  favourites.has(article.id)
-                    ? "text-accent"
-                    : "text-muted-foreground/50 hover:text-accent"
-                }
-              >
-                <Heart
-                  className="size-4"
-                  {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
-                />
-              </button>
-              {article.promo && (
-                <span className="text-destructive" title="Aktionsartikel">
-                  <Percent className="size-4 shrink-0" aria-label="Aktionsartikel" />
+      <div
+        key={article.sku}
+        className="group flex flex-col rounded-lg border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
+      >
+        <div className="relative">
+          <ThumbSlot onVisible={() => requestImages(article.id)}>
+            <button
+              onClick={openDetail}
+              className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+            >
+              {thumb ? (
+                <ArticleImage src={thumb} alt={article.name} className="size-full object-contain p-3" />
+              ) : (
+                <span className="label-mono text-muted-foreground">
+                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Produktbild"}
                 </span>
               )}
-              <button
-                onClick={toggleDetail}
-                className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-              >
-                {article.sku}
-              </button>
+            </button>
+          </ThumbSlot>
+          <button
+            onClick={() => toggleFavourite(article)}
+            aria-label={fav ? `Favorit entfernen ${article.sku}` : `Als Favorit merken ${article.sku}`}
+            title={fav ? "Favorit entfernen" : "Als Favorit merken"}
+            className={`absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-card/90 shadow-sm ${
+              fav ? "text-accent" : "text-muted-foreground hover:text-accent"
+            }`}
+          >
+            <Heart className="size-4" {...(fav ? { fill: "currentColor" } : {})} />
+          </button>
+          {article.promo && (
+            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-sm bg-destructive px-2 py-0.5 text-[11px] font-bold uppercase text-destructive-foreground">
+              <Percent className="size-3" /> Aktion
             </span>
-          </td>
-          <td className="max-w-[320px] px-3 pt-3 align-top">
-            <span className="flex items-start gap-3">
-              <ThumbSlot onVisible={() => requestImages(article.id)}>
-                {/* Feste Größe: Rahmen bleibt gleich, nur der Inhalt wechselt. */}
-                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-sm border border-border bg-panel">
-                  {thumb ? (
-                    <ArticleImage
-                      src={thumb}
-                      alt={article.name}
-                      className="size-10 object-contain"
-                    />
-                  ) : imageLookupDone.has(article.id) ? (
-                    <span className="font-mono text-[10px] text-muted-foreground">—</span>
-                  ) : null}
-                </span>
-              </ThumbSlot>
-              <button onClick={toggleDetail} className="text-left">
-                <span className="block font-semibold">{article.name}</span>
-              </button>
-            </span>
-          </td>
-          <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">{eur(unit)}</td>
-          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-            {article.unit}
-          </td>
-          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-            {article.moq}
-          </td>
-          <td className="px-3 pt-3 align-top">
-            <span className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
-              <span className={`size-1.5 rounded-full ${stockDot[state]}`} />
-              {stockLabel[state]}
-              {article.onHand > 0 && (
-                <span className="font-mono text-muted-foreground">
-                  {stockDisplay(article.onHand)}
-                </span>
-              )}
-            </span>
-            {article.onHand <= 0 && (
-              <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                bestellbar · Lieferung bei Zugang
-              </span>
-            )}
-          </td>
+          )}
+        </div>
 
-          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
-            <span className="flex w-max items-center rounded-sm border border-border">
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="label-mono truncate text-muted-foreground">{article.level1}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{article.sku}</span>
+        </div>
+        <button onClick={openDetail} className="mt-1 text-left">
+          <span className="line-clamp-2 text-[15px] font-bold leading-snug">{article.name}</span>
+        </button>
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+          {spec || article.category}
+        </p>
+
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <div>
+            <p className="text-[12px] text-muted-foreground">Ihr EK netto / {article.unit}</p>
+            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>
+          </div>
+          <div className="text-right text-[12px]">
+            {listPrice > unit && (
+              <p className="text-muted-foreground line-through">{eur(listPrice)}</p>
+            )}
+            {article.moq > 1 && <p className="text-muted-foreground">Mind. {article.moq}</p>}
+            {article.breaks.length > 1 && (
+              <p className="font-semibold text-stock">Staffelpreise</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
+            <span className={`size-2 shrink-0 rounded-full ${stockDot[state]}`} />
+            <span className="truncate">
+              {article.onHand > 0
+                ? `${stockLabel[state]} · ${stockDisplay(article.onHand)}`
+                : "Bestellbar"}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5">
+            <span className="flex items-center rounded-sm border border-border">
               <button
                 onClick={() => step(article, -1)}
                 aria-label={`Menge verringern ${article.sku}`}
@@ -989,7 +971,7 @@ function Shop() {
               >
                 −
               </button>
-              <span className="w-12 text-center font-mono text-[13px]">{q}</span>
+              <span className="w-8 text-center font-mono text-[13px]">{q}</span>
               <button
                 onClick={() => step(article, 1)}
                 aria-label={`Menge erhöhen ${article.sku}`}
@@ -998,31 +980,79 @@ function Shop() {
                 +
               </button>
             </span>
-          </td>
-          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => addLine(article.sku, q)}
-              className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="rounded-sm bg-primary px-3 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              Hinzufügen
+              {article.onHand > 0 ? "In den Korb" : "Vormerken"}
             </button>
-          </td>
-        </tr>
-        <tr
-          onClick={toggleDetail}
-          className={`cursor-pointer hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
-        >
-          <td />
-          <td colSpan={7} className="px-3 pb-3 pt-1">
-            <span className="line-clamp-2 block text-xs text-muted-foreground">
-              {spec || article.category}
-            </span>
-          </td>
-        </tr>
-        {open && (
-          <tr className="bg-muted/30">
-            <td />
-            <td colSpan={7} className="px-3 pb-4 pt-1">
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  /** Variantenartikel (Mutter) als eine Kachel; Varianten klappen darunter auf. */
+  const renderGroupCard = (row: {
+    id: string;
+    sku: string;
+    name: string;
+    variants: CatalogArticle[];
+  }) => {
+    const first = row.variants[0];
+    const thumbArticle = row.variants.find((v) => thumbMap[v.id]) ?? first;
+    const thumb = thumbArticle ? thumbMap[thumbArticle.id] : undefined;
+    const open = !!openGroups[row.id];
+    return (
+      <div
+        key={`gc-${row.id}`}
+        className={`flex flex-col rounded-lg border bg-card p-3 shadow-sm ${open ? "border-accent" : "border-border"}`}
+      >
+        <ThumbSlot onVisible={() => row.variants.slice(0, 3).forEach((v) => requestImages(v.id))}>
+          <button
+            onClick={() => toggleGroup(row.id)}
+            className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+          >
+            {thumb ? (
+              <ArticleImage src={thumb} alt={row.name} className="size-full object-contain p-3" />
+            ) : (
+              <span className="label-mono text-muted-foreground">Produktbild</span>
+            )}
+          </button>
+        </ThumbSlot>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="label-mono truncate text-muted-foreground">{first?.level1}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{row.sku}</span>
+        </div>
+        <button onClick={() => toggleGroup(row.id)} className="mt-1 text-left">
+          <span className="line-clamp-2 text-[15px] font-bold leading-snug">{row.name}</span>
+        </button>
+        <p className="label-mono mt-1 text-muted-foreground">{row.variants.length} Varianten</p>
+        <div className="mt-3">
+          <p className="text-[12px] text-muted-foreground">Ihr EK netto</p>
+          <p className="font-mono text-xl font-bold tracking-tight">
+            ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
+          </p>
+        </div>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
+            <span className="size-2 rounded-full bg-stock" />
+            {row.variants.filter((v) => v.onHand > 0).length} von {row.variants.length} lagernd
+          </span>
+          <button
+            onClick={() => toggleGroup(row.id)}
+            className="rounded-sm border border-primary px-3 py-2 text-sm font-bold transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            {open ? "Schließen" : "Varianten"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  /** Detailinhalt (Bilder, Beschreibung, Staffeln) für das Artikel-Pop-up. */
+  const renderDetail = (article: CatalogArticle) => (
+    <div>
               <div className="float-right ml-4 w-[190px]">
                 <button
                   onClick={() => setScopeArticle(article)}
@@ -1127,13 +1157,10 @@ function Shop() {
                 </tbody>
               </table>
               )}
-            </td>
-          </tr>
-        )}
+    </div>
+  );
 
-      </Fragment>
-    );
-  };
+  const detailArticle = detailSku ? articleForSku(detailSku) : undefined;
 
 
 
@@ -1246,47 +1273,89 @@ function Shop() {
           </div>
         </div>
       )}
-      <header className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-[1440px] items-center gap-6 px-5 py-3">
-          <div className="flex items-center gap-3">
-            <img
-              src={mawaLogo}
-              alt="MAWA Trading"
-              width={369}
-              height={77}
-              className="h-8 w-auto"
-            />
-            <span className="label-mono hidden text-primary-foreground/55 sm:block">
-              Distribution B2B
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-
-            {data.user ? (
-              <Link
-                to="/konto"
-                className="flex flex-col rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 leading-tight text-primary-foreground transition-colors hover:bg-accent/30"
+      {detailArticle && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/60 p-4 sm:py-12"
+          onClick={() => setDetailSku(null)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-lg border border-border bg-background p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="label-mono text-muted-foreground">
+                  {detailArticle.level1} · {detailArticle.sku}
+                </p>
+                <h2 className="mt-1 text-xl font-bold tracking-tight">{detailArticle.name}</h2>
+              </div>
+              <button
+                onClick={() => setDetailSku(null)}
+                aria-label="Schließen"
+                className="text-xl text-muted-foreground hover:text-foreground"
               >
-                <span className="text-sm font-semibold">Mein Konto</span>
-                <span className="font-mono text-xs opacity-80">
-                  {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
-                </span>
+                ×
+              </button>
+            </div>
+            <div className="mt-4">{renderDetail(detailArticle)}</div>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-primary text-primary-foreground">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
+          <img
+            src={mawaLogo}
+            alt="MAWA Trading"
+            width={369}
+            height={77}
+            className="h-7 w-auto shrink-0"
+          />
+          <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
+            <input
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder="Suche nach Artikel, Marke oder Art.-Nr. …"
+              aria-label="Katalog durchsuchen"
+              className="w-full rounded-sm border border-primary-foreground/10 bg-primary-foreground/10 px-4 py-2.5 text-sm text-primary-foreground outline-none placeholder:text-primary-foreground/50 focus:border-accent"
+            />
+          </form>
+          <div className="ml-auto flex shrink-0 items-center gap-5 text-sm">
+            {data.user ? (
+              <Link to="/konto" className="font-medium hover:text-accent">
+                {data.user.displayName ?? "Mein Konto"}
+                {data.user.customerNumber && (
+                  <span className="opacity-70"> · Kd. {data.user.customerNumber}</span>
+                )}
               </Link>
             ) : (
-              <Link
-                to="/anmelden"
-                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground hover:border-accent hover:text-accent"
-              >
+              <Link to="/anmelden" className="font-semibold hover:text-accent">
                 Anmelden
               </Link>
             )}
+            {data.user && (
+              <Link to="/bestellungen" className="hidden font-medium hover:text-accent lg:inline">
+                Bestellungen
+              </Link>
+            )}
+            <button
+              onClick={() => setFavOnly((prev) => !prev)}
+              aria-pressed={favOnly}
+              title="Alle Artikel, die Sie mit dem Herz markiert haben."
+              className={`flex items-center gap-1.5 font-medium hover:text-accent ${favOnly ? "text-accent" : ""}`}
+            >
+              <Heart className="size-4" {...(favOnly ? { fill: "currentColor" } : {})} />
+              Merkliste
+              {favourites.size > 0 && (
+                <span className="font-mono text-xs opacity-80">{favourites.size}</span>
+              )}
+            </button>
             <a
               href="#order"
-              className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
+              className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
-              Warenkorb
-              <span className="font-mono text-xs">{lines.length}</span>
+              Warenkorb · {lines.length}
             </a>
             {data.user && (
               <button
@@ -1294,35 +1363,26 @@ function Shop() {
                   await shopLogout({});
                   await router.invalidate();
                 }}
-                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:border-accent hover:text-accent"
+                className="text-primary-foreground/60 hover:text-accent"
               >
                 Abmelden
               </button>
             )}
-
           </div>
         </div>
+        <form onSubmit={submitSearch} className="px-5 pb-3 md:hidden">
+          <input
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Suche nach Artikel, Marke oder Art.-Nr. …"
+            aria-label="Katalog durchsuchen"
+            className="w-full rounded-sm bg-primary-foreground/10 px-4 py-2.5 text-sm text-primary-foreground outline-none placeholder:text-primary-foreground/50"
+          />
+        </form>
       </header>
 
-      <section className="relative isolate overflow-hidden border-b border-border">
-        <img
-          src={heroImage}
-          alt="Fuchs im nebligen Herbstwald bei Sonnenaufgang"
-          width={1600}
-          height={912}
-          className="absolute inset-0 size-full object-cover object-[50%_30%]"
-        />
-        <div className="absolute inset-0 bg-primary/80" />
-        <div className="relative mx-auto max-w-[1440px] px-5 py-14">
-          <p className="label-mono text-accent">Distributionsportal · Nettopreise</p>
-          <h1 className="mt-3 whitespace-nowrap text-3xl font-bold leading-[1.1] tracking-tight text-primary-foreground lg:text-4xl">
-            Für Profis gemacht. Für Ihren Betrieb gedacht.
-          </h1>
-        </div>
-      </section>
-
-      <nav className="sticky top-0 z-40 border-b border-border bg-panel shadow-sm">
-        <div className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5">
+      <nav className="sticky top-0 z-40 border-t border-primary-foreground/10 bg-primary text-primary-foreground shadow-md">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-5">
           {(() => {
             // Feste Reihenfolge: Optik, Montage, Jagdbedarf, Rest, danach "Alle Artikel".
             const order = ["optik", "montage", "jagdbedarf"];
@@ -1342,7 +1402,6 @@ function Shop() {
               <button
                 key={category.name || "all"}
                 onClick={() => {
-                  // Suchbegriff zurücksetzen, damit die Kategorie vollständig angezeigt wird.
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
@@ -1354,11 +1413,10 @@ function Shop() {
                     }),
                   });
                 }}
-
-                className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-semibold uppercase tracking-[0.04em] transition-colors ${
                   active
-                    ? "border-accent bg-accent/15 font-bold text-accent"
-                    : "border-transparent font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "border-accent text-primary-foreground"
+                    : "border-transparent text-primary-foreground/75 hover:text-primary-foreground"
                 }`}
               >
                 {category.name || "Alle Artikel"}
@@ -1382,151 +1440,75 @@ function Shop() {
             }}
             aria-pressed={promoOnly}
             title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
-            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors ${
-              promoOnly
-                ? "border-destructive bg-destructive text-destructive-foreground"
-                : "border-destructive/60 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            className={`ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-bold uppercase tracking-[0.04em] text-accent transition-colors ${
+              promoOnly ? "border-accent" : "border-transparent hover:opacity-80"
             }`}
           >
             <Percent className="size-4" />
-            Aktion
-          </button>
-
-          <button
-            onClick={() => setFavOnly((prev) => !prev)}
-            title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
-            aria-pressed={favOnly}
-            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors lg:mr-[354px] ${
-              favOnly
-                ? "border-accent bg-accent text-accent-foreground"
-                : "border-accent/60 bg-accent/10 text-accent hover:bg-accent/20"
-            }`}
-          >
-            <Heart className="size-4" {...(favOnly ? { fill: "currentColor" } : {})} />
-            Favoriten
-            {favourites.size > 0 && (
-              <span className="font-mono text-[12px] opacity-80">{favourites.size}</span>
-            )}
+            Aktionen
           </button>
         </div>
-
-        {subCategories.length > 0 && (
-          <div className="border-t border-border bg-card">
-            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
-              <span className="label-mono whitespace-nowrap text-muted-foreground">
-                {search.category}
-              </span>
-              <button
-                onClick={() => {
-                  setTerm("");
-                  void navigate({
-                    search: (prev) => ({ ...prev, subcategory: "", subsubcategory: "", q: "" }),
-                  });
-                }}
-
-                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                  search.subcategory === ""
-                    ? "border-accent bg-accent/15 font-bold text-accent"
-                    : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                Alle
-              </button>
-              {subCategories.map((sub) => {
-                const active = sub.name === search.subcategory;
-                return (
-                  <button
-                    key={sub.name}
-                    onClick={() => {
-                      setTerm("");
-                      void navigate({
-                        search: (prev) => ({
-                          ...prev,
-                          subcategory: active ? "" : sub.name,
-                          subsubcategory: "",
-                          q: "",
-                        }),
-                      });
-                    }}
-
-                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                      active
-                        ? "border-accent bg-accent/15 font-bold text-accent"
-                        : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {sub.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {subSubCategories.length > 0 && (
-          <div className="border-t border-border bg-muted/40">
-            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
-              <span className="label-mono whitespace-nowrap text-muted-foreground">
-                {search.subcategory}
-              </span>
-              <button
-                onClick={() => {
-                  setTerm("");
-                  void navigate({ search: (prev) => ({ ...prev, subsubcategory: "", q: "" }) });
-                }}
-                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                  search.subsubcategory === ""
-                    ? "border-stock bg-stock/20 font-bold text-stock"
-                    : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
-                }`}
-              >
-                Alle
-              </button>
-              {subSubCategories.map((leaf) => {
-                const active = leaf.name === search.subsubcategory;
-                return (
-                  <button
-                    key={leaf.name}
-                    onClick={() => {
-                      setTerm("");
-                      void navigate({
-                        search: (prev) => ({
-                          ...prev,
-                          subsubcategory: active ? "" : leaf.name,
-                          q: "",
-                        }),
-                      });
-                    }}
-                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                      active
-                        ? "border-stock bg-stock/20 font-bold text-stock"
-                        : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
-                    }`}
-                  >
-                    {leaf.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
       </nav>
 
 
-      <div
-        className={`mx-auto grid max-w-[1440px] gap-6 px-5 py-7 ${
-          specFacets.length > 0 && showSpecFilters
-            ? "lg:grid-cols-[240px_minmax(0,1fr)_330px]"
-            : "lg:grid-cols-[minmax(0,1fr)_330px]"
-        }`}
-      >
-        {specFacets.length > 0 && showSpecFilters && (
-          <aside className="lg:sticky lg:top-36 lg:self-start">
+      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
+        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+          {(() => {
+            const block = (
+              title: string,
+              items: { name: string; count?: number }[],
+              current: string,
+              pick: (name: string) => void,
+            ) =>
+              items.length > 0 && (
+                <div>
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">{title}</h3>
+                  <ul className="mt-2 space-y-0.5">
+                    {items.map((item) => {
+                      const active = item.name === current;
+                      return (
+                        <li key={item.name}>
+                          <button
+                            onClick={() => pick(active ? "" : item.name)}
+                            className={`flex w-full items-center gap-2 rounded-sm px-1.5 py-1 text-left text-sm transition-colors hover:bg-muted ${
+                              active ? "font-semibold text-accent" : "text-foreground/85"
+                            }`}
+                          >
+                            <span className="min-w-0 truncate">{item.name}</span>
+                            {item.count !== undefined && (
+                              <span className="ml-auto font-mono text-[11px] text-muted-foreground">
+                                {item.count}
+                              </span>
+                            )}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              );
+            return (
+              <>
+                {block(search.category || "Kategorie", subCategories, search.subcategory, (name) => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({ ...prev, subcategory: name, subsubcategory: "", q: "" }),
+                  });
+                })}
+                {block(search.subcategory, subSubCategories, search.subsubcategory, (name) => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({ ...prev, subsubcategory: name, q: "" }),
+                  });
+                })}
+              </>
+            );
+          })()}
 
-            <div className="rounded-lg border border-border bg-card p-4">
+          {specFacets.length > 0 && (
+            <div>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-semibold tracking-tight">Tech. Filter</h3>
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Tech. Filter</h3>
                 {activeSpecCount > 0 && (
                   <button
                     onClick={() => setSpecFilters({})}
@@ -1536,11 +1518,8 @@ function Shop() {
                   </button>
                 )}
               </div>
-              <p className="mt-1 text-[12px] leading-snug text-muted-foreground">
-                Optional – Auswahl einschränken nach Geräteeigenschaften.
-              </p>
 
-              <div className="mt-3 divide-y divide-border">
+              <div className="mt-2 divide-y divide-border">
                 {specFacets.map((facet) => {
                   const selected = specFilters[facet.key] ?? [];
                   const open = openFacets.includes(facet.key) || selected.length > 0;
@@ -1606,183 +1585,95 @@ function Shop() {
                 })}
               </div>
             </div>
-          </aside>
-        )}
+          )}
+        </aside>
 
         <main className="min-w-0">
-          <div>
-            <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
-              {search.subcategory || search.category || "Alle Artikel"}
-            </h2>
-
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <form onSubmit={submitSearch} className="flex items-center gap-2">
-                <input
-                  value={term}
-                  onChange={(event) => setTerm(event.target.value)}
-                  placeholder="Artikelnummer oder Name"
-                  aria-label="Katalog durchsuchen"
-                  className="w-56 rounded-sm border border-border bg-card px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground"
-                />
-                <button
-                  type="submit"
-                  className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
-                >
-                  Suchen
-                </button>
-              </form>
-
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <button
+                onClick={() => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      category: "",
+                      subcategory: "",
+                      subsubcategory: "",
+                      q: "",
+                    }),
+                  });
+                }}
+                className="hover:text-foreground"
+              >
+                Alle Artikel
+              </button>
+              {[search.category, search.subcategory, search.subsubcategory]
+                .filter(Boolean)
+                .map((crumb) => (
+                  <span key={crumb}>› {crumb}</span>
+                ))}
+              {search.q && <span>› „{search.q}“</span>}
+              <span>
+                ·{" "}
                 {navPending ? (
-                  <>
-                    <span className="size-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
-                    Artikel werden geladen …
-                  </>
-                ) : (
-                  <>
-                    {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
-                  </>
-                )}
-              </p>
-
-              {specFacets.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSpecFilters((v) => {
-                      if (v) setSpecFilters({});
-                      return !v;
-                    });
-                  }}
-                  aria-pressed={showSpecFilters}
-                  className={`ml-auto flex shrink-0 items-center gap-2 rounded-sm border px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                    showSpecFilters
-                      ? "border-accent bg-accent/15 text-accent"
-                      : "border-border bg-card text-muted-foreground hover:border-accent/60 hover:text-foreground"
-                  }`}
-                >
-                  <span
-                    className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
-                      showSpecFilters ? "bg-accent" : "bg-muted-foreground/40"
-                    }`}
-                  >
-                    <span
-                      className={`absolute size-3 rounded-full bg-background transition-all ${
-                        showSpecFilters ? "left-[14px]" : "left-[2px]"
-                      }`}
-                    />
+                  <span className="inline-flex items-center gap-2">
+                    <span className="size-3.5 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
+                    wird geladen …
                   </span>
-                  Tech. Filter
-                  {activeSpecCount > 0 && showSpecFilters && (
-                    <span className="font-mono text-[11px]">{activeSpecCount}</span>
-                  )}
-                </button>
-              )}
-            </div>
+                ) : (
+                  <>{num(data.total)} Artikel</>
+                )}
+              </span>
+            </p>
+            <p className="text-sm text-muted-foreground">Preise netto ohne USt.</p>
           </div>
 
-          <div className="relative mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+          <div className="relative mt-4">
             {navPending && (
-              <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-card/70 pt-16">
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-background/60 pt-16">
                 <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
               </div>
             )}
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-border bg-muted/60">
-                  {[
-                    "Artikelnr.",
-                    "Artikel",
-                    "Netto/Einheit",
-                    "Einheit",
-                    "Mind.",
-                    "Bestand",
-                    "Menge",
-                    "",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="label-mono px-3 py-2.5 font-medium text-muted-foreground"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {articles.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                      {search.q
-                        ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
-                        : "Keine Artikel für diese Auswahl."}
-                    </td>
-
-                  </tr>
-                )}
-                {rows.map((row) =>
-                  row.kind === "single" ? (
-                    renderArticleRow(row.article)
-                  ) : (
-                    <Fragment key={`g-${row.id}`}>
-                      <tr className="border-t border-border/70 bg-muted/30">
-                        <td className="px-3 py-3 align-top">
-                          <button
-                            onClick={() => toggleGroup(row.id)}
-                            className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-                          >
-                            {row.sku}
-                          </button>
-                        </td>
-                        <td className="max-w-[320px] px-3 py-3 align-top">
-                          <button
-                            onClick={() => toggleGroup(row.id)}
-                            className="flex items-start gap-3 text-left"
-                          >
-                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-border bg-panel font-mono text-[13px] text-muted-foreground">
-                              {openGroups[row.id] ? "−" : "+"}
+            {rows.length === 0 && (
+              <p className="rounded-lg border border-border bg-card px-4 py-10 text-center text-muted-foreground">
+                {search.q
+                  ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
+                  : "Keine Artikel für diese Auswahl."}
+              </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {rows.map((row) =>
+                row.kind === "single" ? (
+                  renderArticleCard(row.article)
+                ) : (
+                  <Fragment key={`g-${row.id}`}>
+                    {renderGroupCard(row)}
+                    {openGroups[row.id] && (
+                      <div className="col-span-full rounded-lg border border-accent/40 bg-muted/40 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold">
+                            {row.name}{" "}
+                            <span className="label-mono text-muted-foreground">
+                              · {row.variants.length} Varianten
                             </span>
-                            <span>
-                              <span className="block font-semibold">{row.name}</span>
-                              <span className="label-mono text-muted-foreground">
-                                {row.variants.length} Varianten
-                              </span>
-                            </span>
-                          </button>
-                        </td>
-                        <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
-                          ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
-                        </td>
-                        <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
-                          {row.variants[0]?.unit}
-                        </td>
-                        <td className="px-3 py-3" />
-                        <td className="px-3 py-3 align-top">
-                          <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
-                            <span className="size-1.5 rounded-full bg-stock" />
-                            {row.variants.filter((v) => v.onHand > 0).length} von{" "}
-                            {row.variants.length} Varianten lagernd
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-3" />
-                        <td className="px-3 py-3 align-top">
+                          </p>
                           <button
                             onClick={() => toggleGroup(row.id)}
-                            className="rounded-sm border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+                            className="text-xs font-semibold text-muted-foreground hover:text-accent"
                           >
-                            {openGroups[row.id] ? "Schließen" : "Varianten"}
+                            Schließen ×
                           </button>
-                        </td>
-                      </tr>
-                      {openGroups[row.id] &&
-                        row.variants.map((variant) => renderArticleRow(variant, true))}
-                    </Fragment>
-                  ),
-                )}
-
-              </tbody>
-            </table>
+                        </div>
+                        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                          {row.variants.map((variant) => renderArticleCard(variant))}
+                        </div>
+                      </div>
+                    )}
+                  </Fragment>
+                ),
+              )}
+            </div>
           </div>
         </main>
 
