@@ -58,6 +58,20 @@ export const SPEC_FIELDS = [
   { key: "framerate", label: "Bildfrequenz (Hz)" },
   { key: "display", label: "Display" },
   { key: "battery", label: "Akkulaufzeit (h)" },
+  { key: "devicetype", label: "Gerätetyp" },
+  { key: "formfactor", label: "Bauform" },
+  { key: "nv_sensor", label: "NV-Sensor" },
+  { key: "nv_lens", label: "NV-Objektiv (mm)" },
+  { key: "nv_magnification", label: "NV-Vergrößerung" },
+  { key: "nv_zoom", label: "NV max. Digitalzoom" },
+  { key: "nv_detection", label: "NV-Erkennungsdistanz (m)" },
+  { key: "nv_framerate", label: "NV-Bildfrequenz" },
+  { key: "nv_fov", label: "NV-Sehfeld horizontal (m)" },
+  { key: "zoom", label: "Max. Digitalzoom" },
+  { key: "fov", label: "Sehfeld @100 m (m)" },
+  { key: "lrf", label: "Laserentfernungsmesser (m)" },
+  { key: "cell", label: "Akku-Typ" },
+  { key: "storage", label: "Speicher" },
 ] as const;
 
 
@@ -222,6 +236,20 @@ select a.id as id,
        coalesce(a.ca_bildfrequenz_hz::text, '') as spec_framerate,
        coalesce(a.ca_display, '') as spec_display,
        coalesce(a.ca_akkulaufzeit_h::text, '') as spec_battery,
+       coalesce(nullif(a.ca_nv_th_fu::text, '0'), '') as spec_devicetype,
+       coalesce(nullif(a.ca_type::text, '0'), '') as spec_formfactor,
+       coalesce(nullif(a.ca_nv_sensor::text, '0'), '') as spec_nv_sensor,
+       coalesce(nullif(a.ca_nv_objektiv_mm::text, '0'), '') as spec_nv_lens,
+       coalesce(nullif(a.ca_nv_optische_vergroesserung::text, '0'), '') as spec_nv_magnification,
+       coalesce(nullif(a.ca_nv_max_digitaler_zoom::text, '0'), '') as spec_nv_zoom,
+       coalesce(nullif(a.ca_nv_erkennungsdistanz::text, '0'), '') as spec_nv_detection,
+       coalesce(nullif(a.ca_nv_bildfrequenz_hz::text, '0'), '') as spec_nv_framerate,
+       coalesce(nullif(a.ca_nv_sehfeld_horizontal_m::text, '0'), '') as spec_nv_fov,
+       coalesce(nullif(a.ca_max_digitaler_zoom::text, '0'), '') as spec_zoom,
+       coalesce(nullif(a.ca_sehfeld_100m_hor::text, '0'), '') as spec_fov,
+       coalesce(nullif(a.ca_laserentfernungsmesser_lrf_m::text, '0'), '') as spec_lrf,
+       coalesce(nullif(a.ca_akku::text, '0'), '') as spec_cell,
+       coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
        coalesce(a.ca_aktion, false) as promo,
        coalesce(vr.is_primary, false) as is_primary
 from weclapp.article a
@@ -465,6 +493,20 @@ async function buildArticles(
       spec_framerate: string;
       spec_display: string;
       spec_battery: string;
+      spec_devicetype: string;
+      spec_formfactor: string;
+      spec_nv_sensor: string;
+      spec_nv_lens: string;
+      spec_nv_magnification: string;
+      spec_nv_zoom: string;
+      spec_nv_detection: string;
+      spec_nv_framerate: string;
+      spec_nv_fov: string;
+      spec_zoom: string;
+      spec_fov: string;
+      spec_lrf: string;
+      spec_cell: string;
+      spec_storage: string;
       promo: boolean;
       is_primary: boolean;
     }>(ARTICLES_SQL, params);
@@ -483,6 +525,20 @@ async function buildArticles(
       ["framerate", row.spec_framerate],
       ["display", row.spec_display],
       ["battery", row.spec_battery],
+      ["devicetype", row.spec_devicetype],
+      ["formfactor", row.spec_formfactor],
+      ["nv_sensor", row.spec_nv_sensor],
+      ["nv_lens", row.spec_nv_lens],
+      ["nv_magnification", row.spec_nv_magnification],
+      ["nv_zoom", row.spec_nv_zoom],
+      ["nv_detection", row.spec_nv_detection],
+      ["nv_framerate", row.spec_nv_framerate],
+      ["nv_fov", row.spec_nv_fov],
+      ["zoom", row.spec_zoom],
+      ["fov", row.spec_fov],
+      ["lrf", row.spec_lrf],
+      ["cell", row.spec_cell],
+      ["storage", row.spec_storage],
     ] as const) {
       const text = (value ?? "").trim();
       if (text) specs[key] = text;
