@@ -573,7 +573,11 @@ function Shop() {
   const [term, setTerm] = useState(search.q);
   const detailSku = search.artikel || null;
   const [detailImage, setDetailImage] = useState(0);
-  useEffect(() => setDetailImage(0), [detailSku]);
+  const [detailTab, setDetailTab] = useState("beschreibung");
+  useEffect(() => {
+    setDetailImage(0);
+    setDetailTab("beschreibung");
+  }, [detailSku]);
   const setDetailSku = (sku: string | null) => {
     void navigate({ search: (prev) => ({ ...prev, artikel: sku ?? "" }) });
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
@@ -1701,15 +1705,6 @@ function Shop() {
                   <div className="mt-4 grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
                     <div>
                       {renderGallery(a)}
-                      {a.spec && (
-                        <div className="mt-6">
-                          <p className="label-mono text-muted-foreground">Technische Daten</p>
-                          <div
-                            className="spec-html mt-2 text-[13px] text-muted-foreground"
-                            dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.spec) }}
-                          />
-                        </div>
-                      )}
                     </div>
                     <div>
                       <p className="label-mono text-muted-foreground">
@@ -1798,6 +1793,61 @@ function Shop() {
                             Foto-Download
                           </button>
                         </div>
+                      </div>
+                    </div>
+                    <div className="xl:col-span-2">
+                      <div className="flex flex-wrap gap-1 border-b border-border">
+                        {[
+                          ["beschreibung", "Beschreibung"],
+                          ["technik", "Technische Daten"],
+                          ["lieferumfang", "Lieferumfang"],
+                          ["downloads", "Downloads & Marketing"],
+                          ["garantie", "Garantie & Service"],
+                        ].map(([key, label]) => (
+                          <button
+                            key={key}
+                            onClick={() => setDetailTab(key!)}
+                            className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold transition-colors ${
+                              detailTab === key
+                                ? "border-accent text-foreground"
+                                : "border-transparent text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="max-w-3xl py-5 text-[14px] leading-relaxed">
+                        {detailTab === "beschreibung" && (
+                          <p className="text-muted-foreground">Für diesen Artikel ist noch keine Beschreibung hinterlegt.</p>
+                        )}
+                        {detailTab === "technik" &&
+                          (a.spec ? (
+                            <div className="spec-html" dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.spec) }} />
+                          ) : (
+                            <p className="text-muted-foreground">Keine technischen Daten hinterlegt.</p>
+                          ))}
+                        {detailTab === "lieferumfang" &&
+                          (a.scope ? (
+                            <div className="spec-html" dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.scope) }} />
+                          ) : (
+                            <p className="text-muted-foreground">Kein Lieferumfang hinterlegt.</p>
+                          ))}
+                        {detailTab === "downloads" && (
+                          <div className="space-y-3">
+                            <button
+                              onClick={() => void downloadPhotos(a)}
+                              disabled={imagesOf(a).length === 0}
+                              className="rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-accent hover:text-accent-foreground disabled:opacity-40"
+                            >
+                              Produktfotos herunterladen ({imagesOf(a).length})
+                            </button>
+                            <p className="text-muted-foreground">Datenblätter und Marketingmaterial folgen.</p>
+                          </div>
+                        )}
+                        {detailTab === "garantie" && (
+                          <p className="text-muted-foreground">Informationen zu Garantie und Service folgen.</p>
+                        )}
                       </div>
                     </div>
                   </div>
