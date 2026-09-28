@@ -10,7 +10,6 @@ import { ChevronDown, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react"
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
-import heroImage from "@/assets/hero-fuchs.jpg";
 import mawaLogo from "@/assets/mawa-logo-white.png";
 import { articleImages } from "@/lib/article-images";
 import { getArticleImageData, getArticleImageMap } from "@/lib/article-images.functions";
