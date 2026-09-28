@@ -874,114 +874,97 @@ function Shop() {
   const savings = Math.max(0, listTotal - subtotal);
 
   /**
-   * Artikelzeile — `nested` für Varianten innerhalb eines Variantenartikels.
-   * Bewusst als Funktion (kein eigener Komponententyp), damit nachgeladene
-   * Bilder die Zeilen nicht neu aufbauen und dadurch flackern lassen.
+   * Artikelkachel. Bewusst als Funktion (kein eigener Komponententyp), damit
+   * nachgeladene Bilder die Kacheln nicht neu aufbauen und flackern lassen.
    */
-  const renderArticleRow = (article: CatalogArticle, nested = false) => {
+  const renderArticleCard = (article: CatalogArticle) => {
     const q = getQty(article);
     const unit = priceForQty(article, q);
+    const listPrice = article.breaks[0]?.price ?? unit;
     const state = stockState(article.onHand);
     const spec = specText(article.spec);
-    // Kleines Vorschaubild bevorzugen; das große Foto nur als Ersatz, wenn die
-    // Abfrage abgeschlossen ist und kein Vorschaubild existiert.
     const thumb =
       thumbMap[article.id] ?? (imageLookupDone.has(article.id) ? imagesOf(article)[0] : undefined);
-    const open = detailSku === article.sku;
-    const toggleDetail = () => {
-      if (!open) requestImages(article.id);
-      setDetailSku(open ? null : article.sku);
+    const fav = favourites.has(article.id);
+    const openDetail = () => {
+      requestImages(article.id);
+      setDetailSku(article.sku);
     };
     return (
-      <Fragment key={nested ? `v-${article.sku}` : article.sku}>
-        <tr
-          onClick={toggleDetail}
-          className={`cursor-pointer border-t border-border/70 hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
-        >
-          <td className={`px-3 pt-3 align-top ${nested ? "pl-8" : ""}`}>
-            <span className="flex items-center gap-1.5">
-              <button
-                onClick={(event) => {
-                  event.stopPropagation();
-                  toggleFavourite(article);
-                }}
-                aria-label={
-                  favourites.has(article.id)
-                    ? `Favorit entfernen ${article.sku}`
-                    : `Als Favorit merken ${article.sku}`
-                }
-                title={favourites.has(article.id) ? "Favorit entfernen" : "Als Favorit merken"}
-                className={
-                  favourites.has(article.id)
-                    ? "text-accent"
-                    : "text-muted-foreground/50 hover:text-accent"
-                }
-              >
-                <Heart
-                  className="size-4"
-                  {...(favourites.has(article.id) ? { fill: "currentColor" } : {})}
-                />
-              </button>
-              {article.promo && (
-                <span className="text-destructive" title="Aktionsartikel">
-                  <Percent className="size-4 shrink-0" aria-label="Aktionsartikel" />
+      <div
+        key={article.sku}
+        className="group flex flex-col rounded-lg border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md"
+      >
+        <div className="relative">
+          <ThumbSlot onVisible={() => requestImages(article.id)}>
+            <button
+              onClick={openDetail}
+              className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+            >
+              {thumb ? (
+                <ArticleImage src={thumb} alt={article.name} className="size-full object-contain p-3" />
+              ) : (
+                <span className="label-mono text-muted-foreground">
+                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Produktbild"}
                 </span>
               )}
-              <button
-                onClick={toggleDetail}
-                className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-              >
-                {article.sku}
-              </button>
+            </button>
+          </ThumbSlot>
+          <button
+            onClick={() => toggleFavourite(article)}
+            aria-label={fav ? `Favorit entfernen ${article.sku}` : `Als Favorit merken ${article.sku}`}
+            title={fav ? "Favorit entfernen" : "Als Favorit merken"}
+            className={`absolute right-2 top-2 grid size-8 place-items-center rounded-full bg-card/90 shadow-sm ${
+              fav ? "text-accent" : "text-muted-foreground hover:text-accent"
+            }`}
+          >
+            <Heart className="size-4" {...(fav ? { fill: "currentColor" } : {})} />
+          </button>
+          {article.promo && (
+            <span className="absolute left-2 top-2 flex items-center gap-1 rounded-sm bg-destructive px-2 py-0.5 text-[11px] font-bold uppercase text-destructive-foreground">
+              <Percent className="size-3" /> Aktion
             </span>
-          </td>
-          <td className="max-w-[320px] px-3 pt-3 align-top">
-            <span className="flex items-start gap-3">
-              <ThumbSlot onVisible={() => requestImages(article.id)}>
-                {/* Feste Größe: Rahmen bleibt gleich, nur der Inhalt wechselt. */}
-                <span className="grid size-11 shrink-0 place-items-center overflow-hidden rounded-sm border border-border bg-panel">
-                  {thumb ? (
-                    <ArticleImage
-                      src={thumb}
-                      alt={article.name}
-                      className="size-10 object-contain"
-                    />
-                  ) : imageLookupDone.has(article.id) ? (
-                    <span className="font-mono text-[10px] text-muted-foreground">—</span>
-                  ) : null}
-                </span>
-              </ThumbSlot>
-              <button onClick={toggleDetail} className="text-left">
-                <span className="block font-semibold">{article.name}</span>
-              </button>
-            </span>
-          </td>
-          <td className="px-3 pt-3 align-top font-mono text-[13px] font-semibold">{eur(unit)}</td>
-          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-            {article.unit}
-          </td>
-          <td className="px-3 pt-3 align-top font-mono text-[12px] text-muted-foreground">
-            {article.moq}
-          </td>
-          <td className="px-3 pt-3 align-top">
-            <span className={`flex items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
-              <span className={`size-1.5 rounded-full ${stockDot[state]}`} />
-              {stockLabel[state]}
-              {article.onHand > 0 && (
-                <span className="font-mono text-muted-foreground">
-                  {stockDisplay(article.onHand)}
-                </span>
-              )}
-            </span>
-            {article.onHand <= 0 && (
-              <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                bestellbar · Lieferung bei Zugang
-              </span>
-            )}
-          </td>
+          )}
+        </div>
 
-          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
-            <span className="flex w-max items-center rounded-sm border border-border">
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="label-mono truncate text-muted-foreground">{article.level1}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{article.sku}</span>
+        </div>
+        <button onClick={openDetail} className="mt-1 text-left">
+          <span className="line-clamp-2 text-[15px] font-bold leading-snug">{article.name}</span>
+        </button>
+        <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+          {spec || article.category}
+        </p>
+
+        <div className="mt-3 flex items-end justify-between gap-2">
+          <div>
+            <p className="text-[12px] text-muted-foreground">Ihr EK netto / {article.unit}</p>
+            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>
+          </div>
+          <div className="text-right text-[12px]">
+            {listPrice > unit && (
+              <p className="text-muted-foreground line-through">{eur(listPrice)}</p>
+            )}
+            {article.moq > 1 && <p className="text-muted-foreground">Mind. {article.moq}</p>}
+            {article.breaks.length > 1 && (
+              <p className="font-semibold text-stock">Staffelpreise</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
+            <span className={`size-2 shrink-0 rounded-full ${stockDot[state]}`} />
+            <span className="truncate">
+              {article.onHand > 0
+                ? `${stockLabel[state]} · ${stockDisplay(article.onHand)}`
+                : "Bestellbar"}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-1.5">
+            <span className="flex items-center rounded-sm border border-border">
               <button
                 onClick={() => step(article, -1)}
                 aria-label={`Menge verringern ${article.sku}`}
@@ -989,7 +972,7 @@ function Shop() {
               >
                 −
               </button>
-              <span className="w-12 text-center font-mono text-[13px]">{q}</span>
+              <span className="w-8 text-center font-mono text-[13px]">{q}</span>
               <button
                 onClick={() => step(article, 1)}
                 aria-label={`Menge erhöhen ${article.sku}`}
@@ -998,31 +981,79 @@ function Shop() {
                 +
               </button>
             </span>
-          </td>
-          <td className="px-3 pt-3 align-top" onClick={(event) => event.stopPropagation()}>
             <button
               onClick={() => addLine(article.sku, q)}
-              className="rounded-sm bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+              className="rounded-sm bg-primary px-3 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              Hinzufügen
+              {article.onHand > 0 ? "In den Korb" : "Vormerken"}
             </button>
-          </td>
-        </tr>
-        <tr
-          onClick={toggleDetail}
-          className={`cursor-pointer hover:bg-muted/40 ${nested ? "bg-card" : ""}`}
-        >
-          <td />
-          <td colSpan={7} className="px-3 pb-3 pt-1">
-            <span className="line-clamp-2 block text-xs text-muted-foreground">
-              {spec || article.category}
-            </span>
-          </td>
-        </tr>
-        {open && (
-          <tr className="bg-muted/30">
-            <td />
-            <td colSpan={7} className="px-3 pb-4 pt-1">
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  /** Variantenartikel (Mutter) als eine Kachel; Varianten klappen darunter auf. */
+  const renderGroupCard = (row: {
+    id: string;
+    sku: string;
+    name: string;
+    variants: CatalogArticle[];
+  }) => {
+    const first = row.variants[0];
+    const thumbArticle = row.variants.find((v) => thumbMap[v.id]) ?? first;
+    const thumb = thumbArticle ? thumbMap[thumbArticle.id] : undefined;
+    const open = !!openGroups[row.id];
+    return (
+      <div
+        key={`gc-${row.id}`}
+        className={`flex flex-col rounded-lg border bg-card p-3 shadow-sm ${open ? "border-accent" : "border-border"}`}
+      >
+        <ThumbSlot onVisible={() => row.variants.slice(0, 3).forEach((v) => requestImages(v.id))}>
+          <button
+            onClick={() => toggleGroup(row.id)}
+            className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+          >
+            {thumb ? (
+              <ArticleImage src={thumb} alt={row.name} className="size-full object-contain p-3" />
+            ) : (
+              <span className="label-mono text-muted-foreground">Produktbild</span>
+            )}
+          </button>
+        </ThumbSlot>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="label-mono truncate text-muted-foreground">{first?.level1}</span>
+          <span className="font-mono text-[11px] text-muted-foreground">{row.sku}</span>
+        </div>
+        <button onClick={() => toggleGroup(row.id)} className="mt-1 text-left">
+          <span className="line-clamp-2 text-[15px] font-bold leading-snug">{row.name}</span>
+        </button>
+        <p className="label-mono mt-1 text-muted-foreground">{row.variants.length} Varianten</p>
+        <div className="mt-3">
+          <p className="text-[12px] text-muted-foreground">Ihr EK netto</p>
+          <p className="font-mono text-xl font-bold tracking-tight">
+            ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
+          </p>
+        </div>
+        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
+            <span className="size-2 rounded-full bg-stock" />
+            {row.variants.filter((v) => v.onHand > 0).length} von {row.variants.length} lagernd
+          </span>
+          <button
+            onClick={() => toggleGroup(row.id)}
+            className="rounded-sm border border-primary px-3 py-2 text-sm font-bold transition-colors hover:bg-primary hover:text-primary-foreground"
+          >
+            {open ? "Schließen" : "Varianten"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  /** Detailinhalt (Bilder, Beschreibung, Staffeln) für das Artikel-Pop-up. */
+  const renderDetail = (article: CatalogArticle) => (
+    <div>
               <div className="float-right ml-4 w-[190px]">
                 <button
                   onClick={() => setScopeArticle(article)}
