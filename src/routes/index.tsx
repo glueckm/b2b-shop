@@ -646,6 +646,7 @@ function Shop() {
         specs: {},
         promo: false,
         isPrimary: false,
+        manufacturer: "",
       });
     }
     return out;
@@ -678,6 +679,28 @@ function Shop() {
   const [openFacets, setOpenFacets] = useState<string[]>([]);
   const [showSpecFilters, setShowSpecFilters] = useState(false);
   const [specFilters, setSpecFilters] = useState<Record<string, string[]>>({});
+
+  /** Hersteller-Filter: nur die vier häufigsten Hersteller der aktuellen Auswahl. */
+  const [makerFilter, setMakerFilter] = useState<string[]>([]);
+  const topMakers = useMemo(() => {
+    const counts = new Map<string, Set<string>>();
+    for (const a of articles) {
+      const name = (a.manufacturer ?? "").trim().toUpperCase();
+      if (!name) continue;
+      if (!counts.has(name)) counts.set(name, new Set());
+      counts.get(name)!.add(a.groupId || a.id);
+    }
+    return [...counts.entries()]
+      .map(([name, set]) => ({ name, count: set.size }))
+      .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name))
+      .slice(0, 4);
+  }, [articles]);
+  useEffect(() => {
+    setMakerFilter((prev) => {
+      const kept = prev.filter((m) => topMakers.some((t) => t.name === m));
+      return kept.length === prev.length ? prev : kept;
+    });
+  }, [topMakers]);
 
   /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
   const specFacets = useMemo(() => {
@@ -805,18 +828,19 @@ function Shop() {
       );
     }
 
-    if (!favOnly && !promoOnly && activeSpecCount === 0) return out;
-    // Favoriten (Herz), Aktionen und Zusatzfilter anwenden; bei Varianten nur die passenden.
+    if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0) return out;
+    // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
       (!favOnly || favourites.has(article.id)) &&
       (!promoOnly || article.promo) &&
+      (makerFilter.length === 0 || makerFilter.includes(article.manufacturer.toUpperCase())) &&
       matchesSpecs(article);
     return out.flatMap((row): Row[] => {
       if (row.kind === "single") return keep(row.article) ? [row] : [];
       const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs]);
+  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -1629,6 +1653,48 @@ function Shop() {
               </>
             );
           })()}
+
+          {topMakers.length > 1 && (
+            <div>
+              <div className="flex items-center justify-between gap-2">
+                <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Hersteller</h3>
+                {makerFilter.length > 0 && (
+                  <button
+                    onClick={() => setMakerFilter([])}
+                    className="text-[12px] font-semibold text-accent hover:underline"
+                  >
+                    zurücksetzen
+                  </button>
+                )}
+              </div>
+              <div className="mt-2 flex flex-col gap-1">
+                {topMakers.map((m) => {
+                  const active = makerFilter.includes(m.name);
+                  return (
+                    <label
+                      key={m.name}
+                      className={`flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 text-[13px] transition-colors hover:bg-muted ${
+                        active ? "font-semibold text-accent" : "text-muted-foreground"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={active}
+                        onChange={() =>
+                          setMakerFilter((prev) =>
+                            prev.includes(m.name) ? prev.filter((x) => x !== m.name) : [...prev, m.name],
+                          )
+                        }
+                        className="size-3.5 shrink-0 accent-accent"
+                      />
+                      <span className="min-w-0 truncate uppercase">{m.name}</span>
+                      <span className="ml-auto font-mono text-[11px] opacity-60">{m.count}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {specFacets.length > 0 && (
             <div>
