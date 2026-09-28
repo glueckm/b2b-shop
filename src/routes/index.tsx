@@ -7,6 +7,7 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { ChevronDown, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
 
@@ -1508,8 +1509,18 @@ function Shop() {
           {specFacets.length > 0 && (
             <div>
               <div className="flex items-center justify-between gap-2">
-                <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Tech. Filter</h3>
-                {activeSpecCount > 0 && (
+                <label className="flex cursor-pointer items-center gap-2">
+                  <Switch
+                    checked={showSpecFilters}
+                    onCheckedChange={(on) => {
+                      setShowSpecFilters(on);
+                      if (!on) setSpecFilters({});
+                    }}
+                    aria-label="Technische Filter ein/aus"
+                  />
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Tech. Filter</h3>
+                </label>
+                {showSpecFilters && activeSpecCount > 0 && (
                   <button
                     onClick={() => setSpecFilters({})}
                     className="text-[12px] font-semibold text-accent hover:underline"
@@ -1519,7 +1530,7 @@ function Shop() {
                 )}
               </div>
 
-              <div className="mt-2 divide-y divide-border">
+              <div className={`mt-2 divide-y divide-border ${showSpecFilters ? "" : "hidden"}`}>
                 {specFacets.map((facet) => {
                   const selected = specFilters[facet.key] ?? [];
                   const open = openFacets.includes(facet.key) || selected.length > 0;
