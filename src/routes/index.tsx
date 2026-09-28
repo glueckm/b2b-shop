@@ -835,6 +835,35 @@ function Shop() {
       );
     }
 
+    // Wärmebild & Nachtsicht: meistverkaufte Serien (ähnlicher Name) zuerst,
+    // innerhalb der Serie das meistverkaufte Gerät zuerst. Bei Suche bleibt die Trefferreihenfolge.
+    if (search.category === "Wärmebild & Nachtsicht" && !search.q.trim()) {
+      const rowName = (r: Row) => (r.kind === "single" ? r.article.name : r.name);
+      const rowSold = (r: Row) =>
+        r.kind === "single" ? r.article.sold : r.variants.reduce((s, v) => s + v.sold, 0);
+      const seriesOf = (name: string) =>
+        name
+          .replace(/\b(pard|nocpix|infiray|rusan|nitecore)\b/gi, " ")
+          .replace(/^[\s-]+/, "")
+          .split(/[\s-]+/)[0]
+          ?.toLowerCase() ?? "";
+      const seriesTotal = new Map<string, number>();
+      for (const r of out) {
+        const key = seriesOf(rowName(r));
+        seriesTotal.set(key, (seriesTotal.get(key) ?? 0) + rowSold(r));
+      }
+      out.sort((x, y) => {
+        const sx = seriesOf(rowName(x));
+        const sy = seriesOf(rowName(y));
+        return (
+          (seriesTotal.get(sy) ?? 0) - (seriesTotal.get(sx) ?? 0) ||
+          sx.localeCompare(sy) ||
+          rowSold(y) - rowSold(x) ||
+          rowName(x).localeCompare(rowName(y), "de", { numeric: true })
+        );
+      });
+    }
+
     if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
