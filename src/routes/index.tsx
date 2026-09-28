@@ -1427,74 +1427,120 @@ function Shop() {
         </form>
       </header>
 
-      <nav className="sticky top-0 z-40 border-t border-primary-foreground/10 bg-primary text-primary-foreground shadow-md">
-        <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-5">
-          {(() => {
-            // Feste Reihenfolge: Wärmebild & Nachtsicht, Jagdbedarf, Adapter, Montagen, Rest, danach "Alle Artikel".
-            const order = ["wärmebild & nachtsicht", "jagdbedarf", "adapter für vorsatzgeräte", "montagen"];
-            const rank = (name: string) => {
-              const idx = order.indexOf(name.trim().toLowerCase());
-              return idx === -1 ? order.length : idx;
-            };
-            return [
-              ...[...data.categories].sort(
-                (a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name),
-              ),
-              { name: "", count: data.stats.articles },
-            ];
-          })().map((category) => {
-            const active = category.name === search.category;
-            return (
+      {(() => {
+        // Feste Reihenfolge: Wärmebild & Nachtsicht, Jagdbedarf, Adapter, Montagen, Rest, danach "Alle Artikel".
+        const order = ["wärmebild & nachtsicht", "jagdbedarf", "adapter für vorsatzgeräte", "montagen"];
+        const rank = (name: string) => {
+          const idx = order.indexOf(name.trim().toLowerCase());
+          return idx === -1 ? order.length : idx;
+        };
+        const navCats = [
+          ...[...data.categories].sort(
+            (a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name),
+          ),
+          { name: "", count: data.stats.articles },
+        ];
+        const shortLabel = (name: string) => {
+          const n = name.trim().toLowerCase();
+          if (!name) return "Alle Artikel";
+          if (n === "adapter für vorsatzgeräte") return "Adapter";
+          if (n === "mündung & schalldämpfer") return "Schalldämpfer";
+          return name;
+        };
+        const selectCategory = (name: string) => {
+          setPromoOnly(false);
+          setTerm("");
+          void navigate({
+            search: (prev) => ({
+              ...prev, artikel: "",
+              category: name,
+              subcategory: "",
+              subsubcategory: "",
+              q: "",
+            }),
+          });
+        };
+        const togglePromo = () => {
+          setPromoOnly((prev) => !prev);
+          setTerm("");
+          void navigate({
+            search: (prev) => ({
+              ...prev, artikel: "",
+              category: "",
+              subcategory: "",
+              subsubcategory: "",
+              q: "",
+            }),
+          });
+        };
+        return (
+          <nav className="sticky top-0 z-40 border-t border-primary-foreground/10 bg-primary text-primary-foreground shadow-md">
+            {/* PC / Tablet: kompakte Einzeiler-Leiste */}
+            <div className="mx-auto hidden max-w-[1600px] items-center gap-0.5 px-4 md:flex">
+              {navCats.map((category) => {
+                const active = !promoOnly && category.name === search.category;
+                return (
+                  <button
+                    key={category.name || "all"}
+                    onClick={() => selectCategory(active ? "" : category.name)}
+                    title={category.name || "Alle Artikel"}
+                    className={`whitespace-nowrap border-b-2 px-2.5 py-2.5 text-xs font-semibold uppercase tracking-[0.04em] transition-colors lg:text-[13px] ${
+                      active
+                        ? "border-accent text-primary-foreground"
+                        : "border-transparent text-primary-foreground/75 hover:text-primary-foreground"
+                    }`}
+                  >
+                    {shortLabel(category.name)}
+                  </button>
+                );
+              })}
               <button
-                key={category.name || "all"}
-                onClick={() => {
-                  setTerm("");
-                  void navigate({
-                    search: (prev) => ({
-                      ...prev, artikel: "",
-                      category: active ? "" : category.name,
-                      subcategory: "",
-                      subsubcategory: "",
-                      q: "",
-                    }),
-                  });
-                }}
-                className={`whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-semibold uppercase tracking-[0.04em] transition-colors ${
-                  active
-                    ? "border-accent text-primary-foreground"
-                    : "border-transparent text-primary-foreground/75 hover:text-primary-foreground"
+                onClick={togglePromo}
+                aria-pressed={promoOnly}
+                title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
+                className={`ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-xs font-bold uppercase tracking-[0.04em] text-accent transition-colors lg:text-[13px] ${
+                  promoOnly ? "border-accent" : "border-transparent hover:opacity-80"
                 }`}
               >
-                {category.name || "Alle Artikel"}
+                <Percent className="size-4" />
+                Aktionen
               </button>
-            );
-          })}
+            </div>
 
-          <button
-            onClick={() => {
-              setPromoOnly((prev) => !prev);
-              setTerm("");
-              void navigate({
-                search: (prev) => ({
-                  ...prev, artikel: "",
-                  category: "",
-                  subcategory: "",
-                  subsubcategory: "",
-                  q: "",
-                }),
-              });
-            }}
-            aria-pressed={promoOnly}
-            title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
-            className={`ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-bold uppercase tracking-[0.04em] text-accent transition-colors ${
-              promoOnly ? "border-accent" : "border-transparent hover:opacity-80"
-            }`}
-          >
-            <Percent className="size-4" />
-            Aktionen
-          </button>
-        </div>
-      </nav>
+            {/* Handy: kompaktes Auswahl-Dropdown */}
+            <div className="flex items-center gap-2 px-4 py-2 md:hidden">
+              <select
+                aria-label="Kategorie wählen"
+                value={promoOnly ? "__promo" : search.category}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === "__promo") {
+                    if (!promoOnly) togglePromo();
+                  } else selectCategory(v);
+                }}
+                className="min-w-0 flex-1 rounded-md border border-primary-foreground/20 bg-primary px-3 py-2 text-sm font-semibold uppercase tracking-[0.04em] text-primary-foreground"
+              >
+                {navCats.map((category) => (
+                  <option key={category.name || "all"} value={category.name}>
+                    {category.name || "Alle Artikel"}
+                  </option>
+                ))}
+                <option value="__promo">Aktionen</option>
+              </select>
+              <button
+                onClick={togglePromo}
+                aria-pressed={promoOnly}
+                className={`flex shrink-0 items-center gap-1 rounded-md border px-3 py-2 text-xs font-bold uppercase text-accent ${
+                  promoOnly ? "border-accent" : "border-primary-foreground/20"
+                }`}
+              >
+                <Percent className="size-4" />
+                Aktionen
+              </button>
+            </div>
+          </nav>
+        );
+      })()}
 
 
       <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
