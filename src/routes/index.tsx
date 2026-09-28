@@ -1385,8 +1385,8 @@ function Shop() {
       <nav className="sticky top-0 z-40 border-t border-primary-foreground/10 bg-primary text-primary-foreground shadow-md">
         <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-5">
           {(() => {
-            // Feste Reihenfolge: Optik, Montage, Jagdbedarf, Rest, danach "Alle Artikel".
-            const order = ["optik", "montage", "jagdbedarf"];
+            // Feste Reihenfolge: Wärmebild & Nachtsicht, Jagdbedarf, Adapter, Montagen, Rest, danach "Alle Artikel".
+            const order = ["wärmebild & nachtsicht", "jagdbedarf", "adapter für vorsatzgeräte", "montagen"];
             const rank = (name: string) => {
               const idx = order.indexOf(name.trim().toLowerCase());
               return idx === -1 ? order.length : idx;
