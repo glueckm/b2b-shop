@@ -1127,13 +1127,10 @@ function Shop() {
                 </tbody>
               </table>
               )}
-            </td>
-          </tr>
-        )}
+    </div>
+  );
 
-      </Fragment>
-    );
-  };
+  const detailArticle = detailSku ? articleForSku(detailSku) : undefined;
 
 
 
