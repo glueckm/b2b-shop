@@ -1649,14 +1649,6 @@ function Shop() {
               </div>
             </div>
           )}
-
-          <div>
-            <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Verfügbarkeit</h3>
-            <p className="mt-2 flex items-center gap-2 px-1.5 text-sm text-foreground/85">
-              <span className="size-2 rounded-full bg-stock" />
-              Hauptlager · max. Anzeige 10+
-            </p>
-          </div>
         </aside>
 
         <main className="min-w-0">
