@@ -1932,7 +1932,7 @@ function Shop() {
                             <p className="label-mono text-muted-foreground">
                               {siblings.length} Varianten
                             </p>
-                            <div className="mt-2 max-h-[32rem] overflow-y-auto rounded-md border border-border">
+                            <div className="mt-2 max-h-[16.5rem] overflow-y-auto rounded-md border border-border">
                               {siblings.map((v) => {
                                 const current = v.sku === a.sku;
                                 const vs = stockState(v.onHand);
