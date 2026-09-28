@@ -112,22 +112,15 @@ export async function apiSignup(
   };
 }
 
-/** Anfrage für die Bearbeitung im CRM vermerken. */
+/**
+ * Anfrage für die Bearbeitung im CRM vermerken.
+ * Das Backend nimmt auch nicht berechtigte Anfragen über
+ * POST /v1/shop/auth/signup entgegen (202 { status: "unresolved" }).
+ */
 export async function apiRecordRegistration(input: {
   customerNumber: string;
   email?: string | null;
   note: string;
 }): Promise<void> {
-  const res = await fetch(`${apiBase()}/v1/shop-registrations`, {
-    method: "POST",
-    headers: { origin: appOrigin(), "content-type": "application/json" },
-    body: JSON.stringify({
-      customerNumber: input.customerNumber,
-      email: input.email ?? null,
-      note: input.note,
-      status: "pending",
-    }),
-    signal: AbortSignal.timeout(20_000),
-  });
-  if (!res.ok) throw new Error(`REGISTRATION_FAILED_${res.status}`);
+  await apiSignup(input.customerNumber);
 }
