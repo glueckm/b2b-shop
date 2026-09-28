@@ -2035,7 +2035,7 @@ function Shop() {
                             </span>
                           </p>
                           <button
-                            onClick={() => first && setDetailSku(first.sku)}
+                            onClick={() => toggleGroup(row.id)}
                             className="text-xs font-semibold text-muted-foreground hover:text-accent"
                           >
                             Schließen ×
