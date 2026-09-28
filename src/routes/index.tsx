@@ -572,6 +572,8 @@ function Shop() {
   }, [data.user?.id]);
   const [term, setTerm] = useState(search.q);
   const detailSku = search.artikel || null;
+  const [detailImage, setDetailImage] = useState(0);
+  useEffect(() => setDetailImage(0), [detailSku]);
   const setDetailSku = (sku: string | null) => {
     void navigate({ search: (prev) => ({ ...prev, artikel: sku ?? "" }) });
     if (typeof window !== "undefined") window.scrollTo({ top: 0 });
@@ -1087,30 +1089,64 @@ function Shop() {
                   </span>
                 </button>
               </div>
-              {imagesOf(article).length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {imagesOf(article).map((src, index) => (
-                    <button
-                      key={src}
-                      onClick={() =>
-                        setLightbox({
-                          images: imagesOf(article),
-                          index,
-                          title: `${article.sku} · ${article.name}`,
-                        })
-                      }
-                      aria-label={`Bild ${index + 1} vergrößern`}
-                      className="rounded-sm border border-border bg-panel p-0.5 transition-colors hover:border-accent"
-                    >
+              {imagesOf(article).length > 0 && (() => {
+                const imgs = imagesOf(article);
+                const current = Math.min(detailImage, imgs.length - 1);
+                const go = (delta: number) =>
+                  setDetailImage((current + delta + imgs.length) % imgs.length);
+                return (
+                  <div className="mr-[206px]">
+                    <div className="relative grid h-[420px] place-items-center rounded-md border border-border bg-muted">
                       <ArticleImage
-                        src={src}
-                        alt={`${article.name} — Bild ${index + 1}`}
-                        className="h-20 w-20 object-contain"
+                        src={imgs[current] ?? ""}
+                        alt={`${article.name} — Bild ${current + 1}`}
+                        className="max-h-[400px] max-w-full object-contain"
                       />
-                    </button>
-                  ))}
-                </div>
-              )}
+                      {imgs.length > 1 && (
+                        <>
+                          <button
+                            onClick={() => go(-1)}
+                            aria-label="Vorheriges Bild"
+                            className="absolute left-2 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 text-2xl shadow hover:text-accent"
+                          >
+                            ‹
+                          </button>
+                          <button
+                            onClick={() => go(1)}
+                            aria-label="Nächstes Bild"
+                            className="absolute right-2 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 text-2xl shadow hover:text-accent"
+                          >
+                            ›
+                          </button>
+                          <span className="absolute bottom-2 right-3 font-mono text-[11px] text-muted-foreground">
+                            {current + 1} / {imgs.length}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {imgs.length > 1 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {imgs.map((src, index) => (
+                          <button
+                            key={src}
+                            onClick={() => setDetailImage(index)}
+                            aria-label={`Bild ${index + 1} anzeigen`}
+                            className={`rounded-sm border bg-panel p-0.5 transition-colors hover:border-accent ${
+                              index === current ? "border-accent" : "border-border"
+                            }`}
+                          >
+                            <ArticleImage
+                              src={src}
+                              alt={`${article.name} — Bild ${index + 1}`}
+                              className="h-16 w-16 object-contain"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {article.spec && (
                 <div
