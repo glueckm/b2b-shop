@@ -684,6 +684,10 @@ function Shop() {
 
   /** Hersteller-Filter: nur die vier häufigsten Hersteller der aktuellen Auswahl. */
   const [makerFilter, setMakerFilter] = useState<string[]>([]);
+  /** Klick auf ein Logo im Marken-Laufband: alle Artikel dieses Herstellers. */
+  const [brandPick, setBrandPick] = useState<string | null>(null);
+  const brandMatches = (maker: string) =>
+    !brandPick || new RegExp(`(^|[^A-Z])${brandPick}`).test(maker.toUpperCase());
   const topMakers = useMemo(() => {
     const counts = new Map<string, Set<string>>();
     for (const a of articles) {
@@ -865,19 +869,20 @@ function Shop() {
       });
     }
 
-    if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0) return out;
+    if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
       (!favOnly || favourites.has(article.id)) &&
       (!promoOnly || article.promo) &&
       (makerFilter.length === 0 || makerFilter.includes(article.manufacturer.toUpperCase())) &&
+      brandMatches(article.manufacturer) &&
       matchesSpecs(article);
     return out.flatMap((row): Row[] => {
       if (row.kind === "single") return keep(row.article) ? [row] : [];
       const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, search.category, search.q]);
+  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -1542,6 +1547,7 @@ function Shop() {
           return name;
         };
         const selectCategory = (name: string) => {
+          setBrandPick(null);
           setPromoOnly(false);
           setTerm("");
           void navigate({
@@ -1555,6 +1561,7 @@ function Shop() {
           });
         };
         const togglePromo = () => {
+          setBrandPick(null);
           setPromoOnly((prev) => !prev);
           setTerm("");
           void navigate({
@@ -2391,7 +2398,19 @@ function Shop() {
         </aside>
       </div>
 
-      <BrandMarquee />
+      <BrandMarquee
+        onSelect={(brand) => {
+          setBrandPick(brand);
+          setPromoOnly(false);
+          setFavOnly(false);
+          setMakerFilter([]);
+          setTerm("");
+          void navigate({
+            search: (prev) => ({ ...prev, artikel: "", category: "", subcategory: "", subsubcategory: "", q: "" }),
+          });
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+      />
 
       <footer className="border-t border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground">
