@@ -1,3 +1,4 @@
+import { BrandMarquee } from "@/components/BrandMarquee";
 import {
   createFileRoute,
   Link,
@@ -2389,6 +2390,8 @@ function Shop() {
           </div>
         </aside>
       </div>
+
+      <BrandMarquee />
 
       <footer className="border-t border-border bg-panel">
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-sm text-muted-foreground">

@@ -145,6 +145,14 @@
   }
 }
 
+@keyframes brand-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@utility animate-brand-marquee {
+  animation: brand-marquee 40s linear infinite;
+}
+
 @utility label-mono {
   font-family: var(--font-mono);
   font-size: 0.625rem;
