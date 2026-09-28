@@ -742,6 +742,25 @@ function Shop() {
     [specFilters],
   );
 
+  // Keine Treffer im aktuellen Bereich: Suche automatisch unter allen Artikeln fortsetzen.
+  const [searchFallback, setSearchFallback] = useState<{ from: string; q: string } | null>(null);
+  useEffect(() => {
+    if (navPending) return;
+    const q = search.q.trim();
+    if (q && search.category && data.total === 0) {
+      setSearchFallback({
+        from: [search.category, search.subcategory, search.subsubcategory].filter(Boolean).join(" › "),
+        q,
+      });
+      void navigate({
+        search: (prev) => ({ ...prev, category: "", subcategory: "", subsubcategory: "", artikel: "" }),
+      });
+      return;
+    }
+    if (searchFallback && (searchFallback.q !== q || search.category)) setSearchFallback(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search.q, search.category, search.subcategory, search.subsubcategory, data.total, navPending]);
+
   // Suche nach exakter Artikelnummer einer Variante: direkt in den Variantenartikel springen.
   useEffect(() => {
     const q = search.q.trim().toLowerCase();
@@ -2024,6 +2043,14 @@ function Shop() {
               <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-background/60 pt-16">
                 <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
               </div>
+            )}
+            {searchFallback && !search.category && search.q.trim() === searchFallback.q && (
+              <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
+                Im Bereich <strong>{searchFallback.from}</strong> wurde für „{searchFallback.q}“ nichts gefunden.{" "}
+                {rows.length > 0
+                  ? `Die Suche wurde unter allen Artikeln fortgesetzt: ${num(data.total)} Treffer in anderen Bereichen.`
+                  : "Auch unter allen Artikeln gibt es keine Treffer."}
+              </p>
             )}
             {rows.length === 0 && (
               <p className="rounded-lg border border-border bg-card px-4 py-10 text-center text-muted-foreground">
