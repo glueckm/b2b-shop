@@ -1246,47 +1246,89 @@ function Shop() {
           </div>
         </div>
       )}
-      <header className="bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-[1440px] items-center gap-6 px-5 py-3">
-          <div className="flex items-center gap-3">
-            <img
-              src={mawaLogo}
-              alt="MAWA Trading"
-              width={369}
-              height={77}
-              className="h-8 w-auto"
-            />
-            <span className="label-mono hidden text-primary-foreground/55 sm:block">
-              Distribution B2B
-            </span>
-          </div>
-          <div className="ml-auto flex items-center gap-4">
-
-            {data.user ? (
-              <Link
-                to="/konto"
-                className="flex flex-col rounded-md border border-accent/40 bg-accent/15 px-3 py-1.5 leading-tight text-primary-foreground transition-colors hover:bg-accent/30"
+      {detailArticle && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-foreground/60 p-4 sm:py-12"
+          onClick={() => setDetailSku(null)}
+        >
+          <div
+            className="w-full max-w-3xl rounded-lg border border-border bg-background p-6 shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="label-mono text-muted-foreground">
+                  {detailArticle.level1} · {detailArticle.sku}
+                </p>
+                <h2 className="mt-1 text-xl font-bold tracking-tight">{detailArticle.name}</h2>
+              </div>
+              <button
+                onClick={() => setDetailSku(null)}
+                aria-label="Schließen"
+                className="text-xl text-muted-foreground hover:text-foreground"
               >
-                <span className="text-sm font-semibold">Mein Konto</span>
-                <span className="font-mono text-xs opacity-80">
-                  {data.user.customerNumber ?? data.user.displayName ?? data.user.email}
-                </span>
+                ×
+              </button>
+            </div>
+            <div className="mt-4">{renderDetail(detailArticle)}</div>
+          </div>
+        </div>
+      )}
+
+      <header className="bg-primary text-primary-foreground">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
+          <img
+            src={mawaLogo}
+            alt="MAWA Trading"
+            width={369}
+            height={77}
+            className="h-7 w-auto shrink-0"
+          />
+          <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
+            <input
+              value={term}
+              onChange={(event) => setTerm(event.target.value)}
+              placeholder="Suche nach Artikel, Marke oder Art.-Nr. …"
+              aria-label="Katalog durchsuchen"
+              className="w-full rounded-sm border border-primary-foreground/10 bg-primary-foreground/10 px-4 py-2.5 text-sm text-primary-foreground outline-none placeholder:text-primary-foreground/50 focus:border-accent"
+            />
+          </form>
+          <div className="ml-auto flex shrink-0 items-center gap-5 text-sm">
+            {data.user ? (
+              <Link to="/konto" className="font-medium hover:text-accent">
+                {data.user.displayName ?? "Mein Konto"}
+                {data.user.customerNumber && (
+                  <span className="opacity-70"> · Kd. {data.user.customerNumber}</span>
+                )}
               </Link>
             ) : (
-              <Link
-                to="/anmelden"
-                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground hover:border-accent hover:text-accent"
-              >
+              <Link to="/anmelden" className="font-semibold hover:text-accent">
                 Anmelden
               </Link>
             )}
+            {data.user && (
+              <Link to="/bestellungen" className="hidden font-medium hover:text-accent lg:inline">
+                Bestellungen
+              </Link>
+            )}
+            <button
+              onClick={() => setFavOnly((prev) => !prev)}
+              aria-pressed={favOnly}
+              title="Alle Artikel, die Sie mit dem Herz markiert haben."
+              className={`flex items-center gap-1.5 font-medium hover:text-accent ${favOnly ? "text-accent" : ""}`}
+            >
+              <Heart className="size-4" {...(favOnly ? { fill: "currentColor" } : {})} />
+              Merkliste
+              {favourites.size > 0 && (
+                <span className="font-mono text-xs opacity-80">{favourites.size}</span>
+              )}
+            </button>
             <a
               href="#order"
-              className="flex items-center gap-2 rounded-sm bg-accent px-3 py-2 text-sm font-semibold text-accent-foreground"
+              className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
-              Warenkorb
-              <span className="font-mono text-xs">{lines.length}</span>
+              Warenkorb · {lines.length}
             </a>
             {data.user && (
               <button
@@ -1294,35 +1336,26 @@ function Shop() {
                   await shopLogout({});
                   await router.invalidate();
                 }}
-                className="rounded-sm border border-primary-foreground/25 px-3 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:border-accent hover:text-accent"
+                className="text-primary-foreground/60 hover:text-accent"
               >
                 Abmelden
               </button>
             )}
-
           </div>
         </div>
+        <form onSubmit={submitSearch} className="px-5 pb-3 md:hidden">
+          <input
+            value={term}
+            onChange={(event) => setTerm(event.target.value)}
+            placeholder="Suche nach Artikel, Marke oder Art.-Nr. …"
+            aria-label="Katalog durchsuchen"
+            className="w-full rounded-sm bg-primary-foreground/10 px-4 py-2.5 text-sm text-primary-foreground outline-none placeholder:text-primary-foreground/50"
+          />
+        </form>
       </header>
 
-      <section className="relative isolate overflow-hidden border-b border-border">
-        <img
-          src={heroImage}
-          alt="Fuchs im nebligen Herbstwald bei Sonnenaufgang"
-          width={1600}
-          height={912}
-          className="absolute inset-0 size-full object-cover object-[50%_30%]"
-        />
-        <div className="absolute inset-0 bg-primary/80" />
-        <div className="relative mx-auto max-w-[1440px] px-5 py-14">
-          <p className="label-mono text-accent">Distributionsportal · Nettopreise</p>
-          <h1 className="mt-3 whitespace-nowrap text-3xl font-bold leading-[1.1] tracking-tight text-primary-foreground lg:text-4xl">
-            Für Profis gemacht. Für Ihren Betrieb gedacht.
-          </h1>
-        </div>
-      </section>
-
-      <nav className="sticky top-0 z-40 border-b border-border bg-panel shadow-sm">
-        <div className="mx-auto flex max-w-[1440px] items-center gap-1 overflow-x-auto px-5">
+      <nav className="sticky top-0 z-40 border-t border-primary-foreground/10 bg-primary text-primary-foreground shadow-md">
+        <div className="mx-auto flex max-w-[1600px] items-center gap-2 overflow-x-auto px-5">
           {(() => {
             // Feste Reihenfolge: Optik, Montage, Jagdbedarf, Rest, danach "Alle Artikel".
             const order = ["optik", "montage", "jagdbedarf"];
@@ -1342,7 +1375,6 @@ function Shop() {
               <button
                 key={category.name || "all"}
                 onClick={() => {
-                  // Suchbegriff zurücksetzen, damit die Kategorie vollständig angezeigt wird.
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
@@ -1354,11 +1386,10 @@ function Shop() {
                     }),
                   });
                 }}
-
-                className={`whitespace-nowrap border-b-2 px-4 py-3.5 text-[16px] tracking-tight transition-colors ${
+                className={`whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-semibold uppercase tracking-[0.04em] transition-colors ${
                   active
-                    ? "border-accent bg-accent/15 font-bold text-accent"
-                    : "border-transparent font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
+                    ? "border-accent text-primary-foreground"
+                    : "border-transparent text-primary-foreground/75 hover:text-primary-foreground"
                 }`}
               >
                 {category.name || "Alle Artikel"}
@@ -1382,135 +1413,14 @@ function Shop() {
             }}
             aria-pressed={promoOnly}
             title="Alle Artikel, die in weclapp als Aktion gekennzeichnet sind."
-            className={`ml-auto flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors ${
-              promoOnly
-                ? "border-destructive bg-destructive text-destructive-foreground"
-                : "border-destructive/60 bg-destructive/10 text-destructive hover:bg-destructive/20"
+            className={`ml-auto flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-3.5 text-[15px] font-bold uppercase tracking-[0.04em] text-accent transition-colors ${
+              promoOnly ? "border-accent" : "border-transparent hover:opacity-80"
             }`}
           >
             <Percent className="size-4" />
-            Aktion
-          </button>
-
-          <button
-            onClick={() => setFavOnly((prev) => !prev)}
-            title="Hier finden Sie alle Artikel, die Sie mit dem Herz markiert haben."
-            aria-pressed={favOnly}
-            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm border px-4 py-2 text-[15px] font-semibold tracking-tight transition-colors lg:mr-[354px] ${
-              favOnly
-                ? "border-accent bg-accent text-accent-foreground"
-                : "border-accent/60 bg-accent/10 text-accent hover:bg-accent/20"
-            }`}
-          >
-            <Heart className="size-4" {...(favOnly ? { fill: "currentColor" } : {})} />
-            Favoriten
-            {favourites.size > 0 && (
-              <span className="font-mono text-[12px] opacity-80">{favourites.size}</span>
-            )}
+            Aktionen
           </button>
         </div>
-
-        {subCategories.length > 0 && (
-          <div className="border-t border-border bg-card">
-            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
-              <span className="label-mono whitespace-nowrap text-muted-foreground">
-                {search.category}
-              </span>
-              <button
-                onClick={() => {
-                  setTerm("");
-                  void navigate({
-                    search: (prev) => ({ ...prev, subcategory: "", subsubcategory: "", q: "" }),
-                  });
-                }}
-
-                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                  search.subcategory === ""
-                    ? "border-accent bg-accent/15 font-bold text-accent"
-                    : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                Alle
-              </button>
-              {subCategories.map((sub) => {
-                const active = sub.name === search.subcategory;
-                return (
-                  <button
-                    key={sub.name}
-                    onClick={() => {
-                      setTerm("");
-                      void navigate({
-                        search: (prev) => ({
-                          ...prev,
-                          subcategory: active ? "" : sub.name,
-                          subsubcategory: "",
-                          q: "",
-                        }),
-                      });
-                    }}
-
-                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                      active
-                        ? "border-accent bg-accent/15 font-bold text-accent"
-                        : "border-transparent bg-panel font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
-                    }`}
-                  >
-                    {sub.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {subSubCategories.length > 0 && (
-          <div className="border-t border-border bg-muted/40">
-            <div className="mx-auto flex max-w-[1440px] items-center gap-2 overflow-x-auto px-5 py-2">
-              <span className="label-mono whitespace-nowrap text-muted-foreground">
-                {search.subcategory}
-              </span>
-              <button
-                onClick={() => {
-                  setTerm("");
-                  void navigate({ search: (prev) => ({ ...prev, subsubcategory: "", q: "" }) });
-                }}
-                className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                  search.subsubcategory === ""
-                    ? "border-stock bg-stock/20 font-bold text-stock"
-                    : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
-                }`}
-              >
-                Alle
-              </button>
-              {subSubCategories.map((leaf) => {
-                const active = leaf.name === search.subsubcategory;
-                return (
-                  <button
-                    key={leaf.name}
-                    onClick={() => {
-                      setTerm("");
-                      void navigate({
-                        search: (prev) => ({
-                          ...prev,
-                          subsubcategory: active ? "" : leaf.name,
-                          q: "",
-                        }),
-                      });
-                    }}
-                    className={`whitespace-nowrap rounded-sm border-b-2 px-3.5 py-1.5 text-[14px] transition-colors ${
-                      active
-                        ? "border-stock bg-stock/20 font-bold text-stock"
-                        : "border-transparent bg-card font-medium text-muted-foreground hover:bg-stock/10 hover:text-stock"
-                    }`}
-                  >
-                    {leaf.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
       </nav>
 
 
