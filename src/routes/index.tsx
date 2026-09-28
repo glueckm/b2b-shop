@@ -1383,7 +1383,7 @@ function Shop() {
                 onClick={() => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({
+                    search: (prev) => ({ artikel: "",
                       ...prev,
                       category: active ? "" : category.name,
                       subcategory: "",
@@ -1408,7 +1408,7 @@ function Shop() {
               setPromoOnly((prev) => !prev);
               setTerm("");
               void navigate({
-                search: (prev) => ({
+                search: (prev) => ({ artikel: "",
                   ...prev,
                   category: "",
                   subcategory: "",
@@ -1584,7 +1584,7 @@ function Shop() {
                 onClick={() => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({
+                    search: (prev) => ({ artikel: "",
                       ...prev,
                       category: "",
                       subcategory: "",
