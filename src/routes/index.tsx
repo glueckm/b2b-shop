@@ -39,7 +39,7 @@ import { SHOP_VERSION } from "@/lib/version";
 
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
-  category: z.string().default(""),
+  category: z.string().default("Wärmebild & Nachtsicht"),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
