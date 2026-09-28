@@ -1610,179 +1610,91 @@ function Shop() {
         )}
 
         <main className="min-w-0">
-          <div>
-            <h2 id="catalog" className="text-2xl font-semibold tracking-tight">
-              {search.subcategory || search.category || "Alle Artikel"}
-            </h2>
-
-            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <form onSubmit={submitSearch} className="flex items-center gap-2">
-                <input
-                  value={term}
-                  onChange={(event) => setTerm(event.target.value)}
-                  placeholder="Artikelnummer oder Name"
-                  aria-label="Katalog durchsuchen"
-                  className="w-56 rounded-sm border border-border bg-card px-3 py-2 text-[13px] outline-none placeholder:text-muted-foreground"
-                />
-                <button
-                  type="submit"
-                  className="rounded-sm bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground"
-                >
-                  Suchen
-                </button>
-              </form>
-
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
+              <button
+                onClick={() => {
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev,
+                      category: "",
+                      subcategory: "",
+                      subsubcategory: "",
+                      q: "",
+                    }),
+                  });
+                }}
+                className="hover:text-foreground"
+              >
+                Alle Artikel
+              </button>
+              {[search.category, search.subcategory, search.subsubcategory]
+                .filter(Boolean)
+                .map((crumb) => (
+                  <span key={crumb}>› {crumb}</span>
+                ))}
+              {search.q && <span>› „{search.q}“</span>}
+              <span>
+                ·{" "}
                 {navPending ? (
-                  <>
-                    <span className="size-4 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
-                    Artikel werden geladen …
-                  </>
-                ) : (
-                  <>
-                    {num(data.total)} Treffer · {rows.length} angezeigt · Preise netto ohne USt.
-                  </>
-                )}
-              </p>
-
-              {specFacets.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowSpecFilters((v) => {
-                      if (v) setSpecFilters({});
-                      return !v;
-                    });
-                  }}
-                  aria-pressed={showSpecFilters}
-                  className={`ml-auto flex shrink-0 items-center gap-2 rounded-sm border px-3 py-1.5 text-[13px] font-semibold transition-colors ${
-                    showSpecFilters
-                      ? "border-accent bg-accent/15 text-accent"
-                      : "border-border bg-card text-muted-foreground hover:border-accent/60 hover:text-foreground"
-                  }`}
-                >
-                  <span
-                    className={`relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors ${
-                      showSpecFilters ? "bg-accent" : "bg-muted-foreground/40"
-                    }`}
-                  >
-                    <span
-                      className={`absolute size-3 rounded-full bg-background transition-all ${
-                        showSpecFilters ? "left-[14px]" : "left-[2px]"
-                      }`}
-                    />
+                  <span className="inline-flex items-center gap-2">
+                    <span className="size-3.5 animate-spin rounded-full border-2 border-accent/30 border-t-accent" />
+                    wird geladen …
                   </span>
-                  Tech. Filter
-                  {activeSpecCount > 0 && showSpecFilters && (
-                    <span className="font-mono text-[11px]">{activeSpecCount}</span>
-                  )}
-                </button>
-              )}
-            </div>
+                ) : (
+                  <>{num(data.total)} Artikel</>
+                )}
+              </span>
+            </p>
+            <p className="text-sm text-muted-foreground">Preise netto ohne USt.</p>
           </div>
 
-          <div className="relative mt-4 overflow-x-auto rounded-lg border border-border bg-card">
+          <div className="relative mt-4">
             {navPending && (
-              <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-card/70 pt-16">
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-background/60 pt-16">
                 <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
               </div>
             )}
-            <table className="w-full min-w-[900px] border-collapse text-left">
-              <thead>
-                <tr className="border-b border-border bg-muted/60">
-                  {[
-                    "Artikelnr.",
-                    "Artikel",
-                    "Netto/Einheit",
-                    "Einheit",
-                    "Mind.",
-                    "Bestand",
-                    "Menge",
-                    "",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="label-mono px-3 py-2.5 font-medium text-muted-foreground"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {articles.length === 0 && (
-                  <tr>
-                    <td colSpan={8} className="px-3 py-8 text-center text-muted-foreground">
-                      {search.q
-                        ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
-                        : "Keine Artikel für diese Auswahl."}
-                    </td>
-
-                  </tr>
-                )}
-                {rows.map((row) =>
-                  row.kind === "single" ? (
-                    renderArticleRow(row.article)
-                  ) : (
-                    <Fragment key={`g-${row.id}`}>
-                      <tr className="border-t border-border/70 bg-muted/30">
-                        <td className="px-3 py-3 align-top">
-                          <button
-                            onClick={() => toggleGroup(row.id)}
-                            className="font-mono text-[12px] text-muted-foreground hover:text-accent"
-                          >
-                            {row.sku}
-                          </button>
-                        </td>
-                        <td className="max-w-[320px] px-3 py-3 align-top">
-                          <button
-                            onClick={() => toggleGroup(row.id)}
-                            className="flex items-start gap-3 text-left"
-                          >
-                            <span className="grid size-11 shrink-0 place-items-center rounded-sm border border-border bg-panel font-mono text-[13px] text-muted-foreground">
-                              {openGroups[row.id] ? "−" : "+"}
+            {rows.length === 0 && (
+              <p className="rounded-lg border border-border bg-card px-4 py-10 text-center text-muted-foreground">
+                {search.q
+                  ? `Keine Treffer für „${search.q}“ in dieser Auswahl.`
+                  : "Keine Artikel für diese Auswahl."}
+              </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              {rows.map((row) =>
+                row.kind === "single" ? (
+                  renderArticleCard(row.article)
+                ) : (
+                  <Fragment key={`g-${row.id}`}>
+                    {renderGroupCard(row)}
+                    {openGroups[row.id] && (
+                      <div className="col-span-full rounded-lg border border-accent/40 bg-muted/40 p-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm font-semibold">
+                            {row.name}{" "}
+                            <span className="label-mono text-muted-foreground">
+                              · {row.variants.length} Varianten
                             </span>
-                            <span>
-                              <span className="block font-semibold">{row.name}</span>
-                              <span className="label-mono text-muted-foreground">
-                                {row.variants.length} Varianten
-                              </span>
-                            </span>
-                          </button>
-                        </td>
-                        <td className="px-3 py-3 align-top font-mono text-[13px] font-semibold">
-                          ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
-                        </td>
-                        <td className="px-3 py-3 align-top font-mono text-[12px] text-muted-foreground">
-                          {row.variants[0]?.unit}
-                        </td>
-                        <td className="px-3 py-3" />
-                        <td className="px-3 py-3 align-top">
-                          <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
-                            <span className="size-1.5 rounded-full bg-stock" />
-                            {row.variants.filter((v) => v.onHand > 0).length} von{" "}
-                            {row.variants.length} Varianten lagernd
-                          </span>
-                        </td>
-
-                        <td className="px-3 py-3" />
-                        <td className="px-3 py-3 align-top">
+                          </p>
                           <button
                             onClick={() => toggleGroup(row.id)}
-                            className="rounded-sm border border-border px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-accent hover:text-accent"
+                            className="text-xs font-semibold text-muted-foreground hover:text-accent"
                           >
-                            {openGroups[row.id] ? "Schließen" : "Varianten"}
+                            Schließen ×
                           </button>
-                        </td>
-                      </tr>
-                      {openGroups[row.id] &&
-                        row.variants.map((variant) => renderArticleRow(variant, true))}
-                    </Fragment>
-                  ),
-                )}
-
-              </tbody>
-            </table>
+                        </div>
+                        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                          {row.variants.map((variant) => renderArticleCard(variant))}
+                        </div>
+                      </div>
+                    )}
+                  </Fragment>
+                ),
+              )}
+            </div>
           </div>
         </main>
 
