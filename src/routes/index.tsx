@@ -898,10 +898,10 @@ function Shop() {
           <ThumbSlot onVisible={() => requestImages(article.id)}>
             <button
               onClick={openDetail}
-              className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+              className="grid h-28 w-full place-items-center overflow-hidden rounded-md bg-muted"
             >
               {thumb ? (
-                <ArticleImage src={thumb} alt={article.name} className="size-full object-contain p-3" />
+                <ArticleImage src={thumb} alt={article.name} className="max-h-24 max-w-[70%] object-contain" />
               ) : (
                 <span className="label-mono text-muted-foreground">
                   {imageLookupDone.has(article.id) ? "Kein Bild" : "Produktbild"}
@@ -1011,10 +1011,10 @@ function Shop() {
         <ThumbSlot onVisible={() => row.variants.slice(0, 3).forEach((v) => requestImages(v.id))}>
           <button
             onClick={() => toggleGroup(row.id)}
-            className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-md bg-muted"
+            className="grid h-28 w-full place-items-center overflow-hidden rounded-md bg-muted"
           >
             {thumb ? (
-              <ArticleImage src={thumb} alt={row.name} className="size-full object-contain p-3" />
+              <ArticleImage src={thumb} alt={row.name} className="max-h-24 max-w-[70%] object-contain" />
             ) : (
               <span className="label-mono text-muted-foreground">Produktbild</span>
             )}
