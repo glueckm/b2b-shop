@@ -954,8 +954,8 @@ function Shop() {
           </div>
         </div>
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-          <span className={`flex min-w-0 items-center gap-1.5 text-xs font-medium ${stockTone[state]}`}>
+        <div className="mt-auto flex flex-col gap-2 pt-4">
+          <span className={`flex min-w-0 items-center gap-1.5 text-sm font-medium ${stockTone[state]}`}>
             <span className={`size-2 shrink-0 rounded-full ${stockDot[state]}`} />
             <span className="truncate">
               {article.onHand > 0
@@ -963,7 +963,7 @@ function Shop() {
                 : "Bestellbar"}
             </span>
           </span>
-          <span className="flex shrink-0 items-center gap-1.5">
+          <span className="flex items-center justify-end gap-1.5">
             <span className="flex items-center rounded-sm border border-border">
               <button
                 onClick={() => step(article, -1)}
