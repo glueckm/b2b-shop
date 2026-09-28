@@ -2031,12 +2031,54 @@ function Shop() {
                         {detailTab === "beschreibung" && (
                           <p className="text-muted-foreground">Für diesen Artikel ist noch keine Beschreibung hinterlegt.</p>
                         )}
-                        {detailTab === "technik" &&
-                          (a.spec ? (
-                            <div className="spec-html" dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.spec) }} />
-                          ) : (
-                            <p className="text-muted-foreground">Keine technischen Daten hinterlegt.</p>
-                          ))}
+                        {detailTab === "technik" && (() => {
+                          // Einheitliche Tabelle für alle Wärmebild-/Nachtsichtgeräte; 0-Werte ausblenden.
+                          const groups: { title: string; keys: string[] }[] = [
+                            { title: "Allgemein", keys: ["devicetype", "formfactor", "display", "lrf", "cell", "battery", "storage"] },
+                            { title: "Wärmebild", keys: ["sensor", "netd", "lens", "magnification", "zoom", "detection", "framerate", "fov"] },
+                            { title: "Nachtsicht", keys: ["nv_sensor", "nv_lens", "nv_magnification", "nv_zoom", "nv_detection", "nv_framerate", "nv_fov"] },
+                          ];
+                          const shown = (v?: string) => {
+                            const t = (v ?? "").trim();
+                            return t !== "" && Number(t.replace(",", ".")) !== 0 ? t : "";
+                          };
+                          const label = (k: string) => SPEC_FIELDS.find((f) => f.key === k)?.label ?? k;
+                          const filled = groups
+                            .map((g) => ({ ...g, rows: g.keys.filter((k) => shown(a.specs?.[k])) }))
+                            .filter((g) => g.rows.length > 0);
+                          if (!a.spec && filled.length === 0)
+                            return <p className="text-muted-foreground">Keine technischen Daten hinterlegt.</p>;
+                          return (
+                            <div className="space-y-5">
+                              {a.spec && (
+                                <div className="spec-html" dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.spec) }} />
+                              )}
+                              {filled.length > 0 && (
+                                <table className="w-full border-collapse overflow-hidden rounded-sm border border-border text-[13px]">
+                                  <tbody>
+                                    {filled.map((g) => (
+                                      <Fragment key={g.title}>
+                                        <tr className="bg-muted">
+                                          <th colSpan={2} className="px-3 py-2 text-left text-[12px] font-bold uppercase tracking-[0.08em]">
+                                            {g.title}
+                                          </th>
+                                        </tr>
+                                        {g.rows.map((k) => (
+                                          <tr key={k} className="border-t border-border">
+                                            <td className="w-1/2 px-3 py-1.5 text-muted-foreground">
+                                              {label(k).replace(/^NV-|^NV /, "")}
+                                            </td>
+                                            <td className="px-3 py-1.5 font-medium">{shown(a.specs[k])}</td>
+                                          </tr>
+                                        ))}
+                                      </Fragment>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              )}
+                            </div>
+                          );
+                        })()}
                         {detailTab === "lieferumfang" &&
                           (a.scope ? (
                             <div className="spec-html" dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.scope) }} />
