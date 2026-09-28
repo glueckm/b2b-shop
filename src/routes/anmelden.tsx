@@ -37,7 +37,6 @@ function LoginPage() {
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // Zugang anfordern
-  const [signupOpen, setSignupOpen] = useState(false);
   const [signupNumber, setSignupNumber] = useState("");
   const [signupBusy, setSignupBusy] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
