@@ -690,10 +690,15 @@ function Shop() {
       if (!counts.has(name)) counts.set(name, new Set());
       counts.get(name)!.add(a.groupId || a.id);
     }
-    return [...counts.entries()]
+    const top = [...counts.entries()]
       .map(([name, set]) => ({ name, count: set.size }))
       .sort((x, y) => y.count - x.count || x.name.localeCompare(y.name))
       .slice(0, 4);
+    // Gewünschte Reihenfolge: NOCPIX immer vor PARD (Plätze tauschen).
+    const n = top.findIndex((m) => m.name === "NOCPIX");
+    const p = top.findIndex((m) => m.name === "PARD");
+    if (n > p && p >= 0) [top[n], top[p]] = [top[p]!, top[n]!];
+    return top;
   }, [articles]);
   useEffect(() => {
     setMakerFilter((prev) => {
