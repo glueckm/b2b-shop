@@ -119,7 +119,13 @@ function LoginPage() {
           to: "/",
           // Alle Parameter vollständig setzen, sonst normalisiert der Router
           // die Adresse und lädt den Katalog ein zweites Mal.
-          search: { channel: "NET1", category: "", subcategory: "", subsubcategory: "", q: "" },
+          search: {
+            channel: "NET1",
+            category: "Wärmebild & Nachtsicht",
+            subcategory: "",
+            subsubcategory: "",
+            q: "",
+          },
         });
         return;
       }
