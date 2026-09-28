@@ -1684,11 +1684,125 @@ function Shop() {
               >
                 ← Zurück zur Übersicht
               </button>
-              <p className="label-mono mt-4 text-muted-foreground">
-                {detailArticle.level1} · {detailArticle.sku}
-              </p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight">{detailArticle.name}</h1>
-              <div className="mt-4">{renderDetail(detailArticle)}</div>
+              {(() => {
+                const a = detailArticle;
+                const q = getQty(a);
+                const unit = priceForQty(a, q);
+                const state = stockState(a.onHand);
+                const fav = favourites.has(a.id);
+                const activeFrom = [...a.breaks]
+                  .filter((t) => Math.max(t.from, a.moq) <= q)
+                  .pop()?.from;
+                const chips = SPEC_FIELDS.filter((f) => a.specs[f.key]).map((f) => ({
+                  label: f.label.replace(/\s*\(.*\)/, ""),
+                  value: a.specs[f.key],
+                }));
+                return (
+                  <div className="mt-4 grid gap-8 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                    <div>
+                      {renderGallery(a)}
+                      {a.spec && (
+                        <div className="mt-6">
+                          <p className="label-mono text-muted-foreground">Technische Daten</p>
+                          <div
+                            className="spec-html mt-2 text-[13px] text-muted-foreground"
+                            dangerouslySetInnerHTML={{ __html: sanitizeSpec(a.spec) }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="label-mono text-muted-foreground">
+                        {[a.level1, a.level2].filter(Boolean).join(" · ")}
+                      </p>
+                      <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                      <p className="mt-2 font-mono text-[13px] text-muted-foreground">
+                        Art.-Nr.{" "}
+                        <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
+                        {a.groupSku && a.groupSku !== a.sku && <> · Variante von {a.groupSku}</>}
+                      </p>
+                      {chips.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {chips.map((c) => (
+                            <span key={c.label} className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px]">
+                              {c.label} <b>{c.value}</b>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-5 rounded-lg border border-border bg-background p-5">
+                        <p className="text-[13px] text-muted-foreground">Ihr Einkaufspreis netto</p>
+                        <p className="mt-1">
+                          <span className="font-mono text-4xl font-bold tracking-tight">{eur(unit)}</span>{" "}
+                          <span className="text-sm text-muted-foreground">zzgl. USt. / {a.unit}</span>
+                        </p>
+                        {a.rebatePct > 0 && (
+                          <p className="mt-2 text-[12px] text-stock">
+                            inkl. {a.rebatePct} % Konditionsrabatt Ihrer Preisgruppe
+                          </p>
+                        )}
+                        {a.breaks.length > 1 && (
+                          <div className="mt-4 overflow-hidden rounded-md border border-border">
+                            {a.breaks.map((t) => {
+                              const from = Math.max(t.from, a.moq);
+                              const active = t.from === activeFrom;
+                              return (
+                                <button
+                                  key={t.from}
+                                  onClick={() => setQty((prev) => ({ ...prev, [a.sku]: from }))}
+                                  className={`flex w-full justify-between border-b border-border px-3 py-2 text-sm last:border-0 ${
+                                    active ? "bg-accent/15 font-semibold" : "hover:bg-muted"
+                                  }`}
+                                >
+                                  <span>ab {from} {a.unit}</span>
+                                  <span className="font-mono">{eur(t.price)}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <p className={`mt-4 flex items-center gap-2 text-sm font-medium ${stockTone[state]}`}>
+                          <span className={`size-2.5 rounded-full ${stockDot[state]}`} />
+                          {a.onHand > 0
+                            ? `${stockLabel[state]} · ${stockDisplay(a.onHand)}`
+                            : "Derzeit nicht lagernd – bestellbar"}
+                        </p>
+                        {a.moq > 1 && (
+                          <p className="mt-1 text-[12px] text-muted-foreground">
+                            Mindestmenge {a.moq} {a.unit}
+                          </p>
+                        )}
+                        <div className="mt-4 flex gap-3">
+                          <span className="flex items-center rounded-md border border-border">
+                            <button onClick={() => step(a, -1)} aria-label="Menge verringern" className="grid size-11 place-items-center text-lg">−</button>
+                            <span className="w-10 text-center font-mono">{q}</span>
+                            <button onClick={() => step(a, 1)} aria-label="Menge erhöhen" className="grid size-11 place-items-center text-lg">+</button>
+                          </span>
+                          <button
+                            onClick={() => addLine(a.sku, q)}
+                            className="flex-1 rounded-md bg-accent px-4 text-base font-bold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                          >
+                            {a.onHand > 0 ? "In den Warenkorb" : "Vormerken"}
+                          </button>
+                        </div>
+                        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-accent">
+                          <button onClick={() => toggleFavourite(a)} className="flex items-center gap-1 hover:underline">
+                            <Heart className="size-4" {...(fav ? { fill: "currentColor" } : {})} />
+                            {fav ? "Von der Merkliste entfernen" : "Auf die Merkliste"}
+                          </button>
+                          <button onClick={() => setScopeArticle(a)} disabled={!a.scope} className="hover:underline disabled:opacity-40">
+                            Lieferumfang
+                          </button>
+                          <button onClick={() => void downloadPhotos(a)} disabled={imagesOf(a).length === 0} className="hover:underline disabled:opacity-40">
+                            Foto-Download
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           ) : (
           <div className="relative mt-4">
