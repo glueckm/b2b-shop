@@ -1,3 +1,4 @@
+import { BrandMarquee } from "@/components/BrandMarquee";
 import {
   createFileRoute,
   Link,
