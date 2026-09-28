@@ -43,6 +43,9 @@ function LoginPage() {
   const [signupError, setSignupError] = useState<string | null>(null);
   const [signupInfo, setSignupInfo] = useState<string | null>(null);
 
+  const [tab, setTab] = useState<"login" | "signup">("login");
+  const [showPassword, setShowPassword] = useState(false);
+
   // Passwort vergessen
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -129,98 +132,205 @@ function LoginPage() {
     setBusy(false);
   }
 
+  const inputClass =
+    "mt-2 w-full rounded-sm border border-border bg-panel px-3 py-2.5 text-sm outline-none focus:border-accent";
+
+  const features = [
+    { icon: "€", title: "Ihre Konditionen", text: "Händlerpreise und Staffeln direkt aus Ihrem Kundenkonto." },
+    { icon: "●", title: "Live-Verfügbarkeit", text: "Lagerstand und Liefertermine vor der Bestellung sehen." },
+    { icon: "↻", title: "Aufträge & Rechnungen", text: "Status, Lieferscheine und Rechnungen an einem Ort." },
+  ];
+
   return (
-    <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-16">
+    <main className="grid min-h-screen lg:grid-cols-2">
       {loadingCatalog && (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background/85 backdrop-blur-sm">
           <span className="size-10 animate-spin rounded-full border-4 border-accent/30 border-t-accent" />
           <p className="text-sm text-muted-foreground">Katalog wird geladen …</p>
         </div>
       )}
-      <div className="rounded-lg bg-primary px-5 py-6 text-primary-foreground">
-        <img
-          src={mawaLogo}
-          alt="MAWA Trading"
-          width={369}
-          height={77}
-          className="h-9 w-auto"
+
+      {/* Linke Seite: Marke */}
+      <section className="relative flex flex-col justify-between overflow-hidden bg-primary px-8 py-10 text-primary-foreground sm:px-12 lg:px-14 lg:py-12">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-40 -right-40 size-[34rem] rounded-full border-[3.5rem] border-accent/10"
         />
-        <p className="label-mono mt-3 text-primary-foreground/55">Distribution B2B</p>
-        <h1 className="mt-4 text-2xl font-semibold tracking-tight">B2B Shop</h1>
-        <p className="mt-1 text-sm text-primary-foreground/70">
-          Der Partner-Shop für Fachhändler und Distributoren.
+        <div className="relative">
+          <img src={mawaLogo} alt="MAWA Trading" width={369} height={77} className="h-10 w-auto" />
+          <p className="label-mono mt-2 text-primary-foreground/55">Distribution B2B</p>
+
+          <h1 className="mt-10 text-4xl font-bold leading-tight tracking-tight lg:text-5xl">
+            Der Partner-Shop für den <span className="text-accent">Jagd- und Outdoor-Fachhandel.</span>
+          </h1>
+
+          <ul className="mt-12 space-y-6">
+            {features.map((f) => (
+              <li key={f.title} className="flex gap-4">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-sm bg-accent/15 text-sm text-accent">
+                  {f.icon}
+                </span>
+                <div>
+                  <p className="font-semibold">{f.title}</p>
+                  <p className="mt-0.5 text-sm text-primary-foreground/75">{f.text}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <p className="label-mono relative mt-12 flex flex-wrap gap-x-5 gap-y-2 text-primary-foreground/45">
+          {["NOCPIX", "PARD", "INFIRAY", "RECKNAGEL", "ERA", "NITECORE"].map((b) => (
+            <span key={b}>{b}</span>
+          ))}
         </p>
-      </div>
+      </section>
 
-      <h2 className="mt-8 text-xl font-semibold tracking-tight">Kundenanmeldung</h2>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Mit Ihrer Kundennummer und Ihrem Passwort anmelden. Nach der Anmeldung erkennen wir Ihre
-        Kundendaten und Konditionen.
-      </p>
+      {/* Rechte Seite: Formular */}
+      <section className="flex items-center justify-center bg-muted/40 px-6 py-12">
+        <div className="w-full max-w-md">
+          <h2 className="text-3xl font-bold tracking-tight">Anmelden</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Mit Kundennummer und Passwort. Danach sehen Sie Ihre Preise und Konditionen.
+          </p>
 
-      <form onSubmit={submit} className="mt-8 space-y-4">
-        <div>
-          <label className="label-mono text-muted-foreground" htmlFor="customerNumber">
-            Kundennummer
-          </label>
-          <input
-            id="customerNumber"
-            type="text"
-            inputMode="numeric"
-            autoComplete="username"
-            required
-            value={customerNumber}
-            onChange={(event) => setCustomerNumber(event.target.value)}
-            className="mt-1 w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
+          <div className="mt-8 grid grid-cols-2 border-b border-border text-sm font-semibold">
+            {(["login", "signup"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`-mb-px border-b-2 py-3 ${
+                  tab === t
+                    ? "border-accent text-foreground"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t === "login" ? "Anmelden" : "Zugang anfordern"}
+              </button>
+            ))}
+          </div>
 
-        <div>
-          <label className="label-mono text-muted-foreground" htmlFor="password">
-            Passwort
-          </label>
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            className="mt-1 w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
-          />
-        </div>
+          {tab === "login" ? (
+            <form onSubmit={submit} className="mt-6 space-y-5">
+              <div>
+                <label className="text-sm font-semibold" htmlFor="customerNumber">
+                  Kundennummer
+                </label>
+                <input
+                  id="customerNumber"
+                  type="text"
+                  autoComplete="username"
+                  required
+                  placeholder="z. B. 10482"
+                  value={customerNumber}
+                  onChange={(event) => setCustomerNumber(event.target.value)}
+                  className={inputClass}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold" htmlFor="password">
+                  Passwort
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className={`${inputClass} pr-24`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                  >
+                    {showPassword ? "Verbergen" : "Anzeigen"}
+                  </button>
+                </div>
+              </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetOpen(true);
+                    setResetError(null);
+                    setResetInfo(null);
+                  }}
+                  className="text-sm font-semibold text-accent hover:underline"
+                >
+                  Passwort vergessen?
+                </button>
+              </div>
 
-        <button
-          type="submit"
-          disabled={busy}
-          className="flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
-        >
-          {busy && (
-            <span className="size-4 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="flex w-full items-center justify-center gap-2 rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-60"
+              >
+                {busy && (
+                  <span className="size-4 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
+                )}
+                {loadingCatalog ? "Katalog wird geladen …" : busy ? "Anmelden …" : "Anmelden"}
+              </button>
+            </form>
+          ) : (
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground">
+                Bereits Kunde, aber noch keinen B2B Shop Zugang? Geben Sie Ihre Kundennummer ein –
+                wir prüfen Ihr Kundenkonto und senden Ihnen einen Link zum Setzen Ihres Passworts.
+              </p>
+              <form onSubmit={requestAccess} className="mt-5 space-y-5">
+                <div>
+                  <label className="text-sm font-semibold" htmlFor="signupNumber">
+                    Kundennummer
+                  </label>
+                  <input
+                    id="signupNumber"
+                    type="text"
+                    required
+                    placeholder="z. B. 10482"
+                    value={signupNumber}
+                    onChange={(event) => setSignupNumber(event.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                {signupError && <p className="text-sm text-destructive">{signupError}</p>}
+                {signupInfo && <p className="text-sm text-stock">{signupInfo}</p>}
+                <button
+                  type="submit"
+                  disabled={signupBusy}
+                  className="w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-60"
+                >
+                  {signupBusy ? "Wird geprüft …" : "Zugang anfordern"}
+                </button>
+              </form>
+              <div className="mt-8 border-t border-border pt-5 text-sm">
+                <p className="font-semibold">Noch kein Kunde?</p>
+                <p className="mt-1 text-muted-foreground">
+                  Fordern Sie ein Händlerkonto samt Shop-Zugang an.
+                </p>
+                <Link
+                  to="/kundenanfrage"
+                  className="mt-3 inline-block font-semibold text-accent hover:underline"
+                >
+                  Händlerkonto anfordern →
+                </Link>
+              </div>
+            </div>
           )}
-          {loadingCatalog ? "Katalog wird geladen …" : busy ? "Anmelden …" : "Anmelden"}
-        </button>
-      </form>
 
-      <div className="mt-4 text-center">
-        <button
-          type="button"
-          onClick={() => {
-            setResetOpen(true);
-            setResetError(null);
-            setResetInfo(null);
-          }}
-          className="text-sm font-semibold text-accent hover:underline"
-        >
-          Passwort vergessen?
-        </button>
-      </div>
+          <p className="label-mono mt-8 text-right text-muted-foreground">Version {SHOP_VERSION}</p>
+        </div>
+      </section>
 
       {resetOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/60 p-4"
           onClick={() => setResetOpen(false)}
         >
           <div
@@ -264,71 +374,6 @@ function LoginPage() {
           </div>
         </div>
       )}
-
-
-      <section className="mt-10 border-t border-border pt-6">
-        <h2 className="text-base font-semibold tracking-tight">
-          Bereits Kunde, aber noch keinen B2B Shop Zugang?
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Fordern Sie Ihren Shop-Zugang mit Ihrer Kundennummer an. Wir prüfen Ihr Kundenkonto und
-          senden Ihnen einen Link zum Setzen Ihres Passworts.
-        </p>
-
-        {!signupOpen ? (
-          <button
-            type="button"
-            onClick={() => setSignupOpen(true)}
-            className="mt-4 w-full rounded-sm border border-accent px-4 py-2.5 text-sm font-semibold text-accent hover:bg-accent/10"
-          >
-            Zugang anfordern
-          </button>
-        ) : (
-          <form onSubmit={requestAccess} className="mt-4 space-y-4">
-            <div>
-              <label className="label-mono text-muted-foreground" htmlFor="signupNumber">
-                Kundennummer
-              </label>
-              <input
-                id="signupNumber"
-                type="text"
-                inputMode="numeric"
-                required
-                value={signupNumber}
-                onChange={(event) => setSignupNumber(event.target.value)}
-                className="mt-1 w-full rounded-sm border border-border bg-panel px-3 py-2 text-sm outline-none focus:border-accent"
-              />
-            </div>
-
-            {signupError && <p className="text-sm text-destructive">{signupError}</p>}
-            {signupInfo && <p className="text-sm text-stock">{signupInfo}</p>}
-
-            <button
-              type="submit"
-              disabled={signupBusy}
-              className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
-            >
-              {signupBusy ? "Wird geprüft …" : "Zugang anfordern"}
-            </button>
-          </form>
-        )}
-      </section>
-
-      <section className="mt-10 border-t border-border pt-6">
-        <h2 className="text-base font-semibold tracking-tight">Noch kein Kunde?</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Sie haben noch keine Kundennummer bei MAWA? Fordern Sie ein Händlerkonto samt Shop-Zugang
-          an – wir melden uns mit den nächsten Schritten.
-        </p>
-        <Link
-          to="/kundenanfrage"
-          className="mt-4 block w-full rounded-sm border border-accent px-4 py-2.5 text-center text-sm font-semibold text-accent hover:bg-accent/10"
-        >
-          Kundenlogin anfordern
-        </Link>
-      </section>
-
-      <p className="mt-10 text-center text-xs text-muted-foreground">Version {SHOP_VERSION}</p>
     </main>
   );
 }
