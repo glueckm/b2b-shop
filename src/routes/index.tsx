@@ -1059,43 +1059,19 @@ function Shop() {
     );
   };
 
-  /** Detailinhalt (Bilder, Beschreibung, Staffeln) für das Artikel-Pop-up. */
-  const renderDetail = (article: CatalogArticle) => (
-    <div>
-              <div className="float-right ml-4 w-[190px]">
-                <button
-                  onClick={() => setScopeArticle(article)}
-                  disabled={!article.scope}
-                  className="w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Lieferumfang anzeigen
-                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
-                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
-                  </span>
-                </button>
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    void downloadPhotos(article);
-                  }}
-                  disabled={imagesOf(article).length === 0}
-                  className="mt-2 w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Foto Download
-                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
-                    {imagesOf(article).length > 0
-                      ? `${imagesOf(article).length} Bild(er) speichern`
-                      : "Keine Bilder vorhanden"}
-                  </span>
-                </button>
-              </div>
-              {imagesOf(article).length > 0 && (() => {
+  /** Bildergalerie der Detailseite: großes Bild, Pfeile, Vorschaubilder. */
+  const renderGallery = (article: CatalogArticle) =>
+    imagesOf(article).length === 0 ? (
+      <div className="grid h-[420px] place-items-center rounded-md border border-border bg-muted label-mono text-muted-foreground">Kein Bild</div>
+    ) : (
+      <>
+              {(() => {
                 const imgs = imagesOf(article);
                 const current = Math.min(detailImage, imgs.length - 1);
                 const go = (delta: number) =>
                   setDetailImage((current + delta + imgs.length) % imgs.length);
                 return (
-                  <div className="mr-[206px]">
+                  <div className="">
                     <div className="relative grid h-[420px] place-items-center rounded-md border border-border bg-muted">
                       <ArticleImage
                         src={imgs[current] ?? ""}
@@ -1147,6 +1123,39 @@ function Shop() {
                   </div>
                 );
               })()}
+      </>
+    );
+
+  /** Detailinhalt (Bilder, Beschreibung, Staffeln) für das Artikel-Pop-up. */
+  const renderDetail = (article: CatalogArticle) => (
+    <div>
+              <div className="float-right ml-4 w-[190px]">
+                <button
+                  onClick={() => setScopeArticle(article)}
+                  disabled={!article.scope}
+                  className="w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Lieferumfang anzeigen
+                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
+                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                  </span>
+                </button>
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void downloadPhotos(article);
+                  }}
+                  disabled={imagesOf(article).length === 0}
+                  className="mt-2 w-full rounded-sm border border-accent bg-accent px-3 py-2 text-left text-xs font-semibold text-accent-foreground shadow-sm transition-colors hover:bg-accent/85 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Foto Download
+                  <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
+                    {imagesOf(article).length > 0
+                      ? `${imagesOf(article).length} Bild(er) speichern`
+                      : "Keine Bilder vorhanden"}
+                  </span>
+                </button>
+              </div>
 
               {article.spec && (
                 <div
