@@ -705,7 +705,8 @@ function Shop() {
   /** Nur Felder anzeigen, die in der aktuellen Auswahl auch gepflegt sind. */
   const specFacets = useMemo(() => {
     const numeric = (value: string) => Number(value.replace(",", "."));
-    return SPEC_FIELDS.map((field) => {
+    // Gerätetyp und Bauform nicht als Tech. Filter anbieten.
+    return SPEC_FIELDS.filter((field) => field.key !== "devicetype" && field.key !== "formfactor").map((field) => {
       const counts = new Map<string, number>();
       for (const article of articles) {
         const value = article.specs?.[field.key];
