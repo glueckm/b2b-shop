@@ -150,7 +150,7 @@
   to { transform: translateX(-50%); }
 }
 @utility animate-brand-marquee {
-  animation: brand-marquee 40s linear infinite;
+  animation: brand-marquee 80s linear infinite;
 }
 
 @utility label-mono {
