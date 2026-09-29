@@ -1164,6 +1164,11 @@ function Shop() {
           <p className="font-mono text-xl font-bold tracking-tight">
             ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
           </p>
+          {row.variants.some((v) => v.uvp != null) && (
+            <p className="text-[11px] text-muted-foreground">
+              UVP ab {eur(Math.min(...row.variants.filter((v) => v.uvp != null).map((v) => v.uvp as number)))}
+            </p>
+          )}
         </div>
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
           <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
