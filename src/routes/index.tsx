@@ -2299,7 +2299,85 @@ function Shop() {
                   : "Keine Artikel für diese Auswahl."}
               </p>
             )}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {highlightView && hlItems.length > 0 && (() => {
+              const a = hlItems[Math.min(hlIndex, hlItems.length - 1)]!;
+              const big = imagesOf(a)[0] ?? thumbMap[a.id];
+              const text = a.spec.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+              return (
+                <div onMouseEnter={() => setHlPaused(true)} onMouseLeave={() => setHlPaused(false)}>
+                  <div key={a.sku} className="grid animate-fade-in gap-8 rounded-lg border border-border bg-card p-6 shadow-sm md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+                    <button
+                      onClick={() => setDetailSku(a.sku)}
+                      className="grid h-80 place-items-center overflow-hidden rounded-md bg-muted md:h-[26rem]"
+                    >
+                      {big ? (
+                        <ArticleImage src={big} alt={a.name} className="max-h-full max-w-[85%] object-contain" />
+                      ) : (
+                        <span className="label-mono text-muted-foreground">Produktbild</span>
+                      )}
+                    </button>
+                    <div className="flex flex-col">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {a.promo && <span className="inline-flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground"><Percent className="size-3" /> Aktion</span>}
+                        {a.highlight && <span className="rounded bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">Highlight</span>}
+                        <span className="label-mono text-muted-foreground">{a.level1}</span>
+                      </div>
+                      <button onClick={() => setDetailSku(a.sku)} className="mt-2 text-left text-3xl font-bold tracking-tight hover:text-accent">
+                        {a.groupName || a.name}
+                      </button>
+                      <p className="label-mono mt-1 text-muted-foreground">Art.-Nr. {a.sku}</p>
+                      {text && <p className="mt-4 line-clamp-5 text-sm leading-relaxed text-muted-foreground">{text}</p>}
+                      <div className="mt-auto pt-6">
+                        <p className="font-mono text-3xl font-bold">{eur(priceForQty(a, a.moq))}</p>
+                        {a.uvp != null && <p className="text-xs text-muted-foreground">UVP {eur(a.uvp)} inkl. USt.</p>}
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <button onClick={() => setDetailSku(a.sku)} className="rounded-md bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
+                            Zum Produkt
+                          </button>
+                          <button onClick={() => addLine(a.sku, a.moq)} className="rounded-md border border-border px-5 py-2.5 text-sm font-bold hover:border-accent hover:text-accent">
+                            + In den Korb
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {hlItems.length > 1 && (
+                    <div className="mt-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="label-mono text-muted-foreground">{hlIndex + 1} / {hlItems.length}</span>
+                        <div className="flex gap-2">
+                          <button aria-label="Vorheriges Gerät" onClick={() => setHlIndex((i) => (i - 1 + hlItems.length) % hlItems.length)} className="rounded-md border border-border px-3 py-1 text-sm hover:border-accent">‹</button>
+                          <button aria-label="Nächstes Gerät" onClick={() => setHlIndex((i) => (i + 1) % hlItems.length)} className="rounded-md border border-border px-3 py-1 text-sm hover:border-accent">›</button>
+                        </div>
+                      </div>
+                      <div className="h-1 overflow-hidden rounded bg-muted">
+                        <div key={`${hlIndex}-${hlPaused}`} className="h-full bg-accent" style={{ width: hlPaused ? "0%" : "100%", transition: hlPaused ? "none" : "width 6s linear" , transform: "scaleX(1)" }} />
+                      </div>
+                      <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
+                        {hlItems.map((item, i) => {
+                          const t = thumbMap[item.id] ?? imagesOf(item)[0];
+                          return (
+                            <ThumbSlot key={item.sku} onVisible={() => requestImages(item.id)}>
+                              <button
+                                ref={(el) => { if (el && i === hlIndex) el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); }}
+                                onClick={() => setHlIndex(i)}
+                                className={`flex w-36 shrink-0 flex-col rounded-md border bg-card p-2 text-left ${i === hlIndex ? "border-accent ring-2 ring-accent/40" : "border-border opacity-70 hover:opacity-100"}`}
+                              >
+                                <span className="grid h-20 place-items-center overflow-hidden rounded bg-muted">
+                                  {t ? <ArticleImage src={t} alt={item.name} className="max-h-16 max-w-[80%] object-contain" /> : <span className="label-mono text-muted-foreground">Bild</span>}
+                                </span>
+                                <span className="mt-2 line-clamp-2 text-xs font-semibold">{item.groupName || item.name}</span>
+                              </button>
+                            </ThumbSlot>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+            <div hidden={highlightView} className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {rows.map((row) =>
                 row.kind === "single" ? (
                   renderArticleCard(row.article)
