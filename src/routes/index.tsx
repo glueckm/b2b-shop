@@ -1,4 +1,4 @@
-import { BrandMarquee } from "@/components/BrandMarquee";
+import { BrandMarquee, brandLogo } from "@/components/BrandMarquee";
 import {
   createFileRoute,
   Link,
@@ -1065,8 +1065,16 @@ function Shop() {
             className="grid animate-in slide-in-from-right-24 fade-in duration-700 ease-out gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
           >
             <div className="flex flex-col justify-center">
-              <span className="label-mono text-primary-foreground/50">
-                {a.manufacturer || a.category}
+              <span className="label-mono flex items-center text-primary-foreground/50">
+                {brandLogo(a.manufacturer) ? (
+                  <img
+                    src={brandLogo(a.manufacturer)}
+                    alt={a.manufacturer}
+                    className="h-6 w-auto max-w-[160px] object-contain brightness-0 invert"
+                  />
+                ) : (
+                  a.manufacturer || a.category
+                )}
                 {a.promo && <span className="ml-2 text-accent">% Aktion</span>}
               </span>
               <button onClick={open} className="mt-2 text-left text-4xl font-bold tracking-tight hover:text-accent">
