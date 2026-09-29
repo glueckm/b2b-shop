@@ -1490,7 +1490,24 @@ function Shop() {
               </Link>
             )}
             <button
-              onClick={() => setFavOnly((prev) => !prev)}
+              onClick={() => {
+                const next = !favOnly;
+                setFavOnly(next);
+                if (next) {
+                  setBrandPick(null);
+                  setPromoOnly(false);
+                  setTerm("");
+                  void navigate({
+                    search: (prev) => ({
+                      ...prev, artikel: "",
+                      category: "",
+                      subcategory: "",
+                      subsubcategory: "",
+                      q: "",
+                    }),
+                  });
+                }
+              }}
               aria-pressed={favOnly}
               title="Alle Artikel, die Sie mit dem Herz markiert haben."
               className={`flex items-center gap-1.5 font-medium hover:text-accent ${favOnly ? "text-accent" : ""}`}
