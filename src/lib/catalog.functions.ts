@@ -264,7 +264,12 @@ select a.id as id,
        coalesce(a.ca_aktion, false) as promo,
        coalesce(vr.is_primary, false) as is_primary,
        coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer,
-       coalesce(so.qty, 0)::float8 as sold
+       coalesce(so.qty, 0)::float8 as sold,
+       (select cp.price::float8 from weclapp.article_calculation_price cp
+         where cp._parent_rid = a._rid and cp.article_calculation_price_type = 'RECOMMENDED_RETAIL_PRICE'
+           and cp.price > 0 and (cp.start_date is null or cp.start_date <= now())
+           and (cp.end_date is null or cp.end_date > now())
+         order by cp.start_date desc nulls last limit 1) as uvp
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
