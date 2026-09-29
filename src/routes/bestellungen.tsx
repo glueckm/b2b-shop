@@ -99,10 +99,11 @@ function OrderCard({ order }: { order: CustomerOrder }) {
                 <ul className="space-y-0.5">
                   {order.invoices.map((inv) => (
                     <li key={inv.id} className="flex items-center justify-end gap-2">
-                      <span className="text-muted-foreground">
-                        {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}Transportreferenz:
+                      <span>
+                        {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}
+                        <strong className="font-semibold">Transportreferenz:</strong>
                       </span>
-                      <span className="font-mono">{inv.transportRef ?? "–"}</span>
+                      <span>{inv.transportRef ?? "–"}</span>
                       {inv.transportRef && (
                         <button
                           type="button"
