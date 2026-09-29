@@ -7,7 +7,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
-import { ChevronDown, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
@@ -105,7 +105,7 @@ export const Route = createFileRoute("/")({
 
 type Line = { sku: string; qty: number };
 
-const eur = (value: number) =>
+const formatEur = (value: number) =>
   new Intl.NumberFormat("de-DE", { style: "currency", currency: "EUR" }).format(value);
 
 const num = (value: number) => value.toLocaleString("de-DE");
@@ -1071,7 +1071,7 @@ function Shop() {
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
             <p className="text-[12px] text-muted-foreground">Ihr EK netto / {article.unit}</p>
-            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>{article.uvp != null && <p className="text-[11px] text-muted-foreground">UVP {eur(article.uvp)}</p>}
+            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>{article.uvp != null && <p className="text-[11px] text-muted-foreground">UVP {formatEur(article.uvp)}</p>}
           </div>
           <div className="text-right text-[12px]">
             {listPrice > unit && (
@@ -1171,7 +1171,7 @@ function Shop() {
           </p>
           {row.variants.some((v) => v.uvp != null) && (
             <p className="text-[11px] text-muted-foreground">
-              UVP ab {eur(Math.min(...row.variants.filter((v) => v.uvp != null).map((v) => v.uvp as number)))}
+              UVP ab {formatEur(Math.min(...row.variants.filter((v) => v.uvp != null).map((v) => v.uvp as number)))}
             </p>
           )}
         </div>
@@ -2081,7 +2081,7 @@ function Shop() {
                                         </span>
                                       </span>
                                     </span>
-                                    <span className="shrink-0 text-right"><span className="block font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>{v.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {eur(v.uvp)}</span>}</span>
+                                    <span className="shrink-0 text-right"><span className="block font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>{v.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(v.uvp)}</span>}</span>
                                   </button>
                                 );
                               })}
@@ -2098,7 +2098,7 @@ function Shop() {
                         {a.uvp != null && (
                           <p className="text-right">
                             <span className="label-mono text-muted-foreground">UVP </span>
-                            <span className="text-xl font-semibold">{eur(a.uvp)}</span>
+                            <span className="text-xl font-semibold">{formatEur(a.uvp)}</span>
                             <span className="ml-1 text-xs text-muted-foreground">inkl. USt.</span>
                           </p>
                         )}
@@ -2310,7 +2310,7 @@ function Shop() {
                                   <span className="line-clamp-2">{acc.name}</span>
                                 </button>
                                 <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                                  <span><span className="block font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>{acc.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {eur(acc.uvp)}</span>}</span>
+                                  <span><span className="block font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>{acc.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(acc.uvp)}</span>}</span>
                                   <button
                                     onClick={() => addLine(acc.sku, acc.moq)}
                                     className="rounded-md border border-border px-2.5 py-1 text-[13px] font-bold hover:border-accent hover:text-accent"
