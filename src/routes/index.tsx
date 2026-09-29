@@ -576,6 +576,7 @@ function Shop() {
   }, [data.user?.id]);
   const [term, setTerm] = useState(search.q);
   const detailSku = search.artikel || null;
+  const highlightView = search.category === HIGHLIGHTS && !detailSku && !search.q.trim();
   const [detailImage, setDetailImage] = useState(0);
   const [detailTab, setDetailTab] = useState("beschreibung");
   const [accessories, setAccessories] = useState<Record<string, CatalogArticle[]>>({});
@@ -1671,8 +1672,12 @@ function Shop() {
       })()}
 
 
-      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
-        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+      <div
+        className={`mx-auto grid max-w-[1600px] gap-6 px-5 py-7 ${
+          highlightView ? "" : "lg:grid-cols-[220px_minmax(0,1fr)_330px]"
+        }`}
+      >
+        <aside hidden={highlightView} className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
           {(() => {
             const block = (
               title: string,
@@ -1861,6 +1866,15 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
+          {highlightView && (
+            <div className="mb-6 border-b border-border pb-4">
+              <span className="label-mono text-accent">Willkommen</span>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Unsere ausgewählten Produkte und aktuellen Aktionen – ein Klick öffnet die Detailseite.
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
@@ -2295,7 +2309,7 @@ function Shop() {
           )}
         </main>
 
-        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
+        <aside id="order" hidden={highlightView} className="lg:sticky lg:top-36 lg:self-start">
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
