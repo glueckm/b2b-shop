@@ -1066,7 +1066,7 @@ function Shop() {
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
             <p className="text-[12px] text-muted-foreground">Ihr EK netto / {article.unit}</p>
-            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>
+            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>{article.uvp != null && <p className="text-[11px] text-muted-foreground">UVP {eur(article.uvp)}</p>}
           </div>
           <div className="text-right text-[12px]">
             {listPrice > unit && (
@@ -1164,6 +1164,11 @@ function Shop() {
           <p className="font-mono text-xl font-bold tracking-tight">
             ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
           </p>
+          {row.variants.some((v) => v.uvp != null) && (
+            <p className="text-[11px] text-muted-foreground">
+              UVP ab {eur(Math.min(...row.variants.filter((v) => v.uvp != null).map((v) => v.uvp as number)))}
+            </p>
+          )}
         </div>
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
           <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
@@ -1956,7 +1961,7 @@ function Shop() {
                                         </span>
                                       </span>
                                     </span>
-                                    <span className="shrink-0 font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>
+                                    <span className="shrink-0 text-right"><span className="block font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>{v.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {eur(v.uvp)}</span>}</span>
                                   </button>
                                 );
                               })}
@@ -2185,7 +2190,7 @@ function Shop() {
                                   <span className="line-clamp-2">{acc.name}</span>
                                 </button>
                                 <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                                  <span className="font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>
+                                  <span><span className="block font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>{acc.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {eur(acc.uvp)}</span>}</span>
                                   <button
                                     onClick={() => addLine(acc.sku, acc.moq)}
                                     className="rounded-md border border-border px-2.5 py-1 text-[13px] font-bold hover:border-accent hover:text-accent"
