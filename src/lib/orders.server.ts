@@ -21,6 +21,7 @@ export type OrderInvoice = {
   dueDate: string | null;
   gross: number;
   paid: boolean;
+  transportRef: string | null;
 };
 
 export type CustomerOrder = {
@@ -64,7 +65,7 @@ select o.id, o.order_number, nullif(o.order_number_at_customer, '') as customer_
          from weclapp.sales_order_item i where i._parent_rid = o._rid), '[]'::jsonb) as items,
        coalesce((select jsonb_agg(jsonb_build_object(
            'id', s.id, 'number', s.invoice_number, 'date', s.invoice_date, 'dueDate', s.due_date,
-           'gross', coalesce(s.gross_amount, 0), 'paid', coalesce(s.paid, false)) order by s.invoice_date)
+           'gross', coalesce(s.gross_amount, 0), 'paid', coalesce(s.paid, false), 'transportRef', nullif(trim(s.ca_transportreferenz::text), '')) order by s.invoice_date)
          from weclapp.sales_invoice s
         where s.customer_id = o.customer_id and coalesce(s.status, '') <> 'CANCELLED'
           and (s.sales_order_id = o.id or exists (
@@ -135,6 +136,7 @@ export async function customerOrders(customerNumber: string, query: DbQuery): Pr
       dueDate: iso(s["dueDate"]),
       gross: Number(s["gross"] ?? 0),
       paid: Boolean(s["paid"]),
+      transportRef: s["transportRef"] ? String(s["transportRef"]) : null,
     })),
   }));
 }
