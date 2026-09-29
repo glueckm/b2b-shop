@@ -51,6 +51,8 @@ export type CatalogArticle = {
   sold: number;
   /** Unverbindliche Preisempfehlung (brutto) aus weclapp, null wenn nicht gepflegt. */
   uvp: number | null;
+  /** weclapp-Feld „Highlight Produkt": wird oben im Shop groß präsentiert. */
+  highlight: boolean;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -109,6 +111,8 @@ export type CatalogPayload = {
   /** Kleines Vorschaubild je Artikel-ID für die Listenansicht. */
   thumbs: Record<string, string>;
   articles: CatalogArticle[];
+  /** Highlight-Artikel (weclapp „Highlight Produkt") aus allen Bereichen. */
+  highlights: CatalogArticle[];
   total: number;
   categories: { name: string; count: number }[];
   /** Zweistufige Menüführung: Ebene 1 mit ihren Ebene-2-Kategorien. */
@@ -290,6 +294,7 @@ where a.active and a.available_in_sale
   and ($2 = '' or ${EFF_L1} = $2)
   and ($4 = '' or ${EFF_L2} = $4)
   and ($6 = '' or ${EFF_L3} = $6)
+  and ($7::boolean = false or coalesce(a.ca_highlight_produkt, false))
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
@@ -376,7 +381,7 @@ function similarity(a: string, b: string): number {
 
 const SIMILARITY_THRESHOLD = 0.3;
 
-type CatalogFilter = { category: string; subcategory: string; subsubcategory: string };
+type CatalogFilter = { category: string; subcategory: string; subsubcategory: string; highlight?: boolean };
 
 type CatalogSnapshot = {
   articles: CatalogArticle[];
@@ -487,6 +492,7 @@ async function buildArticles(
     filter.subcategory,
     priceChannel,
     filter.subsubcategory,
+    filter.highlight ?? false,
   ];
 
   const articles = await query<{
@@ -534,6 +540,7 @@ async function buildArticles(
       manufacturer: string;
       sold: number;
       uvp: number | null;
+      highlight: boolean;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -597,6 +604,7 @@ async function buildArticles(
       isPrimary: Boolean(row.is_primary),
       manufacturer: (row.manufacturer ?? "").trim(),
       sold: Number(row.sold ?? 0),
+      highlight: Boolean(row.highlight),
     };
   });
 
@@ -626,7 +634,7 @@ export async function catalogSnapshot(
 ): Promise<CatalogSnapshot> {
   const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
-  const key = [priceChannel, filter.category, filter.subcategory, filter.subsubcategory].join("|");
+  const key = [priceChannel, filter.category, filter.subcategory, filter.subsubcategory, filter.highlight ? "H" : ""].join("|");
   const hit = cache.get(key);
   const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
 
@@ -676,6 +684,7 @@ async function buildPayload(
         images: {},
         thumbs: {},
         articles: [],
+        highlights: [],
         total: 0,
         categories: [],
         categoryTree: [],
@@ -695,6 +704,13 @@ async function buildPayload(
       query,
     );
     const { categories, categoryTree, stats } = snapshot;
+    const highlights = (
+      await catalogSnapshot(
+        priceChannel,
+        { category: "", subcategory: "", subsubcategory: "", highlight: true },
+        query,
+      )
+    ).articles;
     let mapped: CatalogArticle[] = snapshot.articles;
 
 
@@ -732,6 +748,7 @@ async function buildPayload(
       images,
       thumbs,
       articles: mapped,
+      highlights,
       total: term ? mapped.length : snapshot.total,
       categories,
       categoryTree,
