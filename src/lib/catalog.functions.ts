@@ -49,6 +49,8 @@ export type CatalogArticle = {
   manufacturer: string;
   /** Verkaufte Menge der letzten 52 Monate (für die Sortierung nach Serien). */
   sold: number;
+  /** Unverbindliche Preisempfehlung (brutto) aus weclapp, null wenn nicht gepflegt. */
+  uvp: number | null;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -264,7 +266,12 @@ select a.id as id,
        coalesce(a.ca_aktion, false) as promo,
        coalesce(vr.is_primary, false) as is_primary,
        coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer,
-       coalesce(so.qty, 0)::float8 as sold
+       coalesce(so.qty, 0)::float8 as sold,
+       (select cp.price::float8 from weclapp.article_calculation_price cp
+         where cp._parent_rid = a._rid and cp.article_calculation_price_type = 'RECOMMENDED_RETAIL_PRICE'
+           and cp.price > 0 and (cp.start_date is null or cp.start_date <= now())
+           and (cp.end_date is null or cp.end_date > now())
+         order by cp.start_date desc nulls last limit 1) as uvp
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -525,6 +532,7 @@ async function buildArticles(
       is_primary: boolean;
       manufacturer: string;
       sold: number;
+      uvp: number | null;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -572,6 +580,7 @@ async function buildArticles(
       unit: row.unit,
       moq: Math.max(1, Math.round(row.moq)),
       onHand: Math.round(row.on_hand),
+      uvp: row.uvp != null && Number(row.uvp) > 0 ? Number(row.uvp) : null,
       breaks: (row.breaks ?? [])
         .map((b) => ({
           from: Number(b.from),

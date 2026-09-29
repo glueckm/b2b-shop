@@ -649,6 +649,7 @@ function Shop() {
         isPrimary: false,
         manufacturer: "",
         sold: 0,
+        uvp: null,
       });
     }
     return out;
@@ -1928,7 +1929,7 @@ function Shop() {
                           );
                         if (siblings.length < 2) return null;
                         return (
-                          <div className="-mt-4 xl:order-last xl:col-span-2">
+                          <div className="-mt-4 xl:order-3 xl:col-span-2">
                             <p className="label-mono text-muted-foreground">
                               {siblings.length} Varianten
                             </p>
@@ -1967,7 +1968,16 @@ function Shop() {
                       <p className="label-mono text-muted-foreground">
                         {[a.level1, a.level2].filter(Boolean).join(" · ")}
                       </p>
-                      <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                        <h1 className="text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                        {a.uvp != null && (
+                          <p className="text-right">
+                            <span className="label-mono text-muted-foreground">UVP </span>
+                            <span className="text-xl font-semibold">{eur(a.uvp)}</span>
+                            <span className="ml-1 text-xs text-muted-foreground">inkl. USt.</span>
+                          </p>
+                        )}
+                      </div>
                       <p className="mt-2 font-mono text-[13px] text-muted-foreground">
                         Art.-Nr.{" "}
                         <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
@@ -2052,7 +2062,7 @@ function Shop() {
                         </div>
                       </div>
                     </div>
-                    <div className="xl:col-span-2">
+                    <div className="xl:order-4 xl:col-span-2">
                       <div className="flex flex-wrap gap-1 border-b border-border">
                         {[
                           ["beschreibung", "Beschreibung"],
@@ -2150,7 +2160,7 @@ function Shop() {
                       </div>
                     </div>
                     {(accessories[a.sku]?.length ?? 0) > 0 && (
-                      <div className="xl:col-span-2">
+                      <div className="xl:order-4 xl:col-span-2">
                         <h2 className="text-xl font-bold tracking-tight">Passendes Zubehör</h2>
                         <p className="text-[13px] text-muted-foreground">Kunden, die diesen Artikel gekauft haben, kauften auch</p>
                         <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
