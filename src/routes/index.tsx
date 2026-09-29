@@ -8,6 +8,16 @@ import {
   useRouterState,
 } from "@tanstack/react-router";
 import { ChevronDown, Eye, EyeOff, Heart, Percent, ShoppingCart, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { z } from "zod";
@@ -677,6 +687,10 @@ function Shop() {
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
   const [cartView, setCartView] = useState(false);
+  const [showPrices, setShowPrices] = useState(true);
+  const [askPrices, setAskPrices] = useState(false);
+  /** Händlerpreise (EK) – ausgeblendet als Platzhalter; UVP bleibt über formatEur sichtbar. */
+  const eur = (value: number) => (showPrices ? formatEur(value) : "••••• €");
   // Kategorie-, Such- oder Artikelwechsel schließt die Warenkorb-Ansicht.
   useEffect(() => {
     setCartView(false);
@@ -1523,6 +1537,30 @@ function Shop() {
                 <span className="font-mono text-xs opacity-80">{favourites.size}</span>
               )}
             </button>
+            <button
+              onClick={() => (showPrices ? setShowPrices(false) : setAskPrices(true))}
+              aria-pressed={showPrices}
+              title={showPrices ? "Händlerpreise ausblenden" : "Händlerpreise einblenden"}
+              aria-label={showPrices ? "Händlerpreise ausblenden" : "Händlerpreise einblenden"}
+              className="flex items-center gap-1.5 font-medium hover:text-accent"
+            >
+              {showPrices ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+              Preise
+            </button>
+            <AlertDialog open={askPrices} onOpenChange={setAskPrices}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Händlerpreise einblenden?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Ihre Einkaufspreise werden dann wieder sichtbar – achten Sie darauf, ob Kunden mitschauen.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Nein</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => setShowPrices(true)}>Ja, einblenden</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <a
               href="#order"
               onClick={(e) => {
