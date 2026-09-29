@@ -223,8 +223,17 @@ function HighlightStage({
   if (!current) return null;
   const price = priceForQty(current, current.moq);
   const list = current.breaks[0]?.price ?? price;
-  const pct = current.rebatePct > 0 ? Math.round(current.rebatePct) : list > price ? Math.round((1 - price / list) * 100) : 0;
-  const label = (a: CatalogArticle) => (a.promo ? `Aktion${pct && a === current ? ` −${pct} %` : ""}` : a.onHand > 0 ? "Auf Lager" : "Highlight");
+  const pctOf = (a: CatalogArticle) => {
+    const p = priceForQty(a, a.moq);
+    const l = a.breaks[0]?.price ?? p;
+    return a.rebatePct > 0 ? Math.round(a.rebatePct) : l > p ? Math.round((1 - p / l) * 100) : 0;
+  };
+  void list;
+  const pct = pctOf(current);
+  const label = (a: CatalogArticle) =>
+    a.promo ? `Aktion${pctOf(a) ? ` −${pctOf(a)} %` : ""}` : a.onHand > 0 ? "Auf Lager" : "Highlight";
+  const visible = Math.min(count, 5);
+  const start = Math.max(0, Math.min(index - 2, count - visible));
   const tagline = specText(current.spec).split(/(?<=[.!?])\s/)[0]?.slice(0, 140) ?? "";
   const thumb = thumbFor(current);
 
@@ -289,8 +298,9 @@ function HighlightStage({
       </div>
       {count > 1 && (
         <div className="grid border-t border-primary-foreground/10" style={{ gridTemplateColumns: `repeat(${Math.min(count, 5)}, minmax(0, 1fr))` }}>
-          {items.slice(0, 10).map((a, i) =>
-            i >= 5 && count > 5 && i >= 5 ? null : (
+          {items.slice(start, start + visible).map((a, j) => {
+            const i = start + j;
+            return (
               <button
                 key={a.sku}
                 onClick={() => setIndex(i)}
@@ -302,8 +312,8 @@ function HighlightStage({
                   {(a.manufacturer || a.category)} · {label(a)}
                 </span>
               </button>
-            ),
-          )}
+            );
+          })}
         </div>
       )}
     </section>
