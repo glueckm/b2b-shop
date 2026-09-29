@@ -329,39 +329,33 @@ function ArticleImage({
   alt: string;
   className: string;
 }) {
-  const [resolved, setResolved] = useState<string | null>(() => resolvedImageCache.get(src) ?? null);
-
+  // Öffentliche Bild-URL direkt laden; bei Fehler einmal über Server-Funktion versuchen.
+  const [current, setCurrent] = useState<string>(src);
+  const [failed, setFailed] = useState(false);
   useEffect(() => {
-    let cancelled = false;
-    const cached = resolvedImageCache.get(src);
-    if (cached) {
-      setResolved(cached);
-      return () => {
-        cancelled = true;
-      };
-    }
-    // Ein fehlgeschlagener Abruf (z. B. kurzzeitige Backend-Last) wird erneut
-    // versucht, damit kein dauerhaft leeres Feld stehen bleibt.
-    const attempt = (tries: number) => {
-      void loadAuthenticatedImage(src).then((value) => {
-        if (cancelled) return;
-        if (value) {
-          setResolved(value);
-          return;
-        }
-        if (tries > 0) setTimeout(() => attempt(tries - 1), 1200);
-      });
-    };
-    attempt(3);
-    return () => {
-      cancelled = true;
-    };
+    setCurrent(src);
+    setFailed(false);
   }, [src]);
 
-  return resolved ? (
-    <img src={resolved} alt={alt} className={className} loading="lazy" decoding="async" />
-  ) : (
-    <span aria-label={alt} className={`${className} bg-muted`} />
+  if (failed) return <span aria-label={alt} className={`${className} bg-muted`} />;
+  return (
+    <img
+      src={current}
+      alt={alt}
+      className={className}
+      loading="lazy"
+      decoding="async"
+      onError={() => {
+        if (current !== src) {
+          setFailed(true);
+          return;
+        }
+        void loadAuthenticatedImage(src).then((value) => {
+          if (value && value !== src) setCurrent(value);
+          else setFailed(true);
+        });
+      }}
+    />
   );
 }
 
