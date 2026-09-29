@@ -1049,62 +1049,84 @@ function Shop() {
       requestImages(a.id);
       setDetailSku(a.sku);
     };
-    const go = (d: number) => setSlideIdx((i) => (i + d + slides.length) % slides.length);
+    // Vier Reiter unten: aktuelles Gerät und die nächsten drei.
+    const tabs = Array.from({ length: Math.min(4, slides.length) }, (_, k) => (idx + k) % slides.length);
     return (
-      <div onMouseEnter={() => setSlidePaused(true)} onMouseLeave={() => setSlidePaused(false)}>
-        <div key={a.sku} className="grid animate-in fade-in duration-500 overflow-hidden rounded-lg border border-border bg-card shadow-sm md:grid-cols-2">
-          <button onClick={open} className="relative flex h-80 items-center justify-center bg-panel p-6 md:h-[26rem]">
-            {img ? (
-              <ArticleImage src={img} alt={a.name} className="max-h-full max-w-full object-contain" />
-            ) : (
-              <span className="label-mono text-muted-foreground">Bild wird geladen …</span>
-            )}
-            {a.promo && (
-              <span className="absolute left-4 top-4 rounded-sm bg-destructive px-2 py-1 text-xs font-bold uppercase text-destructive-foreground">
-                % Aktion
-              </span>
-            )}
+      <div className="overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-md">
+        <div className="relative">
+          <button
+            onClick={() => setSlidePaused((p) => !p)}
+            className="absolute right-4 top-3 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
+          >
+            {slidePaused ? "▶ Weiter" : "❚❚ Pause"}
           </button>
-          <div className="flex flex-col justify-center gap-3 p-6 md:p-10">
-            <span className="label-mono text-muted-foreground">
-              {a.manufacturer || a.category} · Art.-Nr. {a.sku}
-            </span>
-            <button onClick={open} className="text-left text-3xl font-bold tracking-tight hover:text-accent">
-              {a.groupName || a.name}
-            </button>
-            {a.spec && (
-              <p className="line-clamp-3 text-sm text-muted-foreground">{specText(a.spec)}</p>
-            )}
-            <div className="mt-2">
-              <span className="text-2xl font-bold">{eur(priceForQty(a, 1))}</span>
-              <span className="ml-2 text-xs text-muted-foreground">EK netto</span>
-              {a.uvp != null && (
-                <div className="text-xs text-muted-foreground">UVP {eur(a.uvp)} inkl. USt.</div>
+          <div
+            key={a.sku}
+            className="grid animate-in slide-in-from-right-24 fade-in duration-700 ease-out gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
+          >
+            <div className="flex flex-col justify-center">
+              <span className="label-mono text-primary-foreground/50">
+                {a.manufacturer || a.category}
+                {a.promo && <span className="ml-2 text-accent">% Aktion</span>}
+              </span>
+              <button onClick={open} className="mt-2 text-left text-4xl font-bold tracking-tight hover:text-accent">
+                {a.groupName || a.name}
+              </button>
+              {a.spec && (
+                <p className="mt-3 line-clamp-2 text-sm text-primary-foreground/70">{specText(a.spec)}</p>
               )}
+              <div className="mt-6 flex flex-wrap items-baseline gap-3">
+                <span className="text-4xl font-bold">{eur(priceForQty(a, 1))}</span>
+                <span className="text-xs text-primary-foreground/60">
+                  EK netto{a.uvp != null && ` · UVP ${eur(a.uvp)}`}
+                </span>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-3">
+                <button
+                  onClick={() => addLine(a.sku, a.moq)}
+                  className="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+                >
+                  {a.onHand > 0 ? "In den Warenkorb" : "Vormerken"}
+                </button>
+                <button
+                  onClick={open}
+                  className="rounded-sm border border-primary-foreground/30 px-5 py-2.5 text-sm font-semibold hover:border-accent hover:text-accent"
+                >
+                  Zum Produkt
+                </button>
+              </div>
             </div>
             <button
               onClick={open}
-              className="mt-3 self-start rounded-sm bg-accent px-5 py-2.5 font-semibold text-accent-foreground hover:opacity-90"
+              className="flex h-72 items-center justify-center rounded-md bg-card p-6 md:h-[22rem]"
             >
-              Zum Gerät →
+              {img ? (
+                <ArticleImage src={img} alt={a.name} className="max-h-full max-w-full object-contain" />
+              ) : (
+                <span className="label-mono text-muted-foreground">Bild wird geladen …</span>
+              )}
             </button>
           </div>
         </div>
-        <div className="mt-4 flex items-center gap-3">
-          <button onClick={() => go(-1)} aria-label="Vorheriges Gerät" className="rounded-sm border border-border px-3 py-1.5 hover:border-accent">‹</button>
-          <input
-            type="range"
-            min={0}
-            max={slides.length - 1}
-            value={idx}
-            onChange={(e) => setSlideIdx(Number(e.target.value))}
-            aria-label="Gerät auswählen"
-            className="flex-1 accent-[var(--color-accent)]"
-          />
-          <button onClick={() => go(1)} aria-label="Nächstes Gerät" className="rounded-sm border border-border px-3 py-1.5 hover:border-accent">›</button>
-          <span className="w-16 text-right font-mono text-xs text-muted-foreground">
-            {idx + 1} / {slides.length}
-          </span>
+        <div className="grid grid-cols-2 border-t border-primary-foreground/10 md:grid-cols-4">
+          {tabs.map((i, k) => {
+            const t = slides[i]!;
+            return (
+              <button
+                key={`${t.sku}-${k}`}
+                onClick={() => setSlideIdx(i)}
+                className={`relative px-5 py-4 text-left transition-colors hover:bg-primary-foreground/5 ${k === 0 ? "" : "opacity-60"}`}
+              >
+                <span
+                  className={`absolute inset-x-5 top-0 h-0.5 ${k === 0 ? "bg-accent" : "bg-transparent"}`}
+                />
+                <span className="block truncate text-sm font-semibold">{t.groupName || t.name}</span>
+                <span className="block truncate text-xs text-primary-foreground/60">
+                  {t.manufacturer || t.category} · {stockLabel[stockState(t.onHand)]}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     );
