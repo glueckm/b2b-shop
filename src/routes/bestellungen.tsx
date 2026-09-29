@@ -73,25 +73,29 @@ function OrderCard({ order }: { order: CustomerOrder }) {
       </button>
       {open && (
         <div className="border-t border-border px-4 py-3">
-          <div className="mb-3 flex flex-wrap gap-2">
-            <DocLink kind="auftragsbestaetigung" id={order.id} label="Auftragsbestätigung" />
-            {order.shipped || order.items.some((i) => i.shipped > 0) ? (
-              <DocLink kind="lieferschein" id={order.id} label="Lieferschein" />
-            ) : null}
-            {order.invoices.map((inv) => (
-              <DocLink key={inv.id} kind="rechnung" id={inv.id} label={`Rechnung ${inv.number}`} />
-            ))}
-          </div>
-          {order.invoices.length > 0 && (
-            <ul className="mb-3 space-y-0.5 text-sm">
+          <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-wrap gap-2">
+              <DocLink kind="auftragsbestaetigung" id={order.id} label="Auftragsbestätigung" />
+              {order.shipped || order.items.some((i) => i.shipped > 0) ? (
+                <DocLink kind="lieferschein" id={order.id} label="Lieferschein" />
+              ) : null}
               {order.invoices.map((inv) => (
-                <li key={inv.id}>
-                  <span className="text-muted-foreground">Rechnung {inv.number} · Transportreferenz: </span>
-                  <span className="font-mono">{inv.transportRef ?? "–"}</span>
-                </li>
+                <DocLink key={inv.id} kind="rechnung" id={inv.id} label={`Rechnung ${inv.number}`} />
               ))}
-            </ul>
-          )}
+            </div>
+            {order.invoices.length > 0 && (
+              <ul className="ml-auto space-y-0.5 text-right text-sm">
+                {order.invoices.map((inv) => (
+                  <li key={inv.id}>
+                    <span className="text-muted-foreground">
+                      {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}Transportreferenz:{" "}
+                    </span>
+                    <span className="font-mono">{inv.transportRef ?? "–"}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <table className="w-full text-sm">
             <thead className="label-mono text-left text-muted-foreground">
               <tr>
