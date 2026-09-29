@@ -329,33 +329,39 @@ function ArticleImage({
   alt: string;
   className: string;
 }) {
-  // Öffentliche Bild-URL direkt laden; bei Fehler einmal über Server-Funktion versuchen.
-  const [current, setCurrent] = useState<string>(src);
-  const [failed, setFailed] = useState(false);
-  useEffect(() => {
-    setCurrent(src);
-    setFailed(false);
-  }, [src]);
+  const [resolved, setResolved] = useState<string | null>(() => resolvedImageCache.get(src) ?? null);
 
-  if (failed) return <span aria-label={alt} className={`${className} bg-muted`} />;
-  return (
-    <img
-      src={current}
-      alt={alt}
-      className={className}
-      loading="lazy"
-      decoding="async"
-      onError={() => {
-        if (current !== src) {
-          setFailed(true);
+  useEffect(() => {
+    let cancelled = false;
+    const cached = resolvedImageCache.get(src);
+    if (cached) {
+      setResolved(cached);
+      return () => {
+        cancelled = true;
+      };
+    }
+    // Ein fehlgeschlagener Abruf (z. B. kurzzeitige Backend-Last) wird erneut
+    // versucht, damit kein dauerhaft leeres Feld stehen bleibt.
+    const attempt = (tries: number) => {
+      void loadAuthenticatedImage(src).then((value) => {
+        if (cancelled) return;
+        if (value) {
+          setResolved(value);
           return;
         }
-        void loadAuthenticatedImage(src).then((value) => {
-          if (value && value !== src) setCurrent(value);
-          else setFailed(true);
-        });
-      }}
-    />
+        if (tries > 0) setTimeout(() => attempt(tries - 1), 1200);
+      });
+    };
+    attempt(3);
+    return () => {
+      cancelled = true;
+    };
+  }, [src]);
+
+  return resolved ? (
+    <img src={resolved} alt={alt} className={className} loading="lazy" decoding="async" />
+  ) : (
+    <span aria-label={alt} className={`${className} bg-muted`} />
   );
 }
 
