@@ -649,6 +649,7 @@ function Shop() {
         isPrimary: false,
         manufacturer: "",
         sold: 0,
+        uvp: null,
       });
     }
     return out;
