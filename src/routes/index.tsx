@@ -38,12 +38,9 @@ import { shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
 
-/** Startseite nach dem Login: Aktions- und Highlight-Artikel aus allen Bereichen. */
-const HIGHLIGHTS = "Highlights";
-
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
-  category: z.string().default(HIGHLIGHTS),
+  category: z.string().default("Wärmebild & Nachtsicht"),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
@@ -63,7 +60,7 @@ export const Route = createFileRoute("/")({
     const catalog = await getCatalog({
       data: {
         channel: deps.channel,
-        category: deps.category === HIGHLIGHTS ? "" : deps.category,
+        category: deps.category,
         subcategory: deps.subcategory,
         subsubcategory: deps.subsubcategory,
         search: deps.q,
@@ -576,7 +573,6 @@ function Shop() {
   }, [data.user?.id]);
   const [term, setTerm] = useState(search.q);
   const detailSku = search.artikel || null;
-  const highlightView = search.category === HIGHLIGHTS && !detailSku && !search.q.trim();
   const [detailImage, setDetailImage] = useState(0);
   const [detailTab, setDetailTab] = useState("beschreibung");
   const [accessories, setAccessories] = useState<Record<string, CatalogArticle[]>>({});
@@ -650,7 +646,6 @@ function Shop() {
         groupName: "",
         specs: {},
         promo: false,
-        highlight: false,
         isPrimary: false,
         manufacturer: "",
         sold: 0,
@@ -875,14 +870,6 @@ function Shop() {
       });
     }
 
-    if (search.category === HIGHLIGHTS && !search.q.trim()) {
-      const hl = (article: CatalogArticle) => article.promo || article.highlight;
-      return out.flatMap((row): Row[] => {
-        if (row.kind === "single") return hl(row.article) ? [row] : [];
-        const variants = row.variants.filter(hl);
-        return variants.length > 0 ? [{ ...row, variants }] : [];
-      });
-    }
     if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
@@ -897,31 +884,6 @@ function Shop() {
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
   }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
-  // Highlight-Seite: jedes Produkt einzeln, automatischer Wechsel alle 6 Sekunden.
-  const hlItems = useMemo(
-    () =>
-      rows.map((row) =>
-        row.kind === "single"
-          ? row.article
-          : (row.variants.find((v) => v.isPrimary) ?? row.variants[0]!),
-      ),
-    [rows],
-  );
-  const [hlIndex, setHlIndex] = useState(0);
-  const [hlPaused, setHlPaused] = useState(false);
-  useEffect(() => {
-    if (!highlightView || hlPaused || hlItems.length < 2) return;
-    const t = window.setTimeout(() => setHlIndex((i) => (i + 1) % hlItems.length), 6000);
-    return () => window.clearTimeout(t);
-  }, [highlightView, hlPaused, hlItems.length, hlIndex]);
-  useEffect(() => {
-    if (hlIndex >= hlItems.length) setHlIndex(0);
-  }, [hlItems.length, hlIndex]);
-  useEffect(() => {
-    const a = hlItems[hlIndex];
-    if (highlightView && a) requestImages(a.id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [highlightView, hlIndex, hlItems]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
@@ -1493,22 +1455,13 @@ function Shop() {
 
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
-          <button
-            type="button"
-            title="Zu den Highlights"
-            onClick={() => {
-              setBrandPick(null);
-              setPromoOnly(false);
-              setFavOnly(false);
-              setTerm("");
-              void navigate({
-                search: (prev) => ({ ...prev, category: HIGHLIGHTS, subcategory: "", subsubcategory: "", q: "", artikel: "" }),
-              });
-            }}
-            className="shrink-0"
-          >
-            <img src={mawaLogo} alt="MAWA Trading" width={369} height={77} className="h-7 w-auto" />
-          </button>
+          <img
+            src={mawaLogo}
+            alt="MAWA Trading"
+            width={369}
+            height={77}
+            className="h-7 w-auto shrink-0"
+          />
           <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
             <input
               value={term}
@@ -1550,7 +1503,6 @@ function Shop() {
             </button>
             <a
               href="#order"
-              hidden={highlightView}
               className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
@@ -1698,12 +1650,8 @@ function Shop() {
       })()}
 
 
-      <div
-        className={`mx-auto grid max-w-[1600px] gap-6 px-5 py-7 ${
-          highlightView ? "" : "lg:grid-cols-[220px_minmax(0,1fr)_330px]"
-        }`}
-      >
-        <aside hidden={highlightView} className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
+        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
           {(() => {
             const block = (
               title: string,
@@ -1892,15 +1840,6 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
-          {highlightView && (
-            <div className="mb-6 border-b border-border pb-4">
-              <span className="label-mono text-accent">Willkommen</span>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Unsere ausgewählten Produkte und aktuellen Aktionen – ein Klick öffnet die Detailseite.
-              </p>
-            </div>
-          )}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
@@ -2299,84 +2238,7 @@ function Shop() {
                   : "Keine Artikel für diese Auswahl."}
               </p>
             )}
-            {highlightView && hlItems.length > 0 && (() => {
-              const a = hlItems[Math.min(hlIndex, hlItems.length - 1)]!;
-              const big = imagesOf(a)[0] ?? thumbMap[a.id];
-              const text = a.spec.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
-              return (
-                <div onMouseEnter={() => setHlPaused(true)} onMouseLeave={() => setHlPaused(false)}>
-                  <div key={a.sku} className="grid animate-fade-in gap-8 rounded-lg border border-border bg-card p-6 shadow-sm md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
-                    <button
-                      onClick={() => setDetailSku(a.sku)}
-                      className="grid h-80 place-items-center overflow-hidden rounded-md bg-muted md:h-[26rem]"
-                    >
-                      {big ? (
-                        <ArticleImage src={big} alt={a.name} className="max-h-full max-w-[85%] object-contain" />
-                      ) : (
-                        <span className="label-mono text-muted-foreground">Produktbild</span>
-                      )}
-                    </button>
-                    <div className="flex flex-col">
-                      <div className="flex flex-wrap items-center gap-2">
-                        {a.promo && <span className="inline-flex items-center gap-1 rounded bg-destructive px-2 py-0.5 text-xs font-bold text-destructive-foreground"><Percent className="size-3" /> Aktion</span>}
-                        {a.highlight && <span className="rounded bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">Highlight</span>}
-                        <span className="label-mono text-muted-foreground">{a.level1}</span>
-                      </div>
-                      <button onClick={() => setDetailSku(a.sku)} className="mt-2 text-left text-3xl font-bold tracking-tight hover:text-accent">
-                        {a.groupName || a.name}
-                      </button>
-                      <p className="label-mono mt-1 text-muted-foreground">Art.-Nr. {a.sku}</p>
-                      {text && <p className="mt-4 line-clamp-5 text-sm leading-relaxed text-muted-foreground">{text}</p>}
-                      <div className="mt-auto pt-6">
-                        <p className="font-mono text-3xl font-bold">{eur(priceForQty(a, a.moq))}</p>
-                        {a.uvp != null && <p className="text-xs text-muted-foreground">UVP {eur(a.uvp)} inkl. USt.</p>}
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          <button onClick={() => setDetailSku(a.sku)} className="rounded-md bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground hover:opacity-90">
-                            Zum Produkt
-                          </button>
-                          <button onClick={() => addLine(a.sku, a.moq)} className="rounded-md border border-border px-5 py-2.5 text-sm font-bold hover:border-accent hover:text-accent">
-                            + In den Korb
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  {hlItems.length > 1 && (
-                    <div className="mt-4">
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="label-mono text-muted-foreground">{hlIndex + 1} / {hlItems.length}</span>
-                        <div className="flex gap-2">
-                          <button aria-label="Vorheriges Gerät" onClick={() => setHlIndex((i) => (i - 1 + hlItems.length) % hlItems.length)} className="rounded-md border border-border px-3 py-1 text-sm hover:border-accent">‹</button>
-                          <button aria-label="Nächstes Gerät" onClick={() => setHlIndex((i) => (i + 1) % hlItems.length)} className="rounded-md border border-border px-3 py-1 text-sm hover:border-accent">›</button>
-                        </div>
-                      </div>
-                      <div className="h-1 overflow-hidden rounded bg-muted">
-                        <div key={`${hlIndex}-${hlPaused}`} className="h-full bg-accent" style={{ animation: hlPaused ? "none" : "hl-progress 6s linear forwards", width: hlPaused ? "0%" : undefined }} />
-                      </div>
-                      <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
-                        {hlItems.map((item, i) => {
-                          const t = thumbMap[item.id] ?? imagesOf(item)[0];
-                          return (
-                            <ThumbSlot key={item.sku} onVisible={() => requestImages(item.id)}>
-                              <button
-                                onClick={() => setHlIndex(i)}
-                                className={`flex w-36 shrink-0 flex-col rounded-md border bg-card p-2 text-left ${i === hlIndex ? "border-accent ring-2 ring-accent/40" : "border-border opacity-70 hover:opacity-100"}`}
-                              >
-                                <span className="grid h-20 place-items-center overflow-hidden rounded bg-muted">
-                                  {t ? <ArticleImage src={t} alt={item.name} className="max-h-16 max-w-[80%] object-contain" /> : <span className="label-mono text-muted-foreground">Bild</span>}
-                                </span>
-                                <span className="mt-2 line-clamp-2 text-xs font-semibold">{item.groupName || item.name}</span>
-                              </button>
-                            </ThumbSlot>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
-            <div hidden={highlightView} className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {rows.map((row) =>
                 row.kind === "single" ? (
                   renderArticleCard(row.article)
@@ -2412,7 +2274,7 @@ function Shop() {
           )}
         </main>
 
-        <aside id="order" hidden={highlightView} className="lg:sticky lg:top-36 lg:self-start">
+        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
