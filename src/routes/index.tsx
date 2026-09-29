@@ -1068,7 +1068,7 @@ function Shop() {
           </button>
           <div
             key={a.sku}
-            className="grid gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
+            className="grid gap-6 p-8 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] md:p-10"
           >
             <div className="order-2 flex flex-col justify-center md:order-1">
               <span className="flex items-center text-lg font-bold uppercase text-primary-foreground">
@@ -1162,7 +1162,7 @@ function Shop() {
               })()}
               {img ? (
                 <div key={a.sku} className="hl-enter relative flex h-full w-full items-center justify-center">
-                  <ArticleImage src={img} alt={a.name} className="hl-img" />
+                  <ArticleImage src={img} alt={a.name} className="hl-img h-full w-full" />
                   <span className="hl-floor" aria-hidden />
                 </div>
               ) : (
