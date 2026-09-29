@@ -38,9 +38,12 @@ import { shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
 
+/** Startseite nach dem Login: Aktions- und Highlight-Artikel aus allen Bereichen. */
+const HIGHLIGHTS = "Highlights";
+
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
-  category: z.string().default("Wärmebild & Nachtsicht"),
+  category: z.string().default(HIGHLIGHTS),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
@@ -60,7 +63,7 @@ export const Route = createFileRoute("/")({
     const catalog = await getCatalog({
       data: {
         channel: deps.channel,
-        category: deps.category,
+        category: deps.category === HIGHLIGHTS ? "" : deps.category,
         subcategory: deps.subcategory,
         subsubcategory: deps.subsubcategory,
         search: deps.q,
@@ -870,6 +873,14 @@ function Shop() {
       });
     }
 
+    if (search.category === HIGHLIGHTS && !search.q.trim()) {
+      const hl = (article: CatalogArticle) => article.promo || article.highlight;
+      return out.flatMap((row): Row[] => {
+        if (row.kind === "single") return hl(row.article) ? [row] : [];
+        const variants = row.variants.filter(hl);
+        return variants.length > 0 ? [{ ...row, variants }] : [];
+      });
+    }
     if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>

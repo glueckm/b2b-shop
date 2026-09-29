@@ -121,7 +121,7 @@ function LoginPage() {
           // die Adresse und lädt den Katalog ein zweites Mal.
           search: {
             channel: "NET1",
-            category: "Wärmebild & Nachtsicht",
+            category: "Highlights",
             subcategory: "",
             subsubcategory: "",
             q: "",
