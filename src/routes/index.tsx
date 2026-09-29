@@ -190,6 +190,136 @@ async function loadAuthenticatedImage(src: string): Promise<string | null> {
   return request;
 }
 
+/** Großer Highlight-Bereich (weclapp „Highlight Produkt") mit automatischem Wechsel. */
+function HighlightStage({
+  items,
+  thumbFor,
+  requestImages,
+  onAdd,
+  onOpen,
+}: {
+  items: CatalogArticle[];
+  thumbFor: (a: CatalogArticle) => string | undefined;
+  requestImages: (id: string) => void;
+  onAdd: (a: CatalogArticle) => void;
+  onOpen: (a: CatalogArticle) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [hover, setHover] = useState(false);
+  const count = items.length;
+  const current = items[Math.min(index, count - 1)];
+
+  useEffect(() => {
+    for (const a of items) requestImages(a.id);
+  }, [items, requestImages]);
+
+  useEffect(() => {
+    if (paused || hover || count < 2) return;
+    const t = setTimeout(() => setIndex((i) => (i + 1) % count), 6000);
+    return () => clearTimeout(t);
+  }, [index, paused, hover, count]);
+
+  if (!current) return null;
+  const price = priceForQty(current, current.moq);
+  const list = current.breaks[0]?.price ?? price;
+  const pctOf = (a: CatalogArticle) => {
+    const p = priceForQty(a, a.moq);
+    const l = a.breaks[0]?.price ?? p;
+    return a.rebatePct > 0 ? Math.round(a.rebatePct) : l > p ? Math.round((1 - p / l) * 100) : 0;
+  };
+  void list;
+  const pct = pctOf(current);
+  const label = (a: CatalogArticle) =>
+    a.promo ? `Aktion${pctOf(a) ? ` −${pctOf(a)} %` : ""}` : a.onHand > 0 ? "Auf Lager" : "Highlight";
+  const visible = Math.min(count, 5);
+  const start = Math.max(0, Math.min(index - 2, count - visible));
+  const tagline = specText(current.spec).split(/(?<=[.!?])\s/)[0]?.slice(0, 140) ?? "";
+  const thumb = thumbFor(current);
+
+  return (
+    <section
+      className="relative mb-6 overflow-hidden rounded-lg bg-primary text-primary-foreground"
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      aria-label="Highlights"
+    >
+      {count > 1 && (
+        <button
+          onClick={() => setPaused((p) => !p)}
+          className="absolute right-3 top-3 z-10 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-medium hover:bg-primary-foreground/20"
+        >
+          {paused ? "▶ Weiter" : "❚❚ Pause"}
+        </button>
+      )}
+      <div className="grid items-center gap-6 p-6 md:grid-cols-2 md:p-10">
+        <div className="min-w-0">
+          {current.promo && (
+            <span className="inline-block rounded bg-destructive px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-destructive-foreground">
+              Aktion{pct ? ` −${pct} %` : ""}
+            </span>
+          )}
+          <p className="label-mono mt-4 text-primary-foreground/60">{current.manufacturer || current.category}</p>
+          <button onClick={() => onOpen(current)} className="mt-2 block text-left text-3xl font-bold leading-tight hover:underline md:text-4xl">
+            {current.name}
+          </button>
+          {tagline && <p className="mt-3 line-clamp-2 text-sm text-primary-foreground/75">{tagline}</p>}
+          <div className="mt-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-mono text-3xl font-bold">{eur(price)}</span>
+            <span className="text-xs text-primary-foreground/60">
+              Ihr EK netto{current.uvp ? ` · UVP ${eur(current.uvp)}` : ""}
+            </span>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              onClick={() => onAdd(current)}
+              className="rounded-md bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+            >
+              In den Warenkorb
+            </button>
+            <button
+              onClick={() => onOpen(current)}
+              className="rounded-md border border-primary-foreground/25 px-4 py-2.5 text-sm font-semibold hover:bg-primary-foreground/10"
+            >
+              Zum Produkt
+            </button>
+          </div>
+        </div>
+        <button
+          onClick={() => onOpen(current)}
+          className="grid aspect-[16/10] w-full place-items-center overflow-hidden rounded-lg bg-card"
+        >
+          {thumb ? (
+            <ArticleImage key={thumb} src={thumb} alt={current.name} className="max-h-[85%] max-w-[85%] object-contain" />
+          ) : (
+            <span className="size-full animate-pulse bg-muted" />
+          )}
+        </button>
+      </div>
+      {count > 1 && (
+        <div className="grid border-t border-primary-foreground/10" style={{ gridTemplateColumns: `repeat(${Math.min(count, 5)}, minmax(0, 1fr))` }}>
+          {items.slice(start, start + visible).map((a, j) => {
+            const i = start + j;
+            return (
+              <button
+                key={a.sku}
+                onClick={() => setIndex(i)}
+                className={`relative min-w-0 border-r border-primary-foreground/10 px-4 py-3 text-left last:border-r-0 hover:bg-primary-foreground/5 ${i === index ? "bg-primary-foreground/5" : ""}`}
+              >
+                {i === index && <span className="absolute left-0 top-0 h-0.5 w-6 bg-accent" />}
+                <span className="block truncate text-sm font-semibold">{a.name}</span>
+                <span className="block truncate text-xs text-primary-foreground/60">
+                  {(a.manufacturer || a.category)} · {label(a)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function ArticleImage({
   src,
   alt,
@@ -650,6 +780,7 @@ function Shop() {
         manufacturer: "",
         sold: 0,
         uvp: null,
+        highlight: false,
       });
     }
     return out;
@@ -657,7 +788,10 @@ function Shop() {
 
   /** Artikel für eine Warenkorbposition — Katalog zuerst, sonst Warenkorbdaten. */
   const articleForSku = (sku: string) =>
-    bySku.get(sku) ?? basketFallback.get(sku) ?? extraArticles.get(sku);
+    bySku.get(sku) ??
+    (data.highlights ?? []).find((h) => h.sku === sku) ??
+    basketFallback.get(sku) ??
+    extraArticles.get(sku);
 
 
   /** Ebene-2-Kategorien der aktuell gewählten Ebene-1-Kategorie. */
@@ -2209,6 +2343,18 @@ function Shop() {
               <div className="pointer-events-none absolute inset-0 z-20 flex items-start justify-center bg-background/60 pt-16">
                 <span className="size-8 animate-spin rounded-full border-[3px] border-accent/30 border-t-accent" />
               </div>
+            )}
+            {!brandPick && !search.q.trim() && (data.highlights ?? []).length > 0 && (
+              <HighlightStage
+                items={data.highlights}
+                thumbFor={(a) => thumbMap[a.id] ?? imagesOf(a)[0]}
+                requestImages={requestImages}
+                onAdd={(a) => addLine(a.sku, a.moq)}
+                onOpen={(a) => {
+                  requestImages(a.id);
+                  setDetailSku(a.sku);
+                }}
+              />
             )}
             {brandPick && (
               <p className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
