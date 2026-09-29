@@ -299,7 +299,7 @@ function LoginPage() {
                     id="signupNumber"
                     type="text"
                     required
-                    placeholder="z. B. KN - S85912"
+                    placeholder="z. B. 10482"
                     value={signupNumber}
                     onChange={(event) => setSignupNumber(event.target.value)}
                     className={inputClass}
