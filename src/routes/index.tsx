@@ -897,6 +897,31 @@ function Shop() {
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
   }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
+  // Highlight-Seite: jedes Produkt einzeln, automatischer Wechsel alle 6 Sekunden.
+  const hlItems = useMemo(
+    () =>
+      rows.map((row) =>
+        row.kind === "single"
+          ? row.article
+          : (row.variants.find((v) => v.isPrimary) ?? row.variants[0]!),
+      ),
+    [rows],
+  );
+  const [hlIndex, setHlIndex] = useState(0);
+  const [hlPaused, setHlPaused] = useState(false);
+  useEffect(() => {
+    if (!highlightView || hlPaused || hlItems.length < 2) return;
+    const t = window.setTimeout(() => setHlIndex((i) => (i + 1) % hlItems.length), 6000);
+    return () => window.clearTimeout(t);
+  }, [highlightView, hlPaused, hlItems.length, hlIndex]);
+  useEffect(() => {
+    if (hlIndex >= hlItems.length) setHlIndex(0);
+  }, [hlItems.length, hlIndex]);
+  useEffect(() => {
+    const a = hlItems[hlIndex];
+    if (highlightView && a) requestImages(a.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightView, hlIndex, hlItems]);
 
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
