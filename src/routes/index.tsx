@@ -911,12 +911,11 @@ function Shop() {
   );
   const [slideIdx, setSlideIdx] = useState(0);
   const [slidePaused, setSlidePaused] = useState(false);
-  const [slideHover, setSlideHover] = useState(false);
   useEffect(() => {
-    if (slides.length < 2 || slidePaused || slideHover) return;
+    if (slides.length < 2 || slidePaused) return;
     const t = setTimeout(() => setSlideIdx((i) => (i + 1) % slides.length), 6000);
     return () => clearTimeout(t);
-  }, [slides.length, slidePaused, slideHover, slideIdx]);
+  }, [slides.length, slidePaused, slideIdx]);
   useEffect(() => {
     const cur = slides[slideIdx];
     if (cur) requestImages(cur.id);
@@ -1055,21 +1054,17 @@ function Shop() {
     return (
       <div className="overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-md">
         <div className="relative">
-          <div className="border-b border-primary-foreground/10 px-8 pb-4 pt-6 md:px-10">
-            <span className="label-mono text-accent">Willkommen</span>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
-          </div>
           <button
             onClick={() => setSlidePaused((p) => !p)}
-            className="absolute right-6 top-6 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
+            className="absolute right-4 top-3 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
           >
             {slidePaused ? "▶ Weiter" : "❚❚ Pause"}
           </button>
           <div
             key={a.sku}
-            className="grid gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
+            className="grid animate-in slide-in-from-right-24 fade-in duration-700 ease-out gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
           >
-            <div className="order-2 flex flex-col justify-center md:order-1">
+            <div className="flex flex-col justify-center">
               <span className="label-mono flex items-center text-primary-foreground/50">
                 {brandLogo(a.manufacturer) ? (
                   <img
@@ -1080,39 +1075,14 @@ function Shop() {
                 ) : (
                   a.manufacturer || a.category
                 )}
+                {a.promo && <span className="ml-2 text-accent">% Aktion</span>}
               </span>
               <button onClick={open} className="mt-2 text-left text-4xl font-bold tracking-tight hover:text-accent">
                 {a.groupName || a.name}
               </button>
-              {(() => {
-                // Kerndaten: Sensor, NETD, Objektiv, LRF, Akku; sonst die ersten Werte aus dem Beschreibungstext.
-                const keys = ["sensor", "netd", "lens", "lrf", "cell"];
-                let chips = SPEC_FIELDS.filter(
-                  (f) => keys.includes(f.key) && a.specs[f.key] && Number(a.specs[f.key]!.replace(",", ".")) !== 0,
-                ).map((f) => ({ label: f.label.replace(/\s*\(.*\)/, ""), value: a.specs[f.key]! }));
-                if (chips.length === 0 && a.spec) {
-                  chips = specText(a.spec)
-                    .split(",")
-                    .map((part) => part.trim())
-                    .filter(Boolean)
-                    .slice(0, 5)
-                    .map((part) => {
-                      const m = part.match(/^([^:]+):\s*(.+)$/);
-                      return m ? { label: m[1]!, value: m[2]! } : { label: "", value: part };
-                    });
-                }
-                if (chips.length === 0) return null;
-                return (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {chips.slice(0, 5).map((c) => (
-                      <span key={c.label + c.value} className="hl-chip">
-                        {c.label && <span className="hl-chip-label">{c.label} </span>}
-                        <strong>{c.value}</strong>
-                      </span>
-                    ))}
-                  </div>
-                );
-              })()}
+              {a.spec && (
+                <p className="mt-3 line-clamp-2 text-sm text-primary-foreground/70">{specText(a.spec)}</p>
+              )}
               <div className="mt-6 flex flex-wrap items-baseline gap-3">
                 <span className="text-4xl font-bold">{eur(priceForQty(a, 1))}</span>
                 <span className="text-xs text-primary-foreground/60">
@@ -1136,29 +1106,12 @@ function Shop() {
             </div>
             <button
               onClick={open}
-              onMouseEnter={() => setSlideHover(true)}
-              onMouseLeave={() => setSlideHover(false)}
-              className={`hl-stage order-1 md:order-2 ${img && !/\.(png|webp)(\?|$)/i.test(img) ? "hl-plate" : ""}`}
+              className="flex h-72 items-center justify-center rounded-md bg-card p-6 md:h-[22rem]"
             >
-              {(() => {
-                const badge = a.promo
-                  ? { text: "Aktion", cls: "bg-destructive text-destructive-foreground" }
-                  : a.onHand > 0
-                    ? { text: "Auf Lager", cls: "bg-stock text-primary-foreground" }
-                    : null;
-                return badge ? (
-                  <span className={`absolute left-3 top-3 z-10 rounded-sm px-2 py-1 text-xs font-bold ${badge.cls}`}>
-                    {badge.text}
-                  </span>
-                ) : null;
-              })()}
               {img ? (
-                <div key={a.sku} className="hl-enter relative flex h-full w-full items-center justify-center">
-                  <ArticleImage src={img} alt={a.name} className="hl-img" />
-                  <span className="hl-floor" aria-hidden />
-                </div>
+                <ArticleImage src={img} alt={a.name} className="max-h-full max-w-full object-contain" />
               ) : (
-                <span className="label-mono text-primary-foreground/50">Bild wird geladen …</span>
+                <span className="label-mono text-muted-foreground">Bild wird geladen …</span>
               )}
             </button>
           </div>
@@ -2039,6 +1992,15 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
+          {highlightView && (
+            <div className="mb-6 border-b border-border pb-4">
+              <span className="label-mono text-accent">Willkommen</span>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Unsere ausgewählten Produkte und aktuellen Aktionen – ein Klick öffnet die Detailseite.
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
