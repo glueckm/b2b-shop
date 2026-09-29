@@ -676,6 +676,11 @@ function Shop() {
 
   // Umschalter „Favoriten" in der Kategorieleiste.
   const [favOnly, setFavOnly] = useState(false);
+  const [cartView, setCartView] = useState(false);
+  // Kategorie-, Such- oder Artikelwechsel schließt die Warenkorb-Ansicht.
+  useEffect(() => {
+    setCartView(false);
+  }, [search.category, search.subcategory, search.subsubcategory, search.q, search.artikel]);
   const [promoOnly, setPromoOnly] = useState(false);
 
   /** Zusatzfilter (Sensor, NETD, Objektiv …): ausgewählte Werte je Feld. */
@@ -1520,6 +1525,11 @@ function Shop() {
             </button>
             <a
               href="#order"
+              onClick={(e) => {
+                e.preventDefault();
+                setCartView(true);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
@@ -1859,6 +1869,97 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
+          {cartView ? (
+            <section aria-label="Warenkorb">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  onClick={() => setCartView(false)}
+                  className="text-sm font-semibold text-accent hover:underline"
+                >
+                  ← Zurück zum Einkaufen
+                </button>
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {detailedLines.length} Positionen
+                </span>
+              </div>
+              <h1 className="mt-3 text-2xl font-bold">Ihr Warenkorb</h1>
+              {detailedLines.length === 0 ? (
+                <div className="mt-6 rounded-lg border border-border bg-card px-6 py-10 text-center">
+                  <p className="text-muted-foreground">Ihr Warenkorb ist leer.</p>
+                  <button
+                    onClick={() => setCartView(false)}
+                    className="mt-4 rounded-sm bg-accent px-4 py-2 text-sm font-semibold text-accent-foreground"
+                  >
+                    Zum Sortiment
+                  </button>
+                </div>
+              ) : (
+                <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-card">
+                  {detailedLines.map((line) => {
+                    const img = imagesOf(line.article)[0];
+                    const state = stockState(line.article.onHand);
+                    return (
+                      <li key={line.sku} className="flex flex-wrap items-center gap-4 p-4">
+                        <button
+                          onClick={() => {
+                            setCartView(false);
+                            void navigate({ search: (prev) => ({ ...prev, artikel: line.sku }) });
+                          }}
+                          className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-background"
+                          aria-label={`${line.article.name} ansehen`}
+                        >
+                          {img ? (
+                            <img src={img} alt={line.article.name} className="max-h-full max-w-full object-contain" loading="lazy" />
+                          ) : (
+                            <span className="text-[11px] text-muted-foreground">Kein Bild</span>
+                          )}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-mono text-[11px] text-muted-foreground">{line.sku}</p>
+                          <p className="font-semibold">{line.article.name}</p>
+                          <p className="mt-1 text-[13px] text-muted-foreground">
+                            {stockLabel[state]} · {eur(line.unit)} / Stk.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => stepLine(line.sku, -1, line.article.moq)}
+                            aria-label={`${line.sku} Menge verringern`}
+                            className="flex size-8 items-center justify-center rounded-sm border border-border hover:border-accent hover:text-accent"
+                          >
+                            −
+                          </button>
+                          <span className="min-w-[3ch] text-center font-mono">{line.qty}</span>
+                          <button
+                            onClick={() => stepLine(line.sku, 1, line.article.moq)}
+                            aria-label={`${line.sku} Menge erhöhen`}
+                            className="flex size-8 items-center justify-center rounded-sm border border-border hover:border-accent hover:text-accent"
+                          >
+                            +
+                          </button>
+                        </div>
+                        <span className="w-28 text-right font-mono font-semibold text-accent">
+                          {eur(line.total)}
+                        </span>
+                        <button
+                          onClick={() => removeLine(line.sku)}
+                          aria-label={`${line.sku} entfernen`}
+                          className="text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="size-5" />
+                        </button>
+                      </li>
+                    );
+                  })}
+                  <li className="flex items-center justify-between p-4">
+                    <span className="text-muted-foreground">Zwischensumme (netto)</span>
+                    <span className="font-mono text-lg font-bold">{eur(subtotal)}</span>
+                  </li>
+                </ul>
+              )}
+            </section>
+          ) : (
+          <>
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
@@ -2290,6 +2391,8 @@ function Shop() {
               )}
             </div>
           </div>
+          )}
+          </>
           )}
         </main>
 
