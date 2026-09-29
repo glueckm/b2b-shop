@@ -1554,6 +1554,7 @@ function Shop() {
         };
         const selectCategory = (name: string) => {
           setBrandPick(null);
+          setFavOnly(false);
           setPromoOnly(false);
           setTerm("");
           void navigate({
@@ -1568,6 +1569,7 @@ function Shop() {
         };
         const togglePromo = () => {
           setBrandPick(null);
+          setFavOnly(false);
           setPromoOnly((prev) => !prev);
           setTerm("");
           void navigate({
