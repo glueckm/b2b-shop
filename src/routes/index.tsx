@@ -899,6 +899,31 @@ function Shop() {
   }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
 
 
+  // Highlight-Startseite: ein Gerät pro Folie, automatischer Wechsel alle 6 s.
+  const slides = useMemo(
+    () =>
+      highlightView
+        ? rows.map((row) =>
+            row.kind === "single" ? row.article : (row.variants.find((v) => v.isPrimary) ?? row.variants[0]),
+          )
+        : [],
+    [rows, highlightView],
+  );
+  const [slideIdx, setSlideIdx] = useState(0);
+  const [slidePaused, setSlidePaused] = useState(false);
+  useEffect(() => {
+    if (slides.length < 2 || slidePaused) return;
+    const t = setTimeout(() => setSlideIdx((i) => (i + 1) % slides.length), 6000);
+    return () => clearTimeout(t);
+  }, [slides.length, slidePaused, slideIdx]);
+  useEffect(() => {
+    const cur = slides[slideIdx];
+    if (cur) requestImages(cur.id);
+  }, [slides, slideIdx, requestImages]);
+  useEffect(() => {
+    if (slideIdx >= slides.length) setSlideIdx(0);
+  }, [slides.length, slideIdx]);
+
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -1015,6 +1040,76 @@ function Shop() {
    * Artikelkachel. Bewusst als Funktion (kein eigener Komponententyp), damit
    * nachgeladene Bilder die Kacheln nicht neu aufbauen und flackern lassen.
    */
+  const renderHighlightSlider = () => {
+    const idx = Math.min(slideIdx, slides.length - 1);
+    const a = slides[idx];
+    if (!a) return null;
+    const img = thumbMap[a.id] ?? (imageLookupDone.has(a.id) ? imagesOf(a)[0] : undefined);
+    const open = () => {
+      requestImages(a.id);
+      setDetailSku(a.sku);
+    };
+    const go = (d: number) => setSlideIdx((i) => (i + d + slides.length) % slides.length);
+    return (
+      <div onMouseEnter={() => setSlidePaused(true)} onMouseLeave={() => setSlidePaused(false)}>
+        <div key={a.sku} className="grid animate-in fade-in duration-500 overflow-hidden rounded-lg border border-border bg-card shadow-sm md:grid-cols-2">
+          <button onClick={open} className="relative flex h-80 items-center justify-center bg-panel p-6 md:h-[26rem]">
+            {img ? (
+              <ArticleImage src={img} alt={a.name} className="max-h-full max-w-full object-contain" />
+            ) : (
+              <span className="label-mono text-muted-foreground">Bild wird geladen …</span>
+            )}
+            {a.promo && (
+              <span className="absolute left-4 top-4 rounded-sm bg-destructive px-2 py-1 text-xs font-bold uppercase text-destructive-foreground">
+                % Aktion
+              </span>
+            )}
+          </button>
+          <div className="flex flex-col justify-center gap-3 p-6 md:p-10">
+            <span className="label-mono text-muted-foreground">
+              {a.manufacturer || a.category} · Art.-Nr. {a.sku}
+            </span>
+            <button onClick={open} className="text-left text-3xl font-bold tracking-tight hover:text-accent">
+              {a.groupName || a.name}
+            </button>
+            {a.spec && (
+              <p className="line-clamp-3 text-sm text-muted-foreground">{specText(a.spec)}</p>
+            )}
+            <div className="mt-2">
+              <span className="text-2xl font-bold">{eur(priceForQty(a, 1))}</span>
+              <span className="ml-2 text-xs text-muted-foreground">EK netto</span>
+              {a.uvp != null && (
+                <div className="text-xs text-muted-foreground">UVP {eur(a.uvp)} inkl. USt.</div>
+              )}
+            </div>
+            <button
+              onClick={open}
+              className="mt-3 self-start rounded-sm bg-accent px-5 py-2.5 font-semibold text-accent-foreground hover:opacity-90"
+            >
+              Zum Gerät →
+            </button>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <button onClick={() => go(-1)} aria-label="Vorheriges Gerät" className="rounded-sm border border-border px-3 py-1.5 hover:border-accent">‹</button>
+          <input
+            type="range"
+            min={0}
+            max={slides.length - 1}
+            value={idx}
+            onChange={(e) => setSlideIdx(Number(e.target.value))}
+            aria-label="Gerät auswählen"
+            className="flex-1 accent-[var(--color-accent)]"
+          />
+          <button onClick={() => go(1)} aria-label="Nächstes Gerät" className="rounded-sm border border-border px-3 py-1.5 hover:border-accent">›</button>
+          <span className="w-16 text-right font-mono text-xs text-muted-foreground">
+            {idx + 1} / {slides.length}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
   const renderArticleCard = (article: CatalogArticle) => {
     const q = getQty(article);
     const unit = priceForQty(article, q);
@@ -2274,7 +2369,8 @@ function Shop() {
                   : "Keine Artikel für diese Auswahl."}
               </p>
             )}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {highlightView && slides.length > 0 && renderHighlightSlider()}
+            <div hidden={highlightView} className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {rows.map((row) =>
                 row.kind === "single" ? (
                   renderArticleCard(row.article)
