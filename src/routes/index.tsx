@@ -2351,7 +2351,7 @@ function Shop() {
                         </div>
                       </div>
                       <div className="h-1 overflow-hidden rounded bg-muted">
-                        <div key={`${hlIndex}-${hlPaused}`} className="h-full bg-accent" style={{ width: hlPaused ? "0%" : "100%", transition: hlPaused ? "none" : "width 6s linear" , transform: "scaleX(1)" }} />
+                        <div key={`${hlIndex}-${hlPaused}`} className="h-full bg-accent" style={{ animation: hlPaused ? "none" : "hl-progress 6s linear forwards", width: hlPaused ? "0%" : undefined }} />
                       </div>
                       <div className="mt-3 flex gap-3 overflow-x-auto pb-2">
                         {hlItems.map((item, i) => {
@@ -2359,7 +2359,6 @@ function Shop() {
                           return (
                             <ThumbSlot key={item.sku} onVisible={() => requestImages(item.id)}>
                               <button
-                                ref={(el) => { if (el && i === hlIndex) el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" }); }}
                                 onClick={() => setHlIndex(i)}
                                 className={`flex w-36 shrink-0 flex-col rounded-md border bg-card p-2 text-left ${i === hlIndex ? "border-accent ring-2 ring-accent/40" : "border-border opacity-70 hover:opacity-100"}`}
                               >

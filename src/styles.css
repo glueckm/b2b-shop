@@ -202,3 +202,8 @@
   text-align: left;
 }
 
+
+@keyframes hl-progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
