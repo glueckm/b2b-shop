@@ -1051,7 +1051,8 @@ function Shop() {
       setDetailSku(a.sku);
     };
     // Vier Reiter unten: aktuelles Gerät und die nächsten drei.
-    const tabs = Array.from({ length: Math.min(4, slides.length) }, (_, k) => (idx + k) % slides.length);
+    const start = Math.floor(idx / 4) * 4;
+    const tabs = Array.from({ length: Math.min(4, slides.length) }, (_, k) => (start + k) % slides.length);
     return (
       <div className="overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-md">
         <div className="relative">
@@ -1070,7 +1071,7 @@ function Shop() {
             className="grid gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
           >
             <div className="order-2 flex flex-col justify-center md:order-1">
-              <span className="label-mono flex items-center text-primary-foreground/50">
+              <span className="flex items-center text-lg font-bold uppercase text-primary-foreground">
                 {brandLogo(a.manufacturer) ? (
                   <img
                     src={brandLogo(a.manufacturer)}
@@ -1081,7 +1082,7 @@ function Shop() {
                   a.manufacturer || a.category
                 )}
               </span>
-              <button onClick={open} className="mt-2 text-left text-4xl font-bold tracking-tight hover:text-accent">
+              <button onClick={open} className="mt-3 text-left text-4xl font-bold tracking-tight hover:text-accent">
                 {a.groupName || a.name}
               </button>
               {(() => {
@@ -1101,8 +1102,13 @@ function Shop() {
                       return m ? { label: m[1]!, value: m[2]! } : { label: "", value: part };
                     });
                 }
-                if (chips.length === 0) return null;
+                const sentence = a.spec
+                  ? (specText(a.spec).split(/(?<=[.!?])\s/)[0] ?? "").trim()
+                  : "";
+                const lead = sentence && !sentence.includes(":") && sentence.length <= 160 ? sentence : "";
+                if (chips.length === 0 && !lead) return null;
                 return (
+                  <>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {chips.slice(0, 5).map((c) => (
                       <span key={c.label + c.value} className="hl-chip">
@@ -1111,9 +1117,11 @@ function Shop() {
                       </span>
                     ))}
                   </div>
+                  {lead && <p className="mt-6 line-clamp-2 text-sm text-primary-foreground/80">{lead}</p>}
+                  </>
                 );
               })()}
-              <div className="mt-6 flex flex-wrap items-baseline gap-3">
+              <div className="mt-8 flex flex-wrap items-baseline gap-3">
                 <span className="text-4xl font-bold">{eur(priceForQty(a, 1))}</span>
                 <span className="text-xs text-primary-foreground/60">
                   EK netto{a.uvp != null && ` · UVP ${eur(a.uvp)}`}
@@ -1138,7 +1146,7 @@ function Shop() {
               onClick={open}
               onMouseEnter={() => setSlideHover(true)}
               onMouseLeave={() => setSlideHover(false)}
-              className={`hl-stage order-1 md:order-2 ${img && !/\.(png|webp)(\?|$)/i.test(img) ? "hl-plate" : ""}`}
+              className={`hl-stage order-1 md:order-2`}
             >
               {(() => {
                 const badge = a.promo
@@ -1147,7 +1155,7 @@ function Shop() {
                     ? { text: "Auf Lager", cls: "bg-stock text-primary-foreground" }
                     : null;
                 return badge ? (
-                  <span className={`absolute left-3 top-3 z-10 rounded-sm px-2 py-1 text-xs font-bold ${badge.cls}`}>
+                  <span className={`absolute left-3 top-3 z-10 rounded-sm px-2 py-1 text-xs font-bold uppercase tracking-wide ${badge.cls}`}>
                     {badge.text}
                   </span>
                 ) : null;
@@ -1170,10 +1178,10 @@ function Shop() {
               <button
                 key={`${t.sku}-${k}`}
                 onClick={() => setSlideIdx(i)}
-                className={`relative px-5 py-4 text-left transition-colors hover:bg-primary-foreground/5 ${k === 0 ? "" : "opacity-60"}`}
+                className={`relative px-5 py-4 text-left transition-colors hover:bg-primary-foreground/5 ${i === idx ? "bg-primary-foreground/5" : "opacity-60"}`}
               >
                 <span
-                  className={`absolute inset-x-5 top-0 h-0.5 ${k === 0 ? "bg-accent" : "bg-transparent"}`}
+                  className={`absolute inset-x-0 top-0 h-0.5 ${i === idx ? "bg-accent" : "bg-transparent"}`}
                 />
                 <span className="block truncate text-sm font-semibold">{t.groupName || t.name}</span>
                 <span className="block truncate text-xs text-primary-foreground/60">
