@@ -19,6 +19,12 @@ const BRANDS: Brand[] = [
   { name: "KEEPPOWER", logo: keeppower },
 ];
 
+/** Logo zu einem Herstellernamen aus weclapp (z. B. „NOCPIX Optics“ → NOCPIX-Logo). */
+export function brandLogo(manufacturer: string): string | undefined {
+  const m = manufacturer.toUpperCase();
+  return BRANDS.find((b) => b.logo && new RegExp(`(^|[^A-Z])${b.name}([^A-Z]|$)`).test(m))?.logo;
+}
+
 /** Laufband mit Markenlogos – nur am PC, stoppt beim Überfahren mit der Maus. */
 export function BrandMarquee({ onSelect }: { onSelect: (brand: string) => void }) {
   const row = (hidden: boolean) => (
