@@ -1525,6 +1525,7 @@ function Shop() {
             </button>
             <a
               href="#order"
+              hidden={highlightView}
               className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
