@@ -917,6 +917,10 @@ function Shop() {
     return () => clearTimeout(t);
   }, [slides.length, slidePaused, slideIdx]);
   useEffect(() => {
+    const cur = slides[slideIdx];
+    if (cur) requestImages(cur.id);
+  }, [slides, slideIdx, requestImages]);
+  useEffect(() => {
     if (slideIdx >= slides.length) setSlideIdx(0);
   }, [slides.length, slideIdx]);
 
@@ -1039,6 +1043,7 @@ function Shop() {
   const renderHighlightSlider = () => {
     const idx = Math.min(slideIdx, slides.length - 1);
     const a = slides[idx];
+    if (!a) return null;
     const img = thumbMap[a.id] ?? (imageLookupDone.has(a.id) ? imagesOf(a)[0] : undefined);
     const open = () => {
       requestImages(a.id);
