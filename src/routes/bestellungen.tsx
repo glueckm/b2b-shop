@@ -90,7 +90,7 @@ function OrderCard({ order }: { order: CustomerOrder }) {
                     {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}
                     <strong className="font-semibold">Transportreferenz:</strong>
                   </span>
-                  <span>{inv.transportRef ?? "–"}</span>
+                  <span>{inv.transportRef ?? "keine Referenz verfügbar"}</span>
                   {inv.transportRef && (
                     <button
                       type="button"

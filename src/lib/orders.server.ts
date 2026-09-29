@@ -136,7 +136,10 @@ export async function customerOrders(customerNumber: string, query: DbQuery): Pr
       dueDate: iso(s["dueDate"]),
       gross: Number(s["gross"] ?? 0),
       paid: Boolean(s["paid"]),
-      transportRef: s["transportRef"] ? String(s["transportRef"]) : null,
+      transportRef: (() => {
+        const v = String(s["transportRef"] ?? "").trim();
+        return !v || /^altbeleg/i.test(v) || /^x+$/i.test(v) ? null : v;
+      })(),
     })),
   }));
 }
