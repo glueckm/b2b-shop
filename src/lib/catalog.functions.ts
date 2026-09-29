@@ -49,6 +49,8 @@ export type CatalogArticle = {
   manufacturer: string;
   /** Verkaufte Menge der letzten 52 Monate (für die Sortierung nach Serien). */
   sold: number;
+  /** Unverbindliche Preisempfehlung (brutto) aus weclapp, null wenn nicht gepflegt. */
+  uvp: number | null;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -530,6 +532,7 @@ async function buildArticles(
       is_primary: boolean;
       manufacturer: string;
       sold: number;
+      uvp: number | null;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -577,6 +580,7 @@ async function buildArticles(
       unit: row.unit,
       moq: Math.max(1, Math.round(row.moq)),
       onHand: Math.round(row.on_hand),
+      uvp: row.uvp != null && Number(row.uvp) > 0 ? Number(row.uvp) : null,
       breaks: (row.breaks ?? [])
         .map((b) => ({
           from: Number(b.from),

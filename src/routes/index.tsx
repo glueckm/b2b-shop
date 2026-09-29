@@ -1967,7 +1967,16 @@ function Shop() {
                       <p className="label-mono text-muted-foreground">
                         {[a.level1, a.level2].filter(Boolean).join(" · ")}
                       </p>
-                      <h1 className="mt-1 text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                      <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                        <h1 className="text-3xl font-bold leading-tight tracking-tight">{a.name}</h1>
+                        {a.uvp != null && (
+                          <p className="text-right">
+                            <span className="label-mono text-muted-foreground">UVP </span>
+                            <span className="text-xl font-semibold">{eur(a.uvp)}</span>
+                            <span className="ml-1 text-xs text-muted-foreground">inkl. USt.</span>
+                          </p>
+                        )}
+                      </div>
                       <p className="mt-2 font-mono text-[13px] text-muted-foreground">
                         Art.-Nr.{" "}
                         <span className="rounded-sm bg-muted px-1.5 py-0.5 text-foreground">{a.sku}</span>
