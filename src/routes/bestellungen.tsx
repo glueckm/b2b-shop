@@ -82,6 +82,16 @@ function OrderCard({ order }: { order: CustomerOrder }) {
               <DocLink key={inv.id} kind="rechnung" id={inv.id} label={`Rechnung ${inv.number}`} />
             ))}
           </div>
+          {order.invoices.length > 0 && (
+            <ul className="mb-3 space-y-0.5 text-sm">
+              {order.invoices.map((inv) => (
+                <li key={inv.id}>
+                  <span className="text-muted-foreground">Rechnung {inv.number} · Transportreferenz: </span>
+                  <span className="font-mono">{inv.transportRef ?? "–"}</span>
+                </li>
+              ))}
+            </ul>
+          )}
           <table className="w-full text-sm">
             <thead className="label-mono text-left text-muted-foreground">
               <tr>
