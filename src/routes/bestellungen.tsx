@@ -85,17 +85,6 @@ function OrderCard({ order }: { order: CustomerOrder }) {
             </div>
             {order.invoices.length > 0 && (
               <div className="ml-auto flex flex-col items-end gap-1 text-right text-sm">
-                <a
-                  href="https://www.post.at/s/sendungssuche"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
-                >
-                  Zur Sendungsverfolgung
-                </a>
-                <p className="text-xs text-muted-foreground">
-                  Kopieren Sie dafür Ihre Transportreferenz der jeweiligen Lieferung.
-                </p>
                 <ul className="space-y-0.5">
                   {order.invoices.map((inv) => (
                     <li key={inv.id} className="flex items-center justify-end gap-2">
@@ -166,21 +155,36 @@ function OrdersPage() {
       </Link>
       <h1 className="mt-8 text-2xl font-semibold tracking-tight">Meine Bestellungen</h1>
 
-      <div className="mt-6 flex gap-2">
-        {([
-          ["orders", `Aufträge (${orders.length})`],
-          ["backlog", `Rückstände (${backlog.length})`],
-        ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`rounded-sm border px-3 py-1.5 text-sm font-semibold ${
-              tab === key ? "border-accent bg-accent text-accent-foreground" : "border-border hover:bg-muted"
-            }`}
+      <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
+        <div className="flex gap-2">
+          {([
+            ["orders", `Aufträge (${orders.length})`],
+            ["backlog", `Rückstände (${backlog.length})`],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={`rounded-sm border px-3 py-1.5 text-sm font-semibold ${
+                tab === key ? "border-accent bg-accent text-accent-foreground" : "border-border hover:bg-muted"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-col items-end gap-1 text-right">
+          <a
+            href="https://www.post.at/s/sendungssuche"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
           >
-            {label}
-          </button>
-        ))}
+            Zur Sendungsverfolgung
+          </a>
+          <p className="text-xs text-muted-foreground">
+            Kopieren Sie dafür Ihre Transportreferenz der jeweiligen Lieferung.
+          </p>
+        </div>
       </div>
 
       {tab === "orders" ? (
