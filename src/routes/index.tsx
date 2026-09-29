@@ -1054,9 +1054,13 @@ function Shop() {
     return (
       <div className="overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-md">
         <div className="relative">
+          <div className="border-b border-primary-foreground/10 px-8 pb-4 pt-6 md:px-10">
+            <span className="label-mono text-accent">Willkommen</span>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
+          </div>
           <button
             onClick={() => setSlidePaused((p) => !p)}
-            className="absolute right-4 top-3 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
+            className="absolute right-6 top-6 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
           >
             {slidePaused ? "▶ Weiter" : "❚❚ Pause"}
           </button>
@@ -1992,15 +1996,6 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
-          {highlightView && (
-            <div className="mb-6 border-b border-border pb-4">
-              <span className="label-mono text-accent">Willkommen</span>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Unsere ausgewählten Produkte und aktuellen Aktionen – ein Klick öffnet die Detailseite.
-              </p>
-            </div>
-          )}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
