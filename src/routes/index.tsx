@@ -38,9 +38,12 @@ import { shopLogout } from "@/lib/shop-auth.functions";
 import { SHOP_VERSION } from "@/lib/version";
 
 
+/** Startseite nach dem Login: Aktions- und Highlight-Artikel aus allen Bereichen. */
+const HIGHLIGHTS = "Highlights";
+
 const searchSchema = z.object({
   channel: z.string().default("NET1"),
-  category: z.string().default("Wärmebild & Nachtsicht"),
+  category: z.string().default(HIGHLIGHTS),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
@@ -60,7 +63,7 @@ export const Route = createFileRoute("/")({
     const catalog = await getCatalog({
       data: {
         channel: deps.channel,
-        category: deps.category,
+        category: deps.category === HIGHLIGHTS ? "" : deps.category,
         subcategory: deps.subcategory,
         subsubcategory: deps.subsubcategory,
         search: deps.q,
@@ -573,6 +576,7 @@ function Shop() {
   }, [data.user?.id]);
   const [term, setTerm] = useState(search.q);
   const detailSku = search.artikel || null;
+  const highlightView = search.category === HIGHLIGHTS && !detailSku && !search.q.trim();
   const [detailImage, setDetailImage] = useState(0);
   const [detailTab, setDetailTab] = useState("beschreibung");
   const [accessories, setAccessories] = useState<Record<string, CatalogArticle[]>>({});
@@ -646,6 +650,7 @@ function Shop() {
         groupName: "",
         specs: {},
         promo: false,
+        highlight: false,
         isPrimary: false,
         manufacturer: "",
         sold: 0,
@@ -870,6 +875,14 @@ function Shop() {
       });
     }
 
+    if (search.category === HIGHLIGHTS && !search.q.trim()) {
+      const hl = (article: CatalogArticle) => article.promo || article.highlight;
+      return out.flatMap((row): Row[] => {
+        if (row.kind === "single") return hl(row.article) ? [row] : [];
+        const variants = row.variants.filter(hl);
+        return variants.length > 0 ? [{ ...row, variants }] : [];
+      });
+    }
     if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
@@ -1455,13 +1468,22 @@ function Shop() {
 
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
-          <img
-            src={mawaLogo}
-            alt="MAWA Trading"
-            width={369}
-            height={77}
-            className="h-7 w-auto shrink-0"
-          />
+          <button
+            type="button"
+            title="Zu den Highlights"
+            onClick={() => {
+              setBrandPick(null);
+              setPromoOnly(false);
+              setFavOnly(false);
+              setTerm("");
+              void navigate({
+                search: (prev) => ({ ...prev, category: HIGHLIGHTS, subcategory: "", subsubcategory: "", q: "", artikel: "" }),
+              });
+            }}
+            className="shrink-0"
+          >
+            <img src={mawaLogo} alt="MAWA Trading" width={369} height={77} className="h-7 w-auto" />
+          </button>
           <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
             <input
               value={term}
@@ -1503,6 +1525,7 @@ function Shop() {
             </button>
             <a
               href="#order"
+              hidden={highlightView}
               className="flex items-center gap-2 rounded-sm bg-accent px-4 py-2 font-semibold text-accent-foreground"
             >
               <ShoppingCart className="size-4" />
@@ -1650,8 +1673,12 @@ function Shop() {
       })()}
 
 
-      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
-        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+      <div
+        className={`mx-auto grid max-w-[1600px] gap-6 px-5 py-7 ${
+          highlightView ? "" : "lg:grid-cols-[220px_minmax(0,1fr)_330px]"
+        }`}
+      >
+        <aside hidden={highlightView} className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
           {(() => {
             const block = (
               title: string,
@@ -1840,6 +1867,15 @@ function Shop() {
         </aside>
 
         <main className="min-w-0">
+          {highlightView && (
+            <div className="mb-6 border-b border-border pb-4">
+              <span className="label-mono text-accent">Willkommen</span>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight">Highlights & Aktionen</h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Unsere ausgewählten Produkte und aktuellen Aktionen – ein Klick öffnet die Detailseite.
+              </p>
+            </div>
+          )}
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <p id="catalog" className="flex items-center gap-2 text-sm text-muted-foreground">
               <button
@@ -2274,7 +2310,7 @@ function Shop() {
           )}
         </main>
 
-        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
+        <aside id="order" hidden={highlightView} className="lg:sticky lg:top-36 lg:self-start">
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
