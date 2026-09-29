@@ -1,4 +1,4 @@
-import { BrandMarquee, brandLogo } from "@/components/BrandMarquee";
+import { BrandMarquee } from "@/components/BrandMarquee";
 import {
   createFileRoute,
   Link,
@@ -899,31 +899,6 @@ function Shop() {
   }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
 
 
-  // Highlight-Startseite: ein Gerät pro Folie, automatischer Wechsel alle 6 s.
-  const slides = useMemo(
-    () =>
-      highlightView
-        ? rows.map((row) =>
-            row.kind === "single" ? row.article : (row.variants.find((v) => v.isPrimary) ?? row.variants[0]),
-          )
-        : [],
-    [rows, highlightView],
-  );
-  const [slideIdx, setSlideIdx] = useState(0);
-  const [slidePaused, setSlidePaused] = useState(false);
-  useEffect(() => {
-    if (slides.length < 2 || slidePaused) return;
-    const t = setTimeout(() => setSlideIdx((i) => (i + 1) % slides.length), 6000);
-    return () => clearTimeout(t);
-  }, [slides.length, slidePaused, slideIdx]);
-  useEffect(() => {
-    const cur = slides[slideIdx];
-    if (cur) requestImages(cur.id);
-  }, [slides, slideIdx, requestImages]);
-  useEffect(() => {
-    if (slideIdx >= slides.length) setSlideIdx(0);
-  }, [slides.length, slideIdx]);
-
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
     setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -1040,106 +1015,6 @@ function Shop() {
    * Artikelkachel. Bewusst als Funktion (kein eigener Komponententyp), damit
    * nachgeladene Bilder die Kacheln nicht neu aufbauen und flackern lassen.
    */
-  const renderHighlightSlider = () => {
-    const idx = Math.min(slideIdx, slides.length - 1);
-    const a = slides[idx];
-    if (!a) return null;
-    const img = thumbMap[a.id] ?? (imageLookupDone.has(a.id) ? imagesOf(a)[0] : undefined);
-    const open = () => {
-      requestImages(a.id);
-      setDetailSku(a.sku);
-    };
-    // Vier Reiter unten: aktuelles Gerät und die nächsten drei.
-    const tabs = Array.from({ length: Math.min(4, slides.length) }, (_, k) => (idx + k) % slides.length);
-    return (
-      <div className="overflow-hidden rounded-lg bg-primary text-primary-foreground shadow-md">
-        <div className="relative">
-          <button
-            onClick={() => setSlidePaused((p) => !p)}
-            className="absolute right-4 top-3 z-10 flex items-center gap-1.5 text-xs text-primary-foreground/60 hover:text-accent"
-          >
-            {slidePaused ? "▶ Weiter" : "❚❚ Pause"}
-          </button>
-          <div
-            key={a.sku}
-            className="grid animate-in slide-in-from-right-24 fade-in duration-700 ease-out gap-6 p-8 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:p-10"
-          >
-            <div className="flex flex-col justify-center">
-              <span className="label-mono flex items-center text-primary-foreground/50">
-                {brandLogo(a.manufacturer) ? (
-                  <img
-                    src={brandLogo(a.manufacturer)}
-                    alt={a.manufacturer}
-                    className="h-6 w-auto max-w-[160px] object-contain brightness-0 invert"
-                  />
-                ) : (
-                  a.manufacturer || a.category
-                )}
-                {a.promo && <span className="ml-2 text-accent">% Aktion</span>}
-              </span>
-              <button onClick={open} className="mt-2 text-left text-4xl font-bold tracking-tight hover:text-accent">
-                {a.groupName || a.name}
-              </button>
-              {a.spec && (
-                <p className="mt-3 line-clamp-2 text-sm text-primary-foreground/70">{specText(a.spec)}</p>
-              )}
-              <div className="mt-6 flex flex-wrap items-baseline gap-3">
-                <span className="text-4xl font-bold">{eur(priceForQty(a, 1))}</span>
-                <span className="text-xs text-primary-foreground/60">
-                  EK netto{a.uvp != null && ` · UVP ${eur(a.uvp)}`}
-                </span>
-              </div>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <button
-                  onClick={() => addLine(a.sku, a.moq)}
-                  className="rounded-sm bg-accent px-5 py-2.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
-                >
-                  {a.onHand > 0 ? "In den Warenkorb" : "Vormerken"}
-                </button>
-                <button
-                  onClick={open}
-                  className="rounded-sm border border-primary-foreground/30 px-5 py-2.5 text-sm font-semibold hover:border-accent hover:text-accent"
-                >
-                  Zum Produkt
-                </button>
-              </div>
-            </div>
-            <button
-              onClick={open}
-              className="flex h-72 items-center justify-center rounded-md bg-card p-6 md:h-[22rem]"
-            >
-              {img ? (
-                <ArticleImage src={img} alt={a.name} className="max-h-full max-w-full object-contain" />
-              ) : (
-                <span className="label-mono text-muted-foreground">Bild wird geladen …</span>
-              )}
-            </button>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 border-t border-primary-foreground/10 md:grid-cols-4">
-          {tabs.map((i, k) => {
-            const t = slides[i]!;
-            return (
-              <button
-                key={`${t.sku}-${k}`}
-                onClick={() => setSlideIdx(i)}
-                className={`relative px-5 py-4 text-left transition-colors hover:bg-primary-foreground/5 ${k === 0 ? "" : "opacity-60"}`}
-              >
-                <span
-                  className={`absolute inset-x-5 top-0 h-0.5 ${k === 0 ? "bg-accent" : "bg-transparent"}`}
-                />
-                <span className="block truncate text-sm font-semibold">{t.groupName || t.name}</span>
-                <span className="block truncate text-xs text-primary-foreground/60">
-                  {t.manufacturer || t.category} · {stockLabel[stockState(t.onHand)]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
   const renderArticleCard = (article: CatalogArticle) => {
     const q = getQty(article);
     const unit = priceForQty(article, q);
@@ -2399,8 +2274,7 @@ function Shop() {
                   : "Keine Artikel für diese Auswahl."}
               </p>
             )}
-            {highlightView && slides.length > 0 && renderHighlightSlider()}
-            <div hidden={highlightView} className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               {rows.map((row) =>
                 row.kind === "single" ? (
                   renderArticleCard(row.article)
