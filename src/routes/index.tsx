@@ -1928,7 +1928,7 @@ function Shop() {
                           );
                         if (siblings.length < 2) return null;
                         return (
-                          <div className="-mt-4 xl:order-last xl:col-span-2">
+                          <div className="-mt-4 xl:order-3 xl:col-span-2">
                             <p className="label-mono text-muted-foreground">
                               {siblings.length} Varianten
                             </p>
@@ -2061,7 +2061,7 @@ function Shop() {
                         </div>
                       </div>
                     </div>
-                    <div className="xl:col-span-2">
+                    <div className="xl:order-4 xl:col-span-2">
                       <div className="flex flex-wrap gap-1 border-b border-border">
                         {[
                           ["beschreibung", "Beschreibung"],
@@ -2159,7 +2159,7 @@ function Shop() {
                       </div>
                     </div>
                     {(accessories[a.sku]?.length ?? 0) > 0 && (
-                      <div className="xl:col-span-2">
+                      <div className="xl:order-4 xl:col-span-2">
                         <h2 className="text-xl font-bold tracking-tight">Passendes Zubehör</h2>
                         <p className="text-[13px] text-muted-foreground">Kunden, die diesen Artikel gekauft haben, kauften auch</p>
                         <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
