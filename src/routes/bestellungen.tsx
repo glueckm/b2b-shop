@@ -84,16 +84,39 @@ function OrderCard({ order }: { order: CustomerOrder }) {
               ))}
             </div>
             {order.invoices.length > 0 && (
-              <ul className="ml-auto space-y-0.5 text-right text-sm">
-                {order.invoices.map((inv) => (
-                  <li key={inv.id}>
-                    <span className="text-muted-foreground">
-                      {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}Transportreferenz:{" "}
-                    </span>
-                    <span className="font-mono">{inv.transportRef ?? "–"}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="ml-auto flex flex-col items-end gap-1 text-right text-sm">
+                <a
+                  href="https://www.post.at/s/sendungssuche"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-sm bg-accent px-3 py-1.5 text-sm font-semibold text-accent-foreground hover:opacity-90"
+                >
+                  Zur Sendungsverfolgung
+                </a>
+                <p className="text-xs text-muted-foreground">
+                  Kopieren Sie dafür Ihre Transportreferenz der jeweiligen Lieferung.
+                </p>
+                <ul className="space-y-0.5">
+                  {order.invoices.map((inv) => (
+                    <li key={inv.id} className="flex items-center justify-end gap-2">
+                      <span className="text-muted-foreground">
+                        {order.invoices.length > 1 ? `Rechnung ${inv.number} · ` : ""}Transportreferenz:
+                      </span>
+                      <span className="font-mono">{inv.transportRef ?? "–"}</span>
+                      {inv.transportRef && (
+                        <button
+                          type="button"
+                          onClick={() => void navigator.clipboard.writeText(inv.transportRef!)}
+                          className="text-xs underline hover:text-accent"
+                          title="Transportreferenz kopieren"
+                        >
+                          Kopieren
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
           </div>
           <table className="w-full text-sm">
