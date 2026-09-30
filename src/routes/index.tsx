@@ -922,6 +922,26 @@ function Shop() {
     });
   }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
 
+  // Große Bereiche (z. B. Montagen) schrittweise anzeigen, damit die Seite flüssig bleibt.
+  const ROW_STEP = 60;
+  const [rowLimit, setRowLimit] = useState(ROW_STEP);
+  useEffect(() => {
+    setRowLimit(ROW_STEP);
+  }, [rows]);
+  const moreRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = moreRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setRowLimit((n) => n + ROW_STEP);
+      },
+      { rootMargin: "600px" },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [rowLimit, rows]);
+
 
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
   const toggleGroup = (id: string) =>
@@ -2423,7 +2443,7 @@ function Shop() {
               </p>
             )}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {rows.map((row) =>
+              {rows.slice(0, rowLimit).map((row) =>
                 row.kind === "single" ? (
                   renderArticleCard(row.article)
                 ) : (
