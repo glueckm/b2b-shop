@@ -273,7 +273,8 @@ select a.id as id,
          where cp._parent_rid = a._rid and cp.article_calculation_price_type = 'RECOMMENDED_RETAIL_PRICE'
            and cp.price > 0 and (cp.start_date is null or cp.start_date <= now())
            and (cp.end_date is null or cp.end_date > now())
-         order by cp.start_date desc nulls last limit 1) as uvp
+         order by cp.start_date desc nulls last limit 1) as uvp,
+       (a.status_id = '888015') as is_eol
 from weclapp.article a
 join tier t on t.article_id = a.id
 left join cat on cat.id = a.article_category_id
@@ -287,7 +288,7 @@ left join sold so on so.article_id = a.id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- Einzelartikel nur mit Bestand im Hauptlager; Varianten immer (auch nicht lagernd, bestellbar)
-  and (vr.group_id is not null or coalesce(s.qty, 0) > 0)
+  and (a.status_id is distinct from '888015' or coalesce(s.qty, 0) > 0)
   and ($2 = '' or ${EFF_L1} = $2)
   and ($4 = '' or ${EFF_L2} = $4)
   and ($6 = '' or ${EFF_L3} = $6)
