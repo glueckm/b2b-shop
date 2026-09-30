@@ -657,6 +657,7 @@ function Shop() {
         specs: {},
         promo: false,
         isPrimary: false,
+        eol: false,
         manufacturer: "",
         sold: 0,
         uvp: null,
