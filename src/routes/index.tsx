@@ -294,7 +294,7 @@ function Shop() {
   const router = useRouter();
   // Läuft gerade ein Kategoriewechsel/Filterwechsel? Dann Ladeanzeige zeigen.
   const navPending = useRouterState({
-    select: (state) => state.isLoading || state.isTransitioning,
+    select: (state) => state.isLoading || state.status === "pending",
   });
 
   const articles = data.articles;
