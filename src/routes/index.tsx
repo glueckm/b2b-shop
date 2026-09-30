@@ -873,17 +873,34 @@ function Shop() {
           .replace(/^[\s-]+/, "")
           .split(/[\s-]+/)[0]
           ?.toLowerCase() ?? "";
+      // Modellreihe: Name ohne letztes Glied (z. B. „Night Stalker 4K eX“ für NS4E-70 und NS4E-100),
+      // damit Geräte derselben Reihe direkt hintereinander stehen.
+      const lineOf = (name: string) => {
+        const parts = name
+          .replace(/\b(pard|nocpix|infiray|rusan|nitecore)\b/gi, " ")
+          .split(/\s+-\s+|\s+/)
+          .filter(Boolean);
+        const cut = name.includes(" - ") ? name.split(" - ").slice(0, -1).join(" - ") : parts.slice(0, -1).join(" ");
+        return (cut || parts.join(" ")).replace(/\b(pard|nocpix|infiray|rusan|nitecore)\b/gi, "").trim().toLowerCase();
+      };
       const seriesTotal = new Map<string, number>();
+      const lineTotal = new Map<string, number>();
       for (const r of out) {
         const key = seriesOf(rowName(r));
         seriesTotal.set(key, (seriesTotal.get(key) ?? 0) + rowSold(r));
+        const line = lineOf(rowName(r));
+        lineTotal.set(line, (lineTotal.get(line) ?? 0) + rowSold(r));
       }
       out.sort((x, y) => {
         const sx = seriesOf(rowName(x));
         const sy = seriesOf(rowName(y));
+        const lx = lineOf(rowName(x));
+        const ly = lineOf(rowName(y));
         return (
           (seriesTotal.get(sy) ?? 0) - (seriesTotal.get(sx) ?? 0) ||
           sx.localeCompare(sy) ||
+          (lineTotal.get(ly) ?? 0) - (lineTotal.get(lx) ?? 0) ||
+          lx.localeCompare(ly) ||
           rowSold(y) - rowSold(x) ||
           rowName(x).localeCompare(rowName(y), "de", { numeric: true })
         );
