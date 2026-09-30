@@ -295,7 +295,7 @@ where a.active and a.available_in_sale
 
   and ($3 = '' or a.article_number ilike '%' || $3 || '%' or a.name ilike '%' || $3 || '%')
 order by coalesce(vr.group_sku, ''), coalesce(s.qty, 0) desc, a.article_number
-limit 600
+limit 15000
 
 
 `;
