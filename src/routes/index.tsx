@@ -1102,7 +1102,9 @@ function Shop() {
           <span className={`flex min-w-0 items-center gap-1.5 text-sm font-medium ${stockTone[state]}`}>
             <span className={`size-2 shrink-0 rounded-full ${stockDot[state]}`} />
             <span className="truncate">
-              {article.onHand > 0
+              {article.eol && article.onHand > 0
+                ? `Restbestände · ${stockDisplay(article.onHand)}`
+                : article.onHand > 0
                 ? `${stockLabel[state]} · ${stockDisplay(article.onHand)}`
                 : "Bestellbar"}
             </span>
@@ -2193,7 +2195,9 @@ function Shop() {
                         )}
                         <p className={`mt-4 flex items-center gap-2 text-sm font-medium ${stockTone[state]}`}>
                           <span className={`size-2.5 rounded-full ${stockDot[state]}`} />
-                          {a.onHand > 0
+                          {a.eol && a.onHand > 0
+                            ? `Restbestände · ${stockDisplay(a.onHand)} – solange der Vorrat reicht`
+                            : a.onHand > 0
                             ? `${stockLabel[state]} · ${stockDisplay(a.onHand)}`
                             : "Derzeit nicht lagernd – bestellbar"}
                         </p>

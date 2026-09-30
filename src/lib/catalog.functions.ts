@@ -51,6 +51,8 @@ export type CatalogArticle = {
   sold: number;
   /** Unverbindliche Preisempfehlung (brutto) aus weclapp, null wenn nicht gepflegt. */
   uvp: number | null;
+  /** In weclapp als EOL markiert (nur mit Bestand sichtbar: Restbestände). */
+  eol: boolean;
 };
 
 /** Zusatzfilter der Zieloptiken: Feldschlüssel und Beschriftung. */
@@ -315,7 +317,7 @@ left join glevel g on g.group_id = vg.variant_article_id
 where a.active and a.available_in_sale
   and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
   -- gleiche Regeln wie die Artikelliste: Varianten immer, Einzelartikel nur mit Bestand; gültiger Preis
-  and (vg.variant_article_id is not null or ${MAIN_STOCK_EXISTS})
+  and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})
   and exists (select 1 from weclapp.article_price p
     where p.article_id = a.id and p.price > 0
       and (p.start_date is null or p.start_date <= now())
@@ -330,11 +332,11 @@ order by 1, 2, 3
 const STATS_SQL = `
 select (select count(*)::int from weclapp.article a where a.active and a.available_in_sale
           and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-          and ${MAIN_STOCK_EXISTS}) as articles,
+          and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as articles,
        (select count(distinct a.article_category_id)::int from weclapp.article a
          where a.active and a.available_in_sale and a.article_category_id is not null
            and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
-           and ${MAIN_STOCK_EXISTS}) as categories,
+           and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as categories,
        (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
          join weclapp.article a on a.id = w.article_id
          where a.active and a.available_in_sale and w.warehouse_id = '3566'
@@ -533,6 +535,7 @@ async function buildArticles(
       manufacturer: string;
       sold: number;
       uvp: number | null;
+      is_eol: boolean | null;
     }>(ARTICLES_SQL, params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
@@ -596,6 +599,7 @@ async function buildArticles(
       isPrimary: Boolean(row.is_primary),
       manufacturer: (row.manufacturer ?? "").trim(),
       sold: Number(row.sold ?? 0),
+      eol: Boolean(row.is_eol),
     };
   });
 
