@@ -2474,6 +2474,16 @@ function Shop() {
                 ),
               )}
             </div>
+            {rows.length > rowLimit && (
+              <div ref={moreRef} className="mt-4 flex justify-center">
+                <button
+                  onClick={() => setRowLimit((n) => n + ROW_STEP)}
+                  className="rounded-sm border border-border px-4 py-2 text-sm font-semibold hover:bg-muted"
+                >
+                  Weitere Artikel anzeigen ({rows.length - rowLimit})
+                </button>
+              </div>
+            )}
           </div>
           )}
           </>
