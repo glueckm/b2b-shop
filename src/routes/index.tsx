@@ -1934,7 +1934,7 @@ function Shop() {
               ) : (
                 <ul className="mt-4 divide-y divide-border rounded-lg border border-border bg-card">
                   {detailedLines.map((line) => {
-                    const img = imagesOf(line.article)[0];
+                    const img = thumbMap[line.article.id] ?? imagesOf(line.article)[0];
                     const state = stockState(line.article.onHand);
                     return (
                       <li key={line.sku} className="flex flex-wrap items-center gap-4 p-4">
@@ -1946,11 +1946,15 @@ function Shop() {
                           className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-background"
                           aria-label={`${line.article.name} ansehen`}
                         >
+                          <ThumbSlot onVisible={() => requestImages(line.article.id)}>
                           {img ? (
                             <img src={img} alt={line.article.name} className="max-h-full max-w-full object-contain" loading="lazy" />
                           ) : (
-                            <span className="text-[11px] text-muted-foreground">Kein Bild</span>
+                            <span className="text-[11px] text-muted-foreground">
+                              {imageLookupDone.has(line.article.id) ? "Kein Bild" : "Bild lädt…"}
+                            </span>
                           )}
+                          </ThumbSlot>
                         </button>
                         <div className="min-w-0 flex-1">
                           <p className="font-mono text-[11px] text-muted-foreground">{line.sku}</p>
