@@ -1132,7 +1132,7 @@ function Shop() {
               onClick={() => addLine(article.sku, q)}
               className="rounded-sm bg-primary px-3 py-2 text-sm font-bold text-primary-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              {article.onHand > 0 ? "In den Korb" : "Vormerken"}
+              In den Korb
             </button>
           </span>
         </div>
@@ -2217,7 +2217,7 @@ function Shop() {
                             onClick={() => addLine(a.sku, q)}
                             className="flex-1 rounded-md bg-accent px-4 text-base font-bold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                           >
-                            {a.onHand > 0 ? "In den Warenkorb" : "Vormerken"}
+                            In den Warenkorb
                           </button>
                         </div>
                         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-accent">
