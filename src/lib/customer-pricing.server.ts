@@ -15,6 +15,8 @@ export type CustomerPricing = {
   group: string | null;
   company: string | null;
   customerNumber: string | null;
+  /** Ländercode der Hauptadresse (z. B. "DE"). */
+  country: string | null;
 };
 
 type Row = {
@@ -22,13 +24,18 @@ type Row = {
   company: string | null;
   category: string | null;
   sales_channel: string | null;
+  country: string | null;
 };
 
 const SQL = `
   select c.customer_number,
          coalesce(nullif(c.company, ''), trim(coalesce(c.first_name, '') || ' ' || coalesce(c.last_name, ''))) as company,
          nullif(c.customer_category_name, '') as category,
-         nullif(c.sales_channel, '') as sales_channel
+         nullif(c.sales_channel, '') as sales_channel,
+         (select upper(nullif(ca.country_code, '')) from weclapp.customer_address ca
+           where ca.customer_id = c.id and nullif(ca.country_code, '') is not null
+           order by ca.prime_address desc nulls last, ca.invoice_address desc nulls last,
+                    ca.delivery_address desc nulls last limit 1) as country
     from weclapp.customer c
    where regexp_replace(upper(coalesce(c.customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
       or regexp_replace(upper(coalesce(c.old_customer_number, '')), '[^A-Z0-9]', '', 'g') = $1
@@ -43,6 +50,7 @@ const FALLBACK: CustomerPricing = {
   group: null,
   company: null,
   customerNumber: null,
+  country: null,
 };
 
 /** Kurzzeit-Cache: die Preisgruppe ändert sich selten, spart eine DB-Abfrage je Seitenaufbau. */
@@ -74,6 +82,7 @@ export async function customerPricing(
       group: row.category?.trim() || null,
       company: row.company?.trim() || null,
       customerNumber: row.customer_number?.trim() || number,
+      country: row.country?.trim() || null,
     };
     cache.set(number, { at: Date.now(), value });
     return value;

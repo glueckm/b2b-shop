@@ -286,7 +286,7 @@ left join glevel g on g.group_id = vr.group_id
 left join stock s on s.article_id = a.id
 left join sold so on so.article_id = a.id
 where a.active and a.available_in_sale
-  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+  and __WEBSHOP__
   -- Einzelartikel nur mit Bestand im Hauptlager; Varianten immer (auch nicht lagernd, bestellbar)
   and (a.status_id is distinct from '888015' or coalesce(s.qty, 0) > 0)
   and ($2 = '' or ${EFF_L1} = $2)
@@ -316,7 +316,7 @@ from weclapp.article a
 left join weclapp.variant_article_variant vg on vg.article_id = a.id
 left join glevel g on g.group_id = vg.variant_article_id
 where a.active and a.available_in_sale
-  and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+  and __WEBSHOP__
   -- gleiche Regeln wie die Artikelliste: Varianten immer, Einzelartikel nur mit Bestand; gültiger Preis
   and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})
   and exists (select 1 from weclapp.article_price p
@@ -332,16 +332,16 @@ order by 1, 2, 3
 
 const STATS_SQL = `
 select (select count(*)::int from weclapp.article a where a.active and a.available_in_sale
-          and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+          and __WEBSHOP__
           and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as articles,
        (select count(distinct a.article_category_id)::int from weclapp.article a
          where a.active and a.available_in_sale and a.article_category_id is not null
-           and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)
+           and __WEBSHOP__
            and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as categories,
        (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
          join weclapp.article a on a.id = w.article_id
          where a.active and a.available_in_sale and w.warehouse_id = '3566'
-           and (a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)) as on_hand
+           and __WEBSHOP__) as on_hand
 `;
 
 
@@ -396,11 +396,24 @@ type CatalogSnapshot = {
  */
 type CacheEntry<T> = { at: number; value: T };
 
+/** Deutsche Kunden sehen nur Artikel für WEBSHOP DE, alle anderen Artikel aus WEBSHOP DE oder AT. */
+function webshopSql(sql: string, de: boolean): string {
+  return sql.replaceAll(
+    "__WEBSHOP__",
+    de ? "coalesce(a.ca_de_webshop_on_off, false)" : "(a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)",
+  );
+}
+
+/** Kunde gilt als deutsch, wenn seine Hauptadresse in Deutschland liegt. */
+export function isGermanCustomer(pricing: { country: string | null }): boolean {
+  return pricing.country === "DE";
+}
+
 const cacheRef = globalThis as typeof globalThis & {
   __mawaCatalogSnapshots?: Map<string, CacheEntry<CatalogSnapshot>>;
   __mawaCatalogInflight?: Map<string, Promise<CatalogSnapshot>>;
-  __mawaCatalogMeta?: CacheEntry<CatalogMeta>;
-  __mawaCatalogMetaInflight?: Promise<CatalogMeta> | undefined;
+  __mawaCatalogMetaByMarket?: Map<string, CacheEntry<CatalogMeta>>;
+  __mawaCatalogMetaInflightByMarket?: Map<string, Promise<CatalogMeta>>;
 };
 
 /** Daten gelten so lange als frisch. */
@@ -414,13 +427,13 @@ type CatalogMeta = {
   stats: { articles: number; categories: number; onHand: number };
 };
 
-async function buildMeta(query: DbQuery): Promise<CatalogMeta> {
+async function buildMeta(query: DbQuery, de: boolean): Promise<CatalogMeta> {
   const [treeRows, stats] = await Promise.all([
     query<{ level1: string; level2: string; level3: string; count: number }>(
-      CATEGORY_TREE_SQL,
+      webshopSql(CATEGORY_TREE_SQL, de),
       [],
     ),
-    query<{ articles: number; categories: number; on_hand: number }>(STATS_SQL),
+    query<{ articles: number; categories: number; on_hand: number }>(webshopSql(STATS_SQL, de)),
   ]);
 
   const treeMap = new Map<string, CategoryNode>();
@@ -460,27 +473,34 @@ async function buildMeta(query: DbQuery): Promise<CatalogMeta> {
   };
 }
 
-function catalogMeta(query: DbQuery): CatalogMeta | Promise<CatalogMeta> {
-  const hit = cacheRef.__mawaCatalogMeta;
+function catalogMeta(query: DbQuery, de: boolean): CatalogMeta | Promise<CatalogMeta> {
+  const key = de ? "DE" : "ALL";
+  const cache = (cacheRef.__mawaCatalogMetaByMarket ??= new Map());
+  const inflight = (cacheRef.__mawaCatalogMetaInflightByMarket ??= new Map());
+  const hit = cache.get(key);
   const fresh = hit && Date.now() - hit.at < META_TTL;
-  if (!fresh && !cacheRef.__mawaCatalogMetaInflight) {
-    cacheRef.__mawaCatalogMetaInflight = buildMeta(query)
-      .then((value) => {
-        cacheRef.__mawaCatalogMeta = { at: Date.now(), value };
-        return value;
-      })
-      .finally(() => {
-        cacheRef.__mawaCatalogMetaInflight = undefined;
-      });
+  if (!fresh && !inflight.has(key)) {
+    inflight.set(
+      key,
+      buildMeta(query, de)
+        .then((value) => {
+          cache.set(key, { at: Date.now(), value });
+          return value;
+        })
+        .finally(() => {
+          inflight.delete(key);
+        }),
+    );
   }
   if (fresh && hit) return hit.value;
-  return cacheRef.__mawaCatalogMetaInflight!;
+  return inflight.get(key)!;
 }
 
 async function buildArticles(
   priceChannel: string,
   filter: CatalogFilter,
   query: DbQuery,
+  de: boolean,
 ): Promise<{ articles: CatalogArticle[]; total: number }> {
   const params = [
     priceChannel,
@@ -537,7 +557,7 @@ async function buildArticles(
       sold: number;
       uvp: number | null;
       is_eol: boolean | null;
-    }>(ARTICLES_SQL, params);
+    }>(webshopSql(ARTICLES_SQL, de), params);
 
   const mapped: CatalogArticle[] = articles.map((row) => {
     // Vertriebsweg-Rabatt der Warengruppe auf die Listenpreise anwenden.
@@ -615,10 +635,11 @@ async function buildSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
   query: DbQuery,
+  de: boolean,
 ): Promise<CatalogSnapshot> {
   const [list, meta] = await Promise.all([
-    buildArticles(priceChannel, filter, query),
-    catalogMeta(query),
+    buildArticles(priceChannel, filter, query, de),
+    catalogMeta(query, de),
   ]);
   return { ...list, ...meta };
 }
@@ -627,15 +648,16 @@ export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
   query: DbQuery,
+  de = false,
 ): Promise<CatalogSnapshot> {
   const cache = (cacheRef.__mawaCatalogSnapshots ??= new Map());
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
-  const key = [priceChannel, filter.category, filter.subcategory, filter.subsubcategory].join("|");
+  const key = [de ? "DE" : "ALL", priceChannel, filter.category, filter.subcategory, filter.subsubcategory].join("|");
   const hit = cache.get(key);
   const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
 
   if (!fresh && !inflight.has(key)) {
-    const task = buildSnapshot(priceChannel, filter, query)
+    const task = buildSnapshot(priceChannel, filter, query, de)
       .then((value) => {
         cache.set(key, { at: Date.now(), value });
         return value;
@@ -697,6 +719,7 @@ async function buildPayload(
         subsubcategory: data.subsubcategory,
       },
       query,
+      isGermanCustomer(pricing),
     );
     const { categories, categoryTree, stats } = snapshot;
     let mapped: CatalogArticle[] = snapshot.articles;
@@ -784,6 +807,7 @@ export const getAccessories = createServerFn({ method: "POST" })
         pricing.channel || "NET1",
         { category: "", subcategory: "", subsubcategory: "" },
         query,
+        isGermanCustomer(pricing),
       );
       const bySku = new Map(snapshot.articles.map((a) => [a.sku, a]));
       const self = bySku.get(data.sku);
