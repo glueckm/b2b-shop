@@ -1,0 +1,153 @@
+Diese Erklärung informiert über die Verarbeitung personenbezogener Daten beim Besuch von b2b.mawa-trading.at, bei der Nutzung von Kundenkonten und im Rahmen von Bestellungen, Anfragen und Händlerinformationen. Sie gilt auch für Ansprechpartner und Mitarbeiter unserer Geschäftskunden.
+
+1 Verantwortliche und Kontakt
+
+Für die Anbahnung und Abwicklung des jeweiligen Kaufvertrags ist die Gesellschaft verantwortlich, die als Verkäuferin auftritt:
+
+MAWA Trading GmbH Österreich: Johann-Galler-Straße 20, 2120 Wolkersdorf, Österreich; Firmenbuch FN 540641k, Landesgericht Korneuburg. Verkäuferin für Kunden in Österreich und den übrigen belieferten Ländern sowie für Wärmebild- und Nachtsichtzieloptiken auch bei Kunden mit Sitz in Deutschland.
+
+MAWA Trading GmbH Deutschland: Josef-Reiert-Straße 16A, 69190 Walldorf, Deutschland; Sitz Frankfurt am Main; Amtsgericht Frankfurt am Main, HRB 133935. Verkäuferin für Kunden mit Sitz in Deutschland, ausgenommen die durch MAWA Österreich verkauften Wärmebild- und Nachtsichtzieloptiken.
+
+Gemischte Bestellungen deutscher Kunden werden entsprechend dieser Zuordnung auf beide Gesellschaften aufgeteilt. Jede Verkäuferin verarbeitet die Daten für ihren jeweiligen Kaufvertrag. Soweit für die Aufteilung und Zuordnung erforderlich, werden Kunden-, Kontakt- und Bestelldaten zwischen den Gesellschaften übermittelt. Bei natürlichen Personen als Vertragspartnern dient dies der Vertragsanbahnung und -erfüllung nach Art. 6 Abs. 1 lit. b DSGVO; bei Ansprechpartnern eines Unternehmens stützen wir die erforderliche Verarbeitung auf unser berechtigtes Interesse an der geordneten Vertragsabwicklung nach Art. 6 Abs. 1 lit. f DSGVO.
+
+Betreiberin des Shops und verantwortlich für dessen technischen Betrieb einschließlich Hosting ist die MAWA Trading GmbH Österreich. Sie ist auch Vertragspartnerin der eingesetzten Hosting- und Softwareanbieter.
+
+Ansprechpartner in Datenschutzfragen für beide Gesellschaften ist Erich Manzer, erreichbar unter office@mawa-trading.com und Telefon +43 2245 28640100. Bitte nennen Sie nach Möglichkeit die betroffene Gesellschaft oder Ihre Kundennummer.
+
+Die Zusammenarbeit beider Gesellschaften bei Händlerverwaltung, Freischaltung und Betreuung ist in einem Vertrag zwischen den Gesellschaften geregelt. Soweit sie dabei gemeinsam über Zwecke und Mittel entscheiden, handelt es sich um eine Vereinbarung nach Art. 26 DSGVO; deren wesentlichen Inhalt stellen wir Ihnen auf Anfrage unter office@mawa-trading.com zur Verfügung. Sie können Ihre Rechte gegenüber jeder der beiden Gesellschaften geltend machen.
+
+2 Datenquellen und betroffene Personen
+
+Wir erhalten Daten von Ihnen, etwa bei der Registrierung, Bestellung oder Kontaktaufnahme. Bei Mitarbeiterkonten und Ansprechpartnern erhalten wir Name, geschäftliche Kontaktdaten, Funktion und Zugriffsberechtigungen gegebenenfalls von Ihrem Arbeitgeber oder einem von ihm benannten Administrator. Bestell-, Liefer-, Zahlungs- und Reklamationsdaten entstehen außerdem im Verlauf der Geschäftsbeziehung.
+
+Soweit wir Unternehmens- und Vertretungsangaben überprüfen, nutzen wir die von Ihnen eingereichten Nachweise und erforderlichenfalls öffentlich zugängliche Unternehmens- oder Gewerberegister. Wir verarbeiten nur Angaben, die für den jeweiligen Zweck benötigt werden.
+
+Bei einer Erhebung über Dritte gelten die Informationspflichten nach Art. 14 DSGVO. Wir stellen die Informationen grundsätzlich spätestens innerhalb eines Monats, bei früherer Kontaktaufnahme bei dieser Kontaktaufnahme oder vor einer früheren ersten Offenlegung bereit, soweit keine gesetzliche Ausnahme greift.
+
+3 Websitebetrieb und technische Sicherheit
+
+Bei Aufrufen des Shops werden für die Auslieferung der Seite und die technische Sicherheit insbesondere IP-Adresse, Datum und Uhrzeit, angeforderte Ressource, Zugriffsstatus sowie vom Browser übermittelte Geräte- und Browserinformationen verarbeitet. Je nach Aufruf kann auch die zuvor besuchte Seite übermittelt werden. Zwecke sind der sichere Betrieb, Fehlerdiagnose und die Abwehr von Missbrauch.
+
+Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Unser berechtigtes Interesse liegt in der zuverlässigen Bereitstellung und dem Schutz des Shops. Zugriffsdaten werden nicht allein deshalb für Werbung verwendet.
+
+Protokolldaten werden nach 14 Tagen gelöscht. Bei dokumentierten Sicherheitsvorfällen bewahren wir nur die erforderlichen Auszüge länger auf, solange sie zur Aufklärung oder Rechtsverfolgung benötigt werden.
+
+4 Kundenkonto und Geschäftsanbahnung
+
+Für Registrierung, Prüfung der Unternehmereigenschaft und Nutzung des Kontos verarbeiten wir Unternehmensname, Anschrift, Kundennummer, gegebenenfalls UID- oder Umsatzsteuer-Identifikationsnummer, Namen und geschäftliche Kontaktdaten der Ansprechpartner sowie Anmelde- und Berechtigungsdaten. Zugangsdaten dienen der Authentifizierung und dem Schutz des Kontos.
+
+Bestehende Händler erhalten bei vorhandener Kundennummer automatisch Shopzugang. Bei neuen Händlern prüfen Mitarbeiter von MAWA Österreich oder MAWA Deutschland die eingereichten Angaben und entscheiden über die Aufnahme. Der Shop ist als Benutzeroberfläche direkt mit unserem Warenwirtschaftssystem weclapp verbunden.
+
+Sind Sie selbst als natürliche Person Vertragspartner, erfolgt die erforderliche Verarbeitung auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO. Handeln Sie als Mitarbeiter oder Vertreter eines Unternehmens, stützen wir die erforderliche Verarbeitung Ihrer Kontaktdaten auf Art. 6 Abs. 1 lit. f DSGVO. Berechtigtes Interesse ist die Anbahnung, Organisation und Durchführung der Geschäftsbeziehung mit dem vertretenen Unternehmen.
+
+Kontodaten speichern wir, solange das Konto für die Geschäftsbeziehung benötigt wird. Nicht mehr benötigte Mitarbeiterzugänge werden deaktiviert; zugehörige Daten werden gelöscht, soweit keine vorrangigen Aufbewahrungs- oder Nachweispflichten bestehen. Für Daten, die zu aufbewahrungspflichtigen Geschäftsvorgängen gehören, gilt Abschnitt 11.
+
+Unterlagen abgelehnter Anträge werden gelöscht, sobald die Prüfung und gegebenenfalls die Klärung von Rückfragen abgeschlossen sind und kein erforderlicher Nachweiszweck mehr besteht. Erforderliche Nachweise zur Abwehr konkreter Rechtsansprüche können nach den Kriterien in Abschnitt 11 länger gespeichert werden.
+
+5 Bestellung Zahlung Lieferung und Reklamation
+
+Zur Bearbeitung von Bestellungen und Zahlungen sowie zur Lieferung verarbeiten wir Bestellpositionen, Preise, Rechnungs- und Lieferadressen, Kontakt-, Zahlungs- und Steuerdaten. Bei Reklamationen kommen insbesondere Seriennummern, Fehlerbeschreibungen, Korrespondenz und von Ihnen übermittelte Nachweise hinzu. Bitte übermitteln Sie Fotos und Videos nur mit den hierfür erforderlichen Inhalten.
+
+Aufträge, Lieferscheine und Rechnungen werden im Warenwirtschaftssystem weclapp erstellt und der jeweils verkaufenden MAWA-Gesellschaft zugeordnet.
+
+Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, wenn Sie selbst Vertragspartner sind. Für Ansprechpartner eines Unternehmens gilt Art. 6 Abs. 1 lit. f DSGVO mit dem Interesse an einer ordnungsgemäßen Vertragsabwicklung. Gesetzliche Buchführungs-, Nachweis- und Aufbewahrungspflichten erfüllen wir auf Grundlage von Art. 6 Abs. 1 lit. c DSGVO, insbesondere nach BAO und UGB in Österreich sowie AO und HGB in Deutschland.
+
+Für die Zustellung übermitteln wir dem jeweils beauftragten Versandunternehmen die erforderlichen Empfänger-, Adress- und Sendungsdaten sowie, soweit für die vereinbarte Zustellung erforderlich, Kontaktdaten. Wir setzen DPD, Post, DHL und UPS ein. Reparaturen führen wir selbst durch. Gesetzliche Aufbewahrungsfristen und die Bearbeitung noch offener Ansprüche bestimmen die Speicherdauer nach Abschnitt 11.
+
+6 Berechtigungsnachweise und rechtliche Prüfungen
+
+Bei regulierten Waren prüfen wir die jeweils erforderlichen Gewerbe-, Erwerbs-, Handels- oder Verbringungsberechtigungen. Wir speichern hierzu die vorgelegten Gewerbenachweise und bei betreffenden deutschen Händlern die BKA-Berechtigung zum Handel mit Wärmebild- und Nachtsichtzieloptiken. Verarbeitet werden die im erforderlichen Nachweis enthaltenen Angaben, insbesondere Name, Berechtigungsumfang, ausstellende Stelle, Dokumentnummer und Gültigkeitsdauer. Nicht benötigte Inhalte dürfen geschwärzt werden, soweit die Nachweisfunktion erhalten bleibt. Vollständige Dokumentkopien werden nur gespeichert, soweit dies für den konkreten Nachweis erforderlich und rechtlich zulässig ist.
+
+Soweit eine gesetzliche Prüf- oder Dokumentationspflicht besteht, erfolgt die Verarbeitung nach Art. 6 Abs. 1 lit. c DSGVO in Verbindung mit der jeweils einschlägigen Vorschrift. Eine darüber hinausgehende erforderliche Überprüfung zur Vermeidung rechtswidriger Lieferungen kann auf Art. 6 Abs. 1 lit. f DSGVO beruhen. Bloße Zweckmäßigkeit rechtfertigt keine unbegrenzte Speicherung von Nachweiskopien.
+
+Berechtigungsnachweise, insbesondere die BKA-Ausnahmegenehmigungen deutscher Händler, bewahren wir für die Dauer der Kundenbeziehung auf. Nach deren Ende löschen wir sie, soweit keine gesetzlichen Aufbewahrungs- oder Nachweispflichten für bereits durchgeführte Lieferungen eine längere Speicherung erfordern.
+
+7 Kontaktanfragen
+
+Bei Anfragen verarbeiten wir Name, geschäftliche Kontaktdaten und den Inhalt Ihrer Nachricht. Bei Anfragen einer natürlichen Person zu ihrem eigenen Vertrag oder zu vorvertraglichen Maßnahmen gilt Art. 6 Abs. 1 lit. b DSGVO. Andere Anfragen bearbeiten wir nach Art. 6 Abs. 1 lit. f DSGVO; unser Interesse ist eine sachgerechte Kommunikation mit Interessenten und Geschäftspartnern.
+
+Nicht mehr erforderliche Anfragen werden nach Erledigung gelöscht. Soweit Korrespondenz Teil eines Geschäftsvorgangs ist oder zur Wahrung von Rechtsansprüchen benötigt wird, gelten die Fristen und Kriterien in Abschnitt 11. Eine pauschale Aufbewahrung jeder Anfrage für drei Jahre erfolgt daraus nicht.
+
+8 Händlernewsletter und Erfolgsmessung
+
+Wir versenden Händlernewsletter mit Informationen zu Produktneuheiten und Preisupdates über rapidmail. Versender und Verantwortliche ist die MAWA Trading GmbH Österreich. Dabei verarbeiten wir E-Mail-Adresse und gegebenenfalls Name und Unternehmenszuordnung. Einwilligungen zum Newsletterbezug werden bei der Händleraufnahme schriftlich eingeholt und zum Nachweis dokumentiert. Soweit eine wirksame Einwilligung vorliegt, ist Art. 6 Abs. 1 lit. a DSGVO die Rechtsgrundlage.
+
+Werbung ohne gesonderte Einwilligung kommt nur in Betracht, wenn sämtliche Voraussetzungen der jeweils anwendbaren Bestandskundenausnahme erfüllt sind: Die versendende Gesellschaft hat die Adresse im Zusammenhang mit einem Verkauf beziehungsweise einer Dienstleistung erhalten, wirbt für eigene ähnliche Angebote und hat bei Erhebung sowie in jeder Nachricht auf die einfache Ablehnungsmöglichkeit hingewiesen; ein Widerspruch liegt nicht vor. In Deutschland gilt § 7 Abs. 3 UWG, in Österreich § 174 Abs. 4 TKG 2021 einschließlich der dort vorgesehenen Beachtung der ECG-Liste. Eine Registrierung allein genügt hierfür nicht. Rechtsgrundlage der zulässigen Verarbeitung ist Art. 6 Abs. 1 lit. f DSGVO; das Interesse besteht in der Pflege bestehender Kundenbeziehungen.
+
+Sie können Ihre Einwilligung jederzeit für die Zukunft widerrufen oder Direktwerbung jederzeit widersprechen, insbesondere über den Abmeldelink im Newsletter oder über office@mawa-trading.com. Abgesehen von Übermittlungskosten nach dem Basistarif entstehen keine Kosten. Die Zulässigkeit der bisherigen Verarbeitung wird durch einen Widerruf nicht berührt.
+
+Zur Erfolgsmessung wertet rapidmail Öffnungen und Linkklicks ausschließlich anonymisiert aus. Eine Zuordnung dieser Ereignisse zu einzelnen Empfängern findet nicht statt; eine gesonderte Einwilligung ist dafür nicht erforderlich.
+
+Versanddaten werden bis zur Abmeldung oder bis zum Wegfall des Versandzwecks genutzt. Einwilligungsnachweise werden darüber hinaus nur so lange und in dem Umfang aufbewahrt, wie sie zur Erfüllung der Rechenschaftspflicht oder zur Abwehr möglicher Ansprüche wegen des erfolgten Versands erforderlich sind. Maßgeblich sind dabei die einschlägigen Verjährungsfristen und gegebenenfalls laufende Verfahren. Eine auf das Nötigste beschränkte Sperrliste dient dazu, einen Widerspruch bei künftigen Versandvorgängen zu beachten; Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Entfällt dieser Zweck, wird auch der Sperrvermerk gelöscht.
+
+9 Empfänger und eingesetzte Dienstleister
+
+Der Innendienst kann zur Kundenbetreuung auf die Kundendaten beider Gesellschaften zugreifen. Mitarbeiter im Außendienst erhalten nur Zugriff auf die ihnen zugeordneten Kunden. Die Verarbeitung dient der Betreuung der Händler und der Bearbeitung ihrer Anliegen. Die datenschutzrechtliche Rollenverteilung zwischen den Gesellschaften ist in Abschnitt 1 darzustellen.
+
+Externe Empfänger erhalten Daten nur, soweit dies für die beschriebenen Zwecke erforderlich ist. Dazu gehören IT- und Hostingdienstleister, Versandunternehmen, erforderlichenfalls Banken und Zahlungsverkehrsdienstleister, Steuerberater, Rechtsberater sowie Behörden bei entsprechender Rechtsgrundlage.
+
+Weisungsgebundene Dienstleister werden auf Grundlage eines Vertrags nach Art. 28 DSGVO eingesetzt. Empfänger wie Behörden, Banken oder beruflich eigenverantwortliche Berater können Daten in eigener Verantwortung verarbeiten. Eine gemeinsame Unternehmensgruppe begründet für sich allein kein allgemeines Recht zur Weitergabe.
+
+netcup GmbH, Deutschland: Hosting des Shops und zugehöriger Systeme.
+
+weclapp GmbH, Deutschland: Warenwirtschaft und Verwaltung von Kunden, Aufträgen, Lieferscheinen und Rechnungen.
+
+Microsoft Ireland Operations Limited, Irland: Microsoft 365 für geschäftliche E-Mails und Büroarbeit.
+
+Positive Group Deutschland GmbH, Deutschland, unter der Marke rapidmail: Newsletterversand und die in Abschnitt 8 beschriebene Erfolgsmessung.
+
+DPD, Post, DHL und UPS: Durchführung der jeweils beauftragten Zustellung. Die übermittelten Daten richten sich nach den Erfordernissen der betreffenden Sendung.
+
+10 Verarbeitung außerhalb des EWR
+
+Der Shopbetrieb und die interne Bearbeitung erfolgen nach den vorgesehenen Abläufen in der Europäischen Union. Reparaturen werden intern durchgeführt. Bei international tätigen IT-Anbietern können jedoch auch Verarbeitungsvorgänge und Supportzugriffe außerhalb des Europäischen Wirtschaftsraums stattfinden. Microsoft beschreibt für Microsoft 365 auch im Rahmen seiner EU Data Boundary begrenzte Ausnahmen. Eine EU-Hostingregion allein schließt solche Vorgänge daher nicht aus.
+
+Eine Übermittlung setzt eine Rechtsgrundlage nach Kapitel V DSGVO voraus. In Betracht kommen ein einschlägiger Angemessenheitsbeschluss oder geeignete Garantien, insbesondere EU-Standardvertragsklauseln mit der erforderlichen Prüfung und gegebenenfalls ergänzenden Schutzmaßnahmen. Beim EU-US Data Privacy Framework muss der konkrete US-Empfänger für die betroffenen Daten wirksam zertifiziert sein. Ein bloßer Verweis auf das Framework ersetzt diese Prüfung nicht.
+
+Microsoft 365 nutzen wir mit Datenverarbeitung in der EU (EU Data Boundary). Soweit Microsoft in Ausnahmefällen, etwa beim technischen Support, Daten außerhalb des EWR verarbeitet, erfolgt dies auf Grundlage des EU-US Data Privacy Framework, unter dem Microsoft zertifiziert ist, sowie der EU-Standardvertragsklauseln. Bei den übrigen eingesetzten Dienstleistern findet nach unseren Vereinbarungen keine Verarbeitung außerhalb des EWR statt.
+
+Informationen zu den für Ihre Daten verwendeten Garantien und eine Kopie der maßgeblichen Regelungen erhalten Sie über office@mawa-trading.com, soweit keine schutzwürdigen Rechte Dritter entgegenstehen.
+
+11 Speicherdauer und Löschung
+
+Wir speichern personenbezogene Daten nur, solange sie für den jeweiligen Zweck benötigt werden oder eine gesetzliche Pflicht besteht. Anschließend werden sie gelöscht oder anonymisiert. Daten, die nur noch aufgrund einer Aufbewahrungspflicht benötigt werden, werden auf diese Zwecke beschränkt.
+
+In Österreich sind Bücher, Aufzeichnungen und die dazugehörigen Belege nach § 132 BAO grundsätzlich sieben Jahre aufzubewahren. Die Frist beginnt grundsätzlich mit Ende des betreffenden Kalenderjahres. Bei anhängigen Verfahren oder besonderen gesetzlichen Vorschriften kann eine längere Aufbewahrung erforderlich sein.
+
+In Deutschland gelten nach § 147 AO und § 257 HGB je nach Unterlagenart grundsätzlich zehn Jahre für Bücher, Inventare und Jahresabschlüsse, acht Jahre für Buchungsbelege einschließlich entsprechender Rechnungen sowie sechs Jahre für Handels- und Geschäftsbriefe und sonstige steuerlich relevante Unterlagen. Die Fristen beginnen grundsätzlich mit Schluss des jeweiligen Kalenderjahres; gesetzliche Sonderfälle und Verlängerungen bleiben vorbehalten.
+
+Zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen können erforderliche Daten bis zum Ablauf der einschlägigen Verjährungsfrist oder bis zum Abschluss eines laufenden Verfahrens gespeichert werden. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO. Dies rechtfertigt nicht die unveränderte Aufbewahrung sämtlicher Kontodaten oder technischer Protokolle.
+
+Reklamations- und Reparaturunterlagen werden bis zur Erledigung des Vorgangs und darüber hinaus nur aufbewahrt, soweit sie für gesetzliche Pflichten, noch laufende Garantie- oder Rückgriffsansprüche oder die erforderliche Rechtsverteidigung benötigt werden. Berechtigungsnachweise unterliegen zusätzlich den für die jeweilige Ware geltenden Prüf- und Nachweispflichten nach Abschnitt 6.
+
+12 Cookies und ähnliche Speichertechniken
+
+Für die ausdrücklich angeforderte Nutzung des Shops können technisch erforderliche Cookies oder vergleichbare Speicherungen eingesetzt werden, etwa zur Anmeldung, Sitzungsverwaltung, Absicherung von Formularen und Speicherung des Warenkorbs. Soweit diese unbedingt erforderlich sind, ist nach § 165 Abs. 3 TKG 2021 beziehungsweise § 25 Abs. 2 TDDDG keine Einwilligung in die Speicherung oder den Zugriff erforderlich. Die anschließende Verarbeitung personenbezogener Daten benötigt zusätzlich eine Rechtsgrundlage nach der DSGVO, insbesondere Art. 6 Abs. 1 lit. b oder lit. f für die beschriebenen Kontofunktionen und den sicheren Shopbetrieb.
+
+Wir setzen keine Analyse-, Marketing- oder sonstigen Tracking-Cookies und keine einwilligungspflichtigen Drittanbieterdienste ein. Für Anmeldung, Sitzungsverwaltung und Warenkorb verwenden wir ausschließlich die dafür technisch erforderlichen Speicherungen.
+
+13 Bereitstellung von Daten und automatisierte Entscheidungen
+
+Für die Abwicklung einer Bestellung sind die als erforderlich gekennzeichneten Unternehmens-, Kontakt-, Liefer- und Rechnungsdaten notwendig. Bei regulierten Waren sind gegebenenfalls gesetzliche Berechtigungsnachweise erforderlich. Ohne diese Daten können wir den Zugang oder die betreffende Bestellung unter Umständen nicht bearbeiten. Angaben für einen freiwilligen Newsletter sind für den Einkauf nicht erforderlich.
+
+Die Aufnahme neuer Händler wird durch Mitarbeiter geprüft und entschieden. Bei vorhandener Kundennummer erfolgt die Bereitstellung des Shopzugangs automatisch auf Grundlage des bereits bestehenden Kundenverhältnisses. Die Automatisierung dieses technischen Zugangs ersetzt keine erforderliche Prüfung der Berechtigung für eine konkrete Warenlieferung.
+
+14 Ihre Rechte
+
+Unter den gesetzlichen Voraussetzungen haben Sie das Recht auf Auskunft und eine Kopie Ihrer Daten, Berichtigung, Löschung, Einschränkung der Verarbeitung sowie Datenübertragbarkeit (Art. 15 bis 20 DSGVO). Datenübertragbarkeit betrifft insbesondere bereitgestellte Daten, die wir aufgrund einer Einwilligung oder eines Vertrags automatisiert verarbeiten. Löschungsansprüchen können gesetzliche Aufbewahrungspflichten entgegenstehen.
+
+Eine Einwilligung können Sie jederzeit mit Wirkung für die Zukunft widerrufen. Die Rechtmäßigkeit der Verarbeitung bis zum Widerruf bleibt unberührt. Zur Ausübung Ihrer Rechte können Sie office@mawa-trading.com oder die Postanschrift der zuständigen Gesellschaft verwenden. Wir beantworten Anträge grundsätzlich innerhalb eines Monats nach Eingang; über eine gesetzlich zulässige Verlängerung informieren wir Sie rechtzeitig.
+
+15 Ihr Widerspruchsrecht
+
+Wenn wir Daten auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO verarbeiten, können Sie aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit widersprechen. Wir verarbeiten die Daten dann nicht weiter, es sei denn, wir weisen zwingende schutzwürdige Gründe nach, die Ihre Interessen, Rechte und Freiheiten überwiegen, oder benötigen die Daten zur Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen.
+
+Gegen eine Verarbeitung für Direktwerbung können Sie jederzeit ohne Angabe von Gründen widersprechen. Das gilt auch für Profiling, soweit es mit Direktwerbung in Verbindung steht. Nach einem solchen Widerspruch verwenden wir Ihre Daten nicht mehr für diese Zwecke. Kontakt: office@mawa-trading.com.
+
+16 Beschwerderecht
+
+Sie können sich bei einer Datenschutzaufsichtsbehörde beschweren, insbesondere im Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des vermuteten Verstoßes. Dieses Recht ist nicht auf die für MAWA zuständige Behörde beschränkt.
+
+Österreichische Datenschutzbehörde: Barichgasse 40–42, 1030 Wien, Österreich; https://www.dsb.gv.at.
+
+Eine Anlaufstelle in Deutschland ist der Landesbeauftragte für den Datenschutz und die Informationsfreiheit Baden-Württemberg, https://www.baden-wuerttemberg.datenschutz.de. Sie können sich auch an eine andere nach Art. 77 DSGVO zuständige Datenschutzaufsichtsbehörde wenden.
