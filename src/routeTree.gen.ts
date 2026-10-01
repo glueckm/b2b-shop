@@ -15,8 +15,8 @@ import { Route as BestellungenRouteImport } from './routes/bestellungen'
 import { Route as KontoRouteImport } from './routes/konto'
 import { Route as KundenanfrageRouteImport } from './routes/kundenanfrage'
 import { Route as PasswortSetzenRouteImport } from './routes/passwort-setzen'
-import { Route as ApiBelegKindIdRouteImport } from './routes/api/beleg.$kind.$id'
 import { Route as ApiPublicArtikelBildFileIdRouteImport } from './routes/api/public/artikel-bild.$fileId'
+import { Route as ApiBelegOrderIdKindIdRouteImport } from './routes/api/beleg.$orderId.$kind.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -48,17 +48,17 @@ const PasswortSetzenRoute = PasswortSetzenRouteImport.update({
   path: '/passwort-setzen',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBelegKindIdRoute = ApiBelegKindIdRouteImport.update({
-  id: '/api/beleg/$kind/$id',
-  path: '/api/beleg/$kind/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicArtikelBildFileIdRoute =
   ApiPublicArtikelBildFileIdRouteImport.update({
     id: '/api/public/artikel-bild/$fileId',
     path: '/api/public/artikel-bild/$fileId',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiBelegOrderIdKindIdRoute = ApiBelegOrderIdKindIdRouteImport.update({
+  id: '/api/beleg/$orderId/$kind/$id',
+  path: '/api/beleg/$orderId/$kind/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,8 +67,8 @@ export interface FileRoutesByFullPath {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
-  '/api/beleg/$kind/$id': typeof ApiBelegKindIdRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
+  '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -77,8 +77,8 @@ export interface FileRoutesByTo {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
-  '/api/beleg/$kind/$id': typeof ApiBelegKindIdRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
+  '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -88,8 +88,8 @@ export interface FileRoutesById {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
-  '/api/beleg/$kind/$id': typeof ApiBelegKindIdRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
+  '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -100,8 +100,8 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
-    | '/api/beleg/$kind/$id'
     | '/api/public/artikel-bild/$fileId'
+    | '/api/beleg/$orderId/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -110,8 +110,8 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
-    | '/api/beleg/$kind/$id'
     | '/api/public/artikel-bild/$fileId'
+    | '/api/beleg/$orderId/$kind/$id'
   id:
     | '__root__'
     | '/'
@@ -120,8 +120,8 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
-    | '/api/beleg/$kind/$id'
     | '/api/public/artikel-bild/$fileId'
+    | '/api/beleg/$orderId/$kind/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -131,8 +131,8 @@ export interface RootRouteChildren {
   KontoRoute: typeof KontoRoute
   KundenanfrageRoute: typeof KundenanfrageRoute
   PasswortSetzenRoute: typeof PasswortSetzenRoute
-  ApiBelegKindIdRoute: typeof ApiBelegKindIdRoute
   ApiPublicArtikelBildFileIdRoute: typeof ApiPublicArtikelBildFileIdRoute
+  ApiBelegOrderIdKindIdRoute: typeof ApiBelegOrderIdKindIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -179,18 +179,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswortSetzenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/beleg/$kind/$id': {
-      id: '/api/beleg/$kind/$id'
-      path: '/api/beleg/$kind/$id'
-      fullPath: '/api/beleg/$kind/$id'
-      preLoaderRoute: typeof ApiBelegKindIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/artikel-bild/$fileId': {
       id: '/api/public/artikel-bild/$fileId'
       path: '/api/public/artikel-bild/$fileId'
       fullPath: '/api/public/artikel-bild/$fileId'
       preLoaderRoute: typeof ApiPublicArtikelBildFileIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/beleg/$orderId/$kind/$id': {
+      id: '/api/beleg/$orderId/$kind/$id'
+      path: '/api/beleg/$orderId/$kind/$id'
+      fullPath: '/api/beleg/$orderId/$kind/$id'
+      preLoaderRoute: typeof ApiBelegOrderIdKindIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -203,8 +203,8 @@ const rootRouteChildren: RootRouteChildren = {
   KontoRoute: KontoRoute,
   KundenanfrageRoute: KundenanfrageRoute,
   PasswortSetzenRoute: PasswortSetzenRoute,
-  ApiBelegKindIdRoute: ApiBelegKindIdRoute,
   ApiPublicArtikelBildFileIdRoute: ApiPublicArtikelBildFileIdRoute,
+  ApiBelegOrderIdKindIdRoute: ApiBelegOrderIdKindIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { getMyOrders } from "@/lib/orders.functions";
+import { getMyOrders, getOrderDocuments, type OrderDocument } from "@/lib/orders.functions";
 import type { CustomerOrder } from "@/lib/orders.server";
 
 export const Route = createFileRoute("/bestellungen")({
@@ -39,10 +39,19 @@ function Badge({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   );
 }
 
-function DocLink({ kind, id, label }: { kind: string; id: string; label: string }) {
+const DOC_LABEL: Record<OrderDocument["kind"], string> = {
+  "order-confirmation": "Auftragsbestätigung",
+  "delivery-note": "Lieferschein",
+  invoice: "Rechnung",
+};
+
+function DocLink({ orderId, doc }: { orderId: string; doc: OrderDocument }) {
+  const label = `${DOC_LABEL[doc.kind]}${doc.number ? ` ${doc.number}` : ""}`;
   return (
     <a
-      href={`/api/beleg/${kind}/${id}`}
+      href={`/api/beleg/${orderId}/${doc.kind}/${doc.id}`}
+      target="_blank"
+      rel="noopener"
       className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:border-accent hover:text-accent"
     >
       ↓ {label}
@@ -53,6 +62,13 @@ function DocLink({ kind, id, label }: { kind: string; id: string; label: string 
 function OrderCard({ order }: { order: CustomerOrder }) {
   const [open, setOpen] = useState(false);
   const inWork = order.status === "ORDER_ENTRY_IN_PROGRESS";
+  const [docs, setDocs] = useState<OrderDocument[] | null | "error">(null);
+  useEffect(() => {
+    if (!open || docs !== null) return;
+    getOrderDocuments({ data: { orderId: order.id } })
+      .then((r) => setDocs(r.ok ? r.documents : "error"))
+      .catch(() => setDocs("error"));
+  }, [open, docs, order.id]);
   return (
     <div className="rounded-sm border border-border bg-card">
       <button
@@ -74,13 +90,12 @@ function OrderCard({ order }: { order: CustomerOrder }) {
       {open && (
         <div className="border-t border-border px-4 py-3">
           <div className="mb-3 flex flex-wrap gap-2">
-            <DocLink kind="auftragsbestaetigung" id={order.id} label="Auftragsbestätigung" />
-            {order.shipped || order.items.some((i) => i.shipped > 0) ? (
-              <DocLink kind="lieferschein" id={order.id} label="Lieferschein" />
-            ) : null}
-            {order.invoices.map((inv) => (
-              <DocLink key={inv.id} kind="rechnung" id={inv.id} label={`Rechnung ${inv.number}`} />
-            ))}
+            {docs === null && <span className="text-xs text-muted-foreground">Belege werden geladen …</span>}
+            {docs === "error" && <span className="text-xs text-muted-foreground">Belege derzeit nicht verfügbar.</span>}
+            {Array.isArray(docs) && docs.length === 0 && (
+              <span className="text-xs text-muted-foreground">Keine Belege vorhanden.</span>
+            )}
+            {Array.isArray(docs) && docs.map((d) => <DocLink key={`${d.kind}-${d.id}`} orderId={order.id} doc={d} />)}
           </div>
           {order.invoices.length > 0 && (
             <ul className="mb-3 space-y-1 text-sm">
