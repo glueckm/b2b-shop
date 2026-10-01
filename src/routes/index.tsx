@@ -2334,12 +2334,17 @@ function Shop() {
                             { title: "Allgemein", keys: ["devicetype", "formfactor", "display", "lrf", "cell", "battery", "storage"] },
                             { title: "Wärmebild", keys: ["sensor", "netd", "lens", "magnification", "zoom", "detection", "framerate", "fov"] },
                             { title: "Nachtsicht", keys: ["nv_sensor", "nv_lens", "nv_magnification", "nv_zoom", "nv_detection", "nv_framerate", "nv_fov"] },
+                            { title: "Montage", keys: ["m_type", "m_interface", "m_ring", "m_height", "m_brand", "m_model"] },
                           ];
+                          const MOUNT_LABEL: Record<string, string> = {
+                            m_type: "Ausführung", m_interface: "Schnittstelle", m_ring: "Zielfernrohr-Aufnahme (mm)",
+                            m_height: "Bauhöhe (mm)", m_brand: "Kompatibel mit Marke", m_model: "Kompatibel mit Modell",
+                          };
                           const shown = (v?: string) => {
                             const t = (v ?? "").trim();
                             return t !== "" && Number(t.replace(",", ".")) !== 0 ? t : "";
                           };
-                          const label = (k: string) => SPEC_FIELDS.find((f) => f.key === k)?.label ?? k;
+                          const label = (k: string) => MOUNT_LABEL[k] ?? SPEC_FIELDS.find((f) => f.key === k)?.label ?? k;
                           const filled = groups
                             .map((g) => ({ ...g, rows: g.keys.filter((k) => shown(a.specs?.[k])) }))
                             .filter((g) => g.rows.length > 0);

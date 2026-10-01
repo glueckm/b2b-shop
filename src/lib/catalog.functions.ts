@@ -266,6 +266,12 @@ select a.id as id,
        coalesce(nullif(a.ca_laserentfernungsmesser_lrf_m::text, '0'), '') as spec_lrf,
        coalesce(nullif(a.ca_akku::text, '0'), '') as spec_cell,
        coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
+       coalesce(a.ca_ausfuehrung, '') as spec_m_type,
+       coalesce(nullif(a.ca_bauhoehe_mm::text, '0'), '') as spec_m_height,
+       coalesce(array_to_string(a.ca_kompatibel_mit_marke, ', '), '') as spec_m_brand,
+       coalesce(a.ca_kompatibel_mit_modell, '') as spec_m_model,
+       coalesce(array_to_string(a.ca_schnittstelle, ', '), '') as spec_m_interface,
+       coalesce(a.ca_zielfernrohr_aufnahme_mm, '') as spec_m_ring,
        coalesce(a.ca_aktion, false) as promo,
        __HIGHLIGHT__ as highlight,
        coalesce(vr.is_primary, false) as is_primary,
@@ -556,6 +562,12 @@ async function buildArticles(
       spec_lrf: string;
       spec_cell: string;
       spec_storage: string;
+      spec_m_type: string;
+      spec_m_height: string;
+      spec_m_brand: string;
+      spec_m_model: string;
+      spec_m_interface: string;
+      spec_m_ring: string;
       promo: boolean;
       highlight: boolean | null;
       is_primary: boolean;
@@ -593,6 +605,12 @@ async function buildArticles(
       ["lrf", row.spec_lrf],
       ["cell", row.spec_cell],
       ["storage", row.spec_storage],
+      ["m_type", row.spec_m_type],
+      ["m_height", row.spec_m_height],
+      ["m_brand", row.spec_m_brand],
+      ["m_model", row.spec_m_model],
+      ["m_interface", row.spec_m_interface],
+      ["m_ring", row.spec_m_ring],
     ] as const) {
       const text = (value ?? "").trim();
       if (text) specs[key] = text;
