@@ -119,7 +119,11 @@ function OrderCard({ order }: { order: CustomerOrder }) {
           ) : (
             <Badge ok={!inWork} yes="Angelegt" no="In Erfassung" />
           )}
-          <Badge ok={order.shipped} yes="Geliefert" no="Nicht geliefert" />
+          {!order.shipped && order.items.some((i) => i.shipped > 0) ? (
+            <span className="rounded-sm bg-low/15 px-2 py-0.5 text-[11px] font-semibold text-low">Teillieferung</span>
+          ) : (
+            <Badge ok={order.shipped} yes="Geliefert" no="Nicht geliefert" />
+          )}
           <Badge ok={order.paid} yes="Bezahlt" no="Offen" />
         </span>
         <span className="w-28 text-right font-mono text-sm">{money(order.net, order.currency)}</span>
