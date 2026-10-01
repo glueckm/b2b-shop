@@ -363,12 +363,19 @@ function Shop() {
     [loadBatch],
   );
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    // Nach einem erneuten Einhängen liegengebliebene Anfragen nachholen.
+    if (queueRef.current.size > 0) {
+      const ids = [...queueRef.current];
+      queueRef.current.clear();
+      ids.forEach((id) => requestImages(id));
+    }
+    return () => {
       if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-    },
-    [],
-  );
+      // Zurücksetzen, sonst blockiert ein verwaister Timer alle weiteren Bildabrufe.
+      timerRef.current = null;
+    };
+  }, [requestImages]);
 
   /** Bilder aus dem MAWA-Backend, ergänzt um lokal abgelegte Dateien. */
   const imagesOf = (article: { id: string; sku: string }) => {
