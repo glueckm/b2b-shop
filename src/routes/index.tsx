@@ -1,4 +1,4 @@
-import { BrandMarquee } from "@/components/BrandMarquee";
+import { BrandMarquee, BrandLogo } from "@/components/BrandMarquee";
 import {
   createFileRoute,
   Link,
