@@ -2718,15 +2718,15 @@ function HighlightHero({
   if (items.length === 0) {
     return <p className="mt-6 text-sm text-muted-foreground">Derzeit sind keine Highlights hinterlegt.</p>;
   }
-  const a = items[Math.min(index, items.length - 1)];
+  const a = items[Math.min(index, items.length - 1)]!;
   const img = imageFor(a);
   const chips = (
     [
-      ["Sensor", a.specs.sensor],
-      ["NETD", a.specs.netd && `≤${a.specs.netd} mK`],
-      ["Objektiv", a.specs.lens && `${a.specs.lens} mm`],
-      ["LRF", a.specs.lrf && "Ja"],
-      ["Akku", a.specs.battery && `${a.specs.battery} h`],
+      ["Sensor", a.specs["sensor"]],
+      ["NETD", a.specs["netd"] && `≤${a.specs["netd"]} mK`],
+      ["Objektiv", a.specs["lens"] && `${a.specs["lens"]} mm`],
+      ["LRF", a.specs["lrf"] && "Ja"],
+      ["Akku", a.specs["battery"] && `${a.specs["battery"]} h`],
     ] as [string, string | undefined][]
   ).filter(([, v]) => v);
   const unit = priceForQty(a, Math.max(1, a.moq));
