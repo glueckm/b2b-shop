@@ -1133,7 +1133,7 @@ function Shop() {
         <div className="mt-3 flex items-end justify-between gap-2">
           <div>
             <p className="text-[12px] text-muted-foreground">Ihr EK netto / {article.unit}</p>
-            <p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>{article.uvp != null && <p className="text-[11px] text-muted-foreground">UVP {formatEur(article.uvp)}</p>}
+            {eur(1) !== formatEur(1) && article.uvp != null ? (<><p className="font-mono text-xl font-bold tracking-tight">UVP {formatEur(article.uvp)}</p><p className="text-[11px] text-muted-foreground">{eur(unit)}</p></>) : (<><p className="font-mono text-xl font-bold tracking-tight">{eur(unit)}</p>{article.uvp != null && <p className="text-[11px] text-muted-foreground">UVP {formatEur(article.uvp)}</p>}</>)}
           </div>
           <div className="text-right text-[12px]">
             {listPrice > unit && (
@@ -1228,16 +1228,18 @@ function Shop() {
           <span className="line-clamp-2 text-[15px] font-bold leading-snug">{row.name}</span>
         </button>
         <p className="label-mono mt-1 text-muted-foreground">{row.variants.length} Varianten</p>
-        <div className="mt-3">
-          <p className="text-[12px] text-muted-foreground">Ihr EK netto</p>
-          <p className="font-mono text-xl font-bold tracking-tight">
+        <div className="mt-3 flex flex-col">
+          <p className="order-0 text-[12px] text-muted-foreground">Ihr EK netto</p>
+          {(() => { const swap = eur(1) !== formatEur(1) && row.variants.some((v) => v.uvp != null); return (<>
+          <p className={swap ? "order-2 text-[11px] text-muted-foreground" : "font-mono text-xl font-bold tracking-tight"}>
             ab {eur(Math.min(...row.variants.map((v) => priceForQty(v, v.moq))))}
           </p>
           {row.variants.some((v) => v.uvp != null) && (
-            <p className="text-[11px] text-muted-foreground">
+            <p className={swap ? "order-1 font-mono text-xl font-bold tracking-tight" : "text-[11px] text-muted-foreground"}>
               UVP ab {formatEur(Math.min(...row.variants.filter((v) => v.uvp != null).map((v) => v.uvp as number)))}
             </p>
           )}
+          </>); })()}
         </div>
         <div className="mt-auto flex items-center justify-between gap-2 pt-4">
           <span className="flex items-center gap-1.5 text-xs font-medium text-stock">
@@ -2198,7 +2200,7 @@ function Shop() {
                                         </span>
                                       </span>
                                     </span>
-                                    <span className="shrink-0 text-right"><span className="block font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>{v.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(v.uvp)}</span>}</span>
+                                    <span className="shrink-0 text-right">{!showPrices && v.uvp != null ? (<><span className="block font-mono font-semibold">UVP {formatEur(v.uvp)}</span><span className="block text-[11px] text-muted-foreground">{eur(priceForQty(v, v.moq))}</span></>) : (<><span className="block font-mono font-semibold">{eur(priceForQty(v, v.moq))}</span>{v.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(v.uvp)}</span>}</>)}</span>
                                   </button>
                                 );
                               })}
@@ -2238,7 +2240,7 @@ function Shop() {
                       <div className="mt-5 rounded-lg border border-border bg-background p-5">
                         <p className="text-[13px] text-muted-foreground">Ihr Einkaufspreis netto</p>
                         <p className="mt-1">
-                          <span className="font-mono text-4xl font-bold tracking-tight">{eur(unit)}</span>{" "}
+                          {!showPrices && a.uvp != null ? (<><span className="font-mono text-4xl font-bold tracking-tight">UVP {formatEur(a.uvp)}</span>{" "}<span className="text-sm text-muted-foreground">inkl. USt. · EK {eur(unit)}</span>{" "}</>) : (<span className="font-mono text-4xl font-bold tracking-tight">{eur(unit)}</span>)}{" "}
                           <span className="text-sm text-muted-foreground">zzgl. USt. / {a.unit}</span>
                         </p>
                         {a.rebatePct > 0 && (
@@ -2434,7 +2436,7 @@ function Shop() {
                                   <span className="line-clamp-2">{acc.name}</span>
                                 </button>
                                 <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                                  <span><span className="block font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>{acc.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(acc.uvp)}</span>}</span>
+                                  <span>{!showPrices && acc.uvp != null ? (<><span className="block font-mono text-sm font-bold">UVP {formatEur(acc.uvp)}</span><span className="block text-[11px] text-muted-foreground">{eur(priceForQty(acc, acc.moq))}</span></>) : (<><span className="block font-mono text-sm font-bold">{eur(priceForQty(acc, acc.moq))}</span>{acc.uvp != null && <span className="block text-[11px] text-muted-foreground">UVP {formatEur(acc.uvp)}</span>}</>)}</span>
                                   <button
                                     onClick={() => addLine(acc.sku, acc.moq)}
                                     className="rounded-md border border-border px-2.5 py-1 text-[13px] font-bold hover:border-accent hover:text-accent"
@@ -2797,10 +2799,14 @@ function HighlightHero({
           )}
           <p className="mt-6 line-clamp-3 text-sm text-primary-foreground/85">{describe(a)}</p>
           <div className="mt-auto flex items-baseline gap-3 pt-8">
+            {eur(1) !== formatEur(1) && a.uvp != null ? (<>
+              <span className="font-mono text-4xl font-bold">UVP {formatEur(a.uvp)}</span>
+              <span className="text-xs text-primary-foreground/60">EK netto {eur(unit)}</span>
+            </>) : (<>
             <span className="font-mono text-4xl font-bold">{eur(unit)}</span>
             <span className="text-xs text-primary-foreground/60">
               EK netto{a.uvp != null ? ` · UVP ${formatEur(a.uvp)}` : ""}
-            </span>
+            </span></>)}
           </div>
           <div className="mt-5 flex flex-wrap gap-3">
             <button
