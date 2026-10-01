@@ -2753,9 +2753,11 @@ function HighlightHero({
         </button>
       </div>
       <div className="grid gap-8 px-8 py-10 md:grid-cols-[2fr_3fr]">
-        <div className="flex flex-col justify-center">
-          <BrandLogo name={a.manufacturer} className="-mt-6 mb-2 h-14" />
-          <h3 className="mt-3 text-4xl font-bold tracking-tight">{a.name}</h3>
+        <div className="flex min-h-[460px] flex-col">
+          <div className="flex h-14 shrink-0 items-center">
+            <BrandLogo name={a.manufacturer} className="h-14" />
+          </div>
+          <h3 className="mt-5 line-clamp-2 text-4xl font-bold tracking-tight">{a.name}</h3>
           {chips.length > 0 && (
             <div className="mt-5 flex flex-wrap gap-2">
               {chips.map(([k, v]) => (
@@ -2766,7 +2768,7 @@ function HighlightHero({
             </div>
           )}
           <p className="mt-6 line-clamp-3 text-sm text-primary-foreground/85">{describe(a)}</p>
-          <div className="mt-8 flex items-baseline gap-3">
+          <div className="mt-auto flex items-baseline gap-3 pt-8">
             <span className="font-mono text-4xl font-bold">{eur(unit)}</span>
             <span className="text-xs text-primary-foreground/60">
               EK netto{a.uvp != null ? ` · UVP ${formatEur(a.uvp)}` : ""}
