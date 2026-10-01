@@ -1,7 +1,7 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-import { getMyOrders, getOrderDocuments, type OrderDocument } from "@/lib/orders.functions";
+import { getMyOrders, getOrderDocumentPdf, getOrderDocuments, type OrderDocument } from "@/lib/orders.functions";
 import type { CustomerOrder } from "@/lib/orders.server";
 
 export const Route = createFileRoute("/bestellungen")({
@@ -47,15 +47,49 @@ const DOC_LABEL: Record<OrderDocument["kind"], string> = {
 
 function DocLink({ orderId, doc }: { orderId: string; doc: OrderDocument }) {
   const label = `${DOC_LABEL[doc.kind]}${doc.number ? ` ${doc.number}` : ""}`;
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function open() {
+    // Fenster sofort öffnen, sonst blockiert der Browser das Pop-up.
+    const win = window.open("", "_blank");
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await getOrderDocumentPdf({ data: { orderId, kind: doc.kind, id: doc.id } });
+      if (!r.ok) {
+        win?.close();
+        setError(r.error);
+        return;
+      }
+      const bytes = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: r.contentType }));
+      if (win) win.location.href = url;
+      else {
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${label}.pdf`;
+        link.click();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch {
+      win?.close();
+      setError("Beleg derzeit nicht verfügbar");
+    } finally {
+      setBusy(false);
+    }
+  }
   return (
-    <a
-      href={`/api/beleg/${orderId}/${doc.kind}/${doc.id}`}
-      target="_blank"
-      rel="noopener"
-      className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:border-accent hover:text-accent"
-    >
-      ↓ {label}
-    </a>
+    <span className="inline-flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => void open()}
+        disabled={busy}
+        className="rounded-sm border border-border px-2 py-1 text-[12px] font-semibold hover:border-accent hover:text-accent disabled:opacity-60"
+      >
+        {busy ? "Lädt …" : `↓ ${label}`}
+      </button>
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </span>
   );
 }
 

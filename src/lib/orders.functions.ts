@@ -79,3 +79,37 @@ export const getOrderDocuments = createServerFn({ method: "GET" })
       return { ok: false, documents: [] };
     }
   });
+
+/**
+ * PDF eines Belegs über die angemeldete Server-Verbindung laden.
+ * Funktioniert auch in eingebetteten Vorschauen, in denen ein neuer Tab das Shop-Cookie nicht mitsendet.
+ */
+export const getOrderDocumentPdf = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => {
+    const r = (raw ?? {}) as Record<string, unknown>;
+    const safe = /^[0-9A-Za-z_-]{1,64}$/;
+    const orderId = String(r["orderId"] ?? "");
+    const id = String(r["id"] ?? "");
+    const kind = String(r["kind"] ?? "");
+    if (!safe.test(orderId) || !safe.test(id) || !["order-confirmation", "delivery-note", "invoice"].includes(kind)) {
+      throw new Error("Ungültiger Beleg");
+    }
+    return { orderId, id, kind };
+  })
+  .handler(async ({ data }): Promise<{ ok: true; base64: string; contentType: string } | { ok: false; error: string }> => {
+    const { readToken, apiBase, appOrigin } = await import("./shop-auth.server");
+    const token = readToken();
+    if (!token) return { ok: false, error: "Nicht angemeldet" };
+    try {
+      const res = await fetch(
+        `${apiBase()}/v1/shop/orders/${data.orderId}/documents/${data.kind}/${data.id}/pdf`,
+        { headers: { authorization: `Bearer ${token}`, origin: appOrigin() }, signal: AbortSignal.timeout(30_000) },
+      );
+      if (!res.ok) return { ok: false, error: res.status === 404 ? "Beleg nicht gefunden" : "Beleg derzeit nicht verfügbar" };
+      const { Buffer } = await import("node:buffer");
+      const base64 = Buffer.from(await res.arrayBuffer()).toString("base64");
+      return { ok: true, base64, contentType: res.headers.get("content-type") ?? "application/pdf" };
+    } catch {
+      return { ok: false, error: "Beleg derzeit nicht verfügbar" };
+    }
+  });
