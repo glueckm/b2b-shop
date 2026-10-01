@@ -1128,6 +1128,11 @@ function Shop() {
           <span className="label-mono truncate text-muted-foreground">{article.level1}</span>
           <span className="font-mono text-[11px] text-muted-foreground">{article.sku}</span>
         </div>
+        {article.manufacturer && (
+          <div className="mt-2">
+            <BrandLogo name={article.manufacturer} tone="subtle" className="h-3.5" />
+          </div>
+        )}
         <button onClick={openDetail} className="mt-1 text-left">
           <span className="line-clamp-2 text-[15px] font-bold leading-snug">{article.name}</span>
         </button>
