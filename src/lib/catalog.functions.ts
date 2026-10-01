@@ -44,6 +44,8 @@ export type CatalogArticle = {
   specs: Record<string, string>;
   /** weclapp-Feld „Aktion": Artikel ist Teil einer laufenden Aktion. */
   promo: boolean;
+  /** weclapp-Feld „Highlight-Produkt“: Startansicht nach dem Login. */
+  highlight: boolean;
   /** In weclapp als Hauptartikel des Variantenartikels markiert. */
   isPrimary: boolean;
   manufacturer: string;
@@ -266,6 +268,7 @@ select a.id as id,
        coalesce(nullif(a.ca_akku::text, '0'), '') as spec_cell,
        coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
        coalesce(a.ca_aktion, false) as promo,
+       coalesce(a.ca_highlight_produkt, false) as highlight,
        coalesce(vr.is_primary, false) as is_primary,
        coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer,
        coalesce(so.qty, 0)::float8 as sold,
@@ -552,6 +555,7 @@ async function buildArticles(
       spec_cell: string;
       spec_storage: string;
       promo: boolean;
+      highlight: boolean | null;
       is_primary: boolean;
       manufacturer: string;
       sold: number;
@@ -617,6 +621,7 @@ async function buildArticles(
       groupName: row.group_name ?? "",
       specs,
       promo: Boolean(row.promo),
+      highlight: Boolean(row.highlight),
       isPrimary: Boolean(row.is_primary),
       manufacturer: (row.manufacturer ?? "").trim(),
       sold: Number(row.sold ?? 0),

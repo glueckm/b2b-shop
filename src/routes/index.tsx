@@ -55,6 +55,8 @@ const searchSchema = z.object({
   subsubcategory: z.string().default(""),
   q: z.string().default(""),
   artikel: z.string().default(""),
+  /** "highlights" = Startansicht nach dem Login: nur Highlight-Geräte. */
+  ansicht: z.string().default(""),
 });
 
 export const Route = createFileRoute("/")({
@@ -63,7 +65,7 @@ export const Route = createFileRoute("/")({
   ssr: false,
   validateSearch: searchSchema,
   // Die Artikel-Detailseite (artikel) löst keinen neuen Katalogabruf aus.
-  loaderDeps: ({ search: { artikel: _artikel, ...rest } }) => rest,
+  loaderDeps: ({ search: { artikel: _artikel, ansicht: _ansicht, ...rest } }) => rest,
   // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
   staleTime: 120_000,
   loader: async ({ deps }) => {
@@ -656,6 +658,7 @@ function Shop() {
         groupName: "",
         specs: {},
         promo: false,
+        highlight: false,
         isPrimary: false,
         eol: false,
         manufacturer: "",
@@ -907,11 +910,13 @@ function Shop() {
       });
     }
 
-    if (!favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
+    const highlightOnly = search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q;
+    if (!highlightOnly && !favOnly && !promoOnly && activeSpecCount === 0 && makerFilter.length === 0 && !brandPick) return out;
     // Favoriten (Herz), Aktionen, Hersteller und Zusatzfilter anwenden; bei Varianten nur die passenden.
     const keep = (article: CatalogArticle) =>
       (!favOnly || favourites.has(article.id)) &&
       (!promoOnly || article.promo) &&
+      (!highlightOnly || article.highlight) &&
       (makerFilter.length === 0 || makerFilter.includes(article.manufacturer.toUpperCase())) &&
       brandMatches(article.manufacturer) &&
       matchesSpecs(article);
@@ -920,7 +925,7 @@ function Shop() {
       const variants = row.variants.filter(keep);
       return variants.length > 0 ? [{ ...row, variants }] : [];
     });
-  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q]);
+  }, [articles, favOnly, promoOnly, favourites, activeSpecCount, matchesSpecs, makerFilter, brandPick, search.category, search.q, search.ansicht]);
 
   // Große Bereiche (z. B. Montagen) schrittweise anzeigen, damit die Seite flüssig bleibt.
   const ROW_STEP = 60;
@@ -1034,7 +1039,7 @@ function Shop() {
 
   const submitSearch = (event: React.FormEvent) => {
     event.preventDefault();
-    void navigate({ search: (prev) => ({ ...prev, artikel: "", q: term.trim() }) });
+    void navigate({ search: (prev) => ({ ...prev, artikel: "", ansicht: "", q: term.trim() }) });
   };
 
 
@@ -1558,7 +1563,7 @@ function Shop() {
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
-                      ...prev, artikel: "",
+                      ...prev, artikel: "", ansicht: "",
                       category: "",
                       subcategory: "",
                       subsubcategory: "",
@@ -1664,7 +1669,7 @@ function Shop() {
           setTerm("");
           void navigate({
             search: (prev) => ({
-              ...prev, artikel: "",
+              ...prev, artikel: "", ansicht: "",
               category: name,
               subcategory: "",
               subsubcategory: "",
@@ -1679,7 +1684,7 @@ function Shop() {
           setTerm("");
           void navigate({
             search: (prev) => ({
-              ...prev, artikel: "",
+              ...prev, artikel: "", ansicht: "",
               category: "",
               subcategory: "",
               subsubcategory: "",
@@ -1798,13 +1803,13 @@ function Shop() {
                 {block(search.category || "Kategorie", subCategories, search.subcategory, (name) => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({ ...prev, artikel: "", subcategory: name, subsubcategory: "", q: "" }),
+                    search: (prev) => ({ ...prev, artikel: "", ansicht: "", subcategory: name, subsubcategory: "", q: "" }),
                   });
                 })}
                 {block(search.subcategory, subSubCategories, search.subsubcategory, (name) => {
                   setTerm("");
                   void navigate({
-                    search: (prev) => ({ ...prev, artikel: "", subsubcategory: name, q: "" }),
+                    search: (prev) => ({ ...prev, artikel: "", ansicht: "", subsubcategory: name, q: "" }),
                   });
                 })}
               </>
@@ -2049,7 +2054,7 @@ function Shop() {
                   setTerm("");
                   void navigate({
                     search: (prev) => ({
-                      ...prev, artikel: "",
+                      ...prev, artikel: "", ansicht: "",
                       category: "",
                       subcategory: "",
                       subsubcategory: "",
@@ -2427,6 +2432,11 @@ function Shop() {
                 </button>
               </p>
             )}
+            {search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q && (
+              <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
+                <strong>Unsere Highlights</strong> – wählen Sie oben eine Kategorie für das gesamte Sortiment.
+              </p>
+            )}
             {searchFallback && !search.category && search.q.trim() === searchFallback.q && (
               <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
                 Im Bereich <strong>{searchFallback.from}</strong> wurde für „{searchFallback.q}“ nichts gefunden.{" "}
@@ -2645,7 +2655,7 @@ function Shop() {
           setMakerFilter([]);
           setTerm("");
           void navigate({
-            search: (prev) => ({ ...prev, artikel: "", category: "", subcategory: "", subsubcategory: "", q: "" }),
+            search: (prev) => ({ ...prev, artikel: "", ansicht: "", category: "", subcategory: "", subsubcategory: "", q: "" }),
           });
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
