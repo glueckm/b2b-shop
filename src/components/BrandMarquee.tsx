@@ -55,3 +55,10 @@ export function BrandMarquee({ onSelect }: { onSelect: (brand: string) => void }
     </section>
   );
 }
+
+/** Herstellerlogo (weiß) – fällt auf den Namen als Text zurück, wenn kein Logo vorhanden ist. */
+export function BrandLogo({ name, className = "h-8" }: { name: string; className?: string }) {
+  const logo = BRANDS.find((b) => b.name.toUpperCase() === (name ?? "").trim().toUpperCase())?.logo;
+  if (!logo) return <p className="text-lg font-bold">{name}</p>;
+  return <img src={logo} alt={name} className={`${className} w-auto max-w-[220px] object-contain object-left brightness-0 invert`} />;
+}
