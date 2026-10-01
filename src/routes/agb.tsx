@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 
 import agbText from "@/data/agb.txt?raw";
+import agbDeText from "@/data/agb-de.txt?raw";
 
 export const Route = createFileRoute("/agb")({
   head: () => ({
@@ -29,7 +30,22 @@ function BackButton() {
   );
 }
 
+function Body({ lines }: { lines: string[] }) {
+  return (
+    <div className="mt-6 space-y-3 text-[14px] leading-relaxed">
+      {lines.map((l, i) =>
+        /^\d{1,2} \S/.test(l) && l.length < 90 ? (
+          <h2 key={i} className="pt-4 text-lg font-bold">{l}</h2>
+        ) : (
+          <p key={i}>{l}</p>
+        ),
+      )}
+    </div>
+  );
+}
+
 function AgbPage() {
+  const deLines = agbDeText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const lines = agbText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   const [title, subtitle, ...body] = lines;
   return (
@@ -37,7 +53,12 @@ function AgbPage() {
       <div className="sticky top-0 z-10 -mx-5 bg-background/95 px-5 py-3 backdrop-blur">
         <BackButton />
       </div>
-      <h1 className="mt-4 text-3xl font-bold tracking-tight">{title}</h1>
+      <section className="mt-4 rounded-sm border border-border p-5">
+        <h1 className="text-3xl font-bold tracking-tight">AGB für Kunden aus Deutschland</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Für Kunden mit Sitz in Deutschland gelten folgende AGB der MAWA Trading GmbH (Deutschland).</p>
+        <Body lines={deLines} />
+      </section>
+      <h1 className="mt-12 text-3xl font-bold tracking-tight">{title}</h1>
       <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       <div className="mt-6 space-y-3 text-[14px] leading-relaxed">
         {body.map((l, i) =>
