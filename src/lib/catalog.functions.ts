@@ -562,6 +562,12 @@ async function buildArticles(
       spec_lrf: string;
       spec_cell: string;
       spec_storage: string;
+      spec_m_type: string;
+      spec_m_height: string;
+      spec_m_brand: string;
+      spec_m_model: string;
+      spec_m_interface: string;
+      spec_m_ring: string;
       promo: boolean;
       highlight: boolean | null;
       is_primary: boolean;
