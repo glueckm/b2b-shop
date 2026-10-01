@@ -10,7 +10,44 @@ export const getMyOrders = createServerFn({ method: "GET" }).handler(
     if (!user?.customerNumber) return null;
     const { withDbSession } = await import("./db.server");
     const { customerOrders } = await import("./orders.server");
-    return withDbSession((s) => customerOrders(user.customerNumber!, s.query));
+    const orders = await withDbSession((s) => customerOrders(user.customerNumber!, s.query));
+    // Abgeschickte Warenkörbe, die in weclapp noch nicht als Auftrag sichtbar sind.
+    try {
+      const api = await import("./basket.server");
+      const known = new Set(orders.map((o) => o.number.toUpperCase()));
+      const sent = (await api.listBaskets())
+        .filter((b) => b.status.toLowerCase() !== "open" && b.status.toLowerCase() !== "abandoned")
+        .filter((b) => !b.orderNumber || !known.has(b.orderNumber.toUpperCase()))
+        .slice(0, 20);
+      const full = await Promise.all(sent.map((b) => api.getBasket(b.id).catch(() => b)));
+      const pending: CustomerOrder[] = full.map((b) => ({
+        id: `basket-${b.id}`,
+        number: b.orderNumber ?? "",
+        customerRef: null,
+        date: b.updatedAt || null,
+        status: "SUBMITTED",
+        net: b.shownTotal,
+        gross: b.shownTotal,
+        currency: "EUR",
+        shipped: false,
+        invoiced: false,
+        paid: false,
+        items: (b.lines ?? []).map((l) => ({
+          sku: l.articleNumber,
+          title: l.name ?? "",
+          quantity: l.quantity,
+          shipped: 0,
+          open: l.quantity,
+          unitPrice: l.priceShown ?? 0,
+          unit: "",
+          plannedDelivery: null,
+        })),
+        invoices: [],
+      }));
+      return [...pending, ...orders];
+    } catch {
+      return orders;
+    }
   },
 );
 

@@ -92,9 +92,10 @@ function DocLink({ orderId, doc }: { orderId: string; doc: OrderDocument }) {
 function OrderCard({ order }: { order: CustomerOrder }) {
   const [open, setOpen] = useState(false);
   const inWork = order.status === "ORDER_ENTRY_IN_PROGRESS";
+  const pending = order.status === "SUBMITTED";
   const [docs, setDocs] = useState<OrderDocument[] | null | "error">(null);
   useEffect(() => {
-    if (!open || docs !== null) return;
+    if (!open || docs !== null || pending) return;
     getOrderDocuments({ data: { orderId: order.id } })
       .then((r) => setDocs(r.ok ? r.documents : "error"))
       .catch(() => setDocs("error"));
@@ -105,13 +106,19 @@ function OrderCard({ order }: { order: CustomerOrder }) {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left"
       >
-        <span className="font-mono text-sm font-semibold">{order.number}</span>
+        <span className="font-mono text-sm font-semibold">
+          {pending ? (order.number ? `AB ${order.number}` : "Abgeschickt") : order.number}
+        </span>
         <span className="text-sm text-muted-foreground">{day(order.date)}</span>
         {order.customerRef && (
           <span className="text-xs text-muted-foreground">Ihre Ref.: {order.customerRef}</span>
         )}
         <span className="ml-auto flex flex-wrap gap-1.5">
-          <Badge ok={!inWork} yes="Angelegt" no="In Erfassung" />
+          {pending ? (
+            <Badge ok={false} yes="" no="Nicht bestätigt" />
+          ) : (
+            <Badge ok={!inWork} yes="Angelegt" no="In Erfassung" />
+          )}
           <Badge ok={order.shipped} yes="Geliefert" no="Nicht geliefert" />
           <Badge ok={order.paid} yes="Bezahlt" no="Offen" />
         </span>
@@ -120,7 +127,8 @@ function OrderCard({ order }: { order: CustomerOrder }) {
       {open && (
         <div className="border-t border-border px-4 py-3">
           <div className="mb-3 flex flex-wrap gap-2">
-            {docs === null && <span className="text-xs text-muted-foreground">Belege werden geladen …</span>}
+            {pending && <span className="text-xs text-muted-foreground">Ihre Bestellung ist eingegangen und wird von MAWA geprüft. Belege folgen nach der Bestätigung.</span>}
+            {!pending && docs === null && <span className="text-xs text-muted-foreground">Belege werden geladen …</span>}
             {docs === "error" && <span className="text-xs text-muted-foreground">Belege derzeit nicht verfügbar.</span>}
             {Array.isArray(docs) && docs.length === 0 && (
               <span className="text-xs text-muted-foreground">Keine Belege vorhanden.</span>
