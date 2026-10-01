@@ -1402,6 +1402,8 @@ function Shop() {
   );
 
   const detailArticle = detailSku ? articleForSku(detailSku) : undefined;
+  const highlightView =
+    search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q && !cartView && !detailArticle;
 
 
 
@@ -1760,8 +1762,8 @@ function Shop() {
       })()}
 
 
-      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
-        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+      <div className={`mx-auto grid max-w-[1600px] gap-6 px-5 py-7 ${highlightView ? "" : "lg:grid-cols-[220px_minmax(0,1fr)_330px]"}`}>
+        <aside className={`${highlightView ? "hidden" : ""} space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto`}>
           {(() => {
             const block = (
               title: string,
@@ -2415,6 +2417,19 @@ function Shop() {
                 );
               })()}
             </div>
+          ) : highlightView ? (
+            <HighlightHero
+              items={articles.filter((x) => x.highlight)}
+              imageFor={(x) => thumbMap[x.id] ?? imagesOf(x)[0]}
+              requestImages={requestImages}
+              eur={eur}
+              describe={(x) => specText(x.spec) || x.category}
+              onAdd={(x) => addLine(x.sku, Math.max(1, x.moq))}
+              onOpen={(x) => {
+                requestImages(x.id);
+                setDetailSku(x.sku);
+              }}
+            />
           ) : (
           <div className="relative mt-4">
             {navPending && (
@@ -2498,7 +2513,7 @@ function Shop() {
           )}
         </main>
 
-        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
+        <aside id="order" className={`${highlightView ? "hidden" : ""} lg:sticky lg:top-36 lg:self-start`}>
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
@@ -2714,8 +2729,7 @@ function HighlightHero({
       ["Akku", a.specs.battery && `${a.specs.battery} h`],
     ] as [string, string | undefined][]
   ).filter(([, v]) => v);
-  const price = a.breaks[0]?.price ?? 0;
-  const unit = price * (1 - (a.rebatePct || 0) / 100);
+  const unit = priceForQty(a, Math.max(1, a.moq));
   return (
     <section className="mt-4 overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-lg">
       <div className="flex items-start justify-between border-b border-primary-foreground/10 px-8 py-6">
