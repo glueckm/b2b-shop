@@ -121,7 +121,7 @@ const formatEur = (value: number) =>
 const num = (value: number) => value.toLocaleString("de-DE");
 
 /** Lagerstand nur bis 10 ausweisen, darüber "10+". */
-const stockDisplay = (onHand: number) => (onHand > 10 ? "10+" : num(onHand));
+const stockDisplay = (onHand: number) => (onHand > 5 ? "5+" : num(onHand));
 
 
 const entities: Record<string, string> = {
