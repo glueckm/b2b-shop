@@ -267,7 +267,7 @@ select a.id as id,
        coalesce(nullif(a.ca_akku::text, '0'), '') as spec_cell,
        coalesce(nullif(a.ca_speicherkapazitaet_gb::text, '0'), '') as spec_storage,
        coalesce(a.ca_aktion, false) as promo,
-       coalesce(a.ca_highlight_produkt, false) as highlight,
+       __HIGHLIGHT__ as highlight,
        coalesce(vr.is_primary, false) as is_primary,
        coalesce(nullif(a.manufacturer_name, ''), (select m.name from weclapp.manufacturer m where m.id = a.manufacturer_id), '') as manufacturer,
        coalesce(so.qty, 0)::float8 as sold,
@@ -401,6 +401,9 @@ type CacheEntry<T> = { at: number; value: T };
 /** Deutsche Kunden sehen nur Artikel für WEBSHOP DE, alle anderen Artikel aus WEBSHOP DE oder AT. */
 function webshopSql(sql: string, de: boolean): string {
   return sql.replaceAll(
+    "__HIGHLIGHT__",
+    de ? "coalesce(a.ca_highlight_produkt_de, false)" : "coalesce(a.ca_highlight_produkt_at, false)",
+  ).replaceAll(
     "__WEBSHOP__",
     de ? "coalesce(a.ca_de_webshop_on_off, false)" : "(a.ca_de_webshop_on_off or a.ca_at_webshop_on_off)",
   );
