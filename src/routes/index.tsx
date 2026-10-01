@@ -3,6 +3,7 @@ import {
   createFileRoute,
   Link,
   redirect,
+  Link,
   useNavigate,
   useRouter,
   useRouterState,
