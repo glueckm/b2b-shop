@@ -1526,13 +1526,32 @@ function Shop() {
 
       <header className="bg-primary text-primary-foreground">
         <div className="mx-auto flex max-w-[1600px] items-center gap-6 px-5 py-3">
-          <img
-            src={mawaLogo}
-            alt="MAWA Trading"
-            width={369}
-            height={77}
-            className="h-7 w-auto shrink-0"
-          />
+          <button
+            type="button"
+            title="Zu den Highlights"
+            className="shrink-0"
+            onClick={() => {
+              setBrandPick(null);
+              setFavOnly(false);
+              setPromoOnly(false);
+              setCartView(false);
+              setTerm("");
+              void navigate({
+                search: (prev) => ({
+                  ...prev, artikel: "", ansicht: "highlights",
+                  category: "", subcategory: "", subsubcategory: "", q: "",
+                }),
+              });
+            }}
+          >
+            <img
+              src={mawaLogo}
+              alt="MAWA Trading"
+              width={369}
+              height={77}
+              className="h-7 w-auto"
+            />
+          </button>
           <form onSubmit={submitSearch} className="hidden min-w-0 flex-1 md:block">
             <input
               value={term}
