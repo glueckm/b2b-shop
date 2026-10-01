@@ -1409,6 +1409,10 @@ function Shop() {
   );
 
   const detailArticle = detailSku ? articleForSku(detailSku) : undefined;
+  // Auf einer Detailseite nur den Hersteller dieses Artikels anführen.
+  const shownMakers = detailArticle
+    ? topMakers.filter((m) => m.name.toUpperCase() === detailArticle.manufacturer.toUpperCase())
+    : topMakers;
   const highlightView =
     search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q && !cartView && !detailArticle;
 
@@ -1842,7 +1846,7 @@ function Shop() {
             );
           })()}
 
-          {topMakers.length > 1 && (
+          {(detailArticle ? shownMakers.length > 0 : topMakers.length > 1) && (
             <div>
               <div className="flex items-center justify-between gap-2">
                 <h3 className="text-[13px] font-bold uppercase tracking-[0.08em]">Hersteller</h3>
@@ -1856,7 +1860,7 @@ function Shop() {
                 )}
               </div>
               <div className="mt-2 flex flex-col gap-1">
-                {topMakers.map((m) => {
+                {shownMakers.map((m) => {
                   const active = makerFilter.includes(m.name);
                   return (
                     <label
