@@ -2686,6 +2686,10 @@ function Shop() {
               >
                 {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
               </button>
+              <p className="mt-2 text-center text-[12px] text-muted-foreground">
+                Mit dem Absenden Ihrer Bestellung gelten die{" "}
+                <Link to="/agb" className="font-semibold text-accent underline">AGBs von MAWA Trading GmbH</Link>.
+              </p>
 
               {orderDone && (
                 <p className="mt-2 rounded-sm border border-stock/40 bg-stock/10 px-3 py-2 text-[13px] text-stock">
