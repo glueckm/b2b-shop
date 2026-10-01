@@ -113,6 +113,12 @@ function OrderCard({ order }: { order: CustomerOrder }) {
         {order.customerRef && (
           <span className="text-xs text-muted-foreground">Ihre Ref.: {order.customerRef}</span>
         )}
+        {order.invoices.some((i) => i.transportRef) && (
+          <span className="text-xs">
+            <strong className="font-semibold">Sendungsnr.:</strong>{" "}
+            <span className="font-mono">{order.invoices.map((i) => i.transportRef).filter(Boolean).join(", ")}</span>
+          </span>
+        )}
         <span className="ml-auto flex flex-wrap gap-1.5">
           {pending ? (
             <Badge ok={false} yes="" no="Nicht bestätigt" />
