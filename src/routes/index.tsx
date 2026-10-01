@@ -166,8 +166,8 @@ function stockState(onHand: number) {
 }
 
 const stockLabel = { in: "Auf Lager", low: "Wenig Bestand", backorder: "Nicht lagernd" };
-const stockTone = { in: "text-stock", low: "text-low", backorder: "text-muted-foreground" };
-const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-muted-foreground" };
+const stockTone = { in: "text-stock", low: "text-low", backorder: "text-stock" };
+const stockDot = { in: "bg-stock", low: "bg-low", backorder: "bg-stock" };
 
 const imageDataCache = new Map<string, Promise<string | null>>();
 const resolvedImageCache = new Map<string, string>();
