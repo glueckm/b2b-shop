@@ -56,9 +56,26 @@ export function BrandMarquee({ onSelect }: { onSelect: (brand: string) => void }
   );
 }
 
-/** Herstellerlogo (weiß) – fällt auf den Namen als Text zurück, wenn kein Logo vorhanden ist. */
-export function BrandLogo({ name, className = "h-8" }: { name: string; className?: string }) {
+/** Herstellerlogo – weiß (Standard) oder dezent dunkel; fällt auf den Namen als Text zurück. */
+export function BrandLogo({
+  name,
+  className = "h-8",
+  tone = "light",
+}: {
+  name: string;
+  className?: string;
+  tone?: "light" | "subtle";
+}) {
   const logo = BRANDS.find((b) => b.name.toUpperCase() === (name ?? "").trim().toUpperCase())?.logo;
+  if (tone === "subtle") {
+    if (!logo)
+      return name ? (
+        <span className={`${className} flex items-center text-[11px] font-black tracking-[0.2em] text-muted-foreground/70`}>
+          {name.toUpperCase()}
+        </span>
+      ) : null;
+    return <img src={logo} alt={name} className={`${className} w-auto max-w-[110px] object-contain object-left brightness-0 opacity-40`} />;
+  }
   if (!logo) return <p className="text-lg font-bold">{name}</p>;
   return <img src={logo} alt={name} className={`${className} w-auto max-w-[320px] object-contain object-left brightness-0 invert`} />;
 }
