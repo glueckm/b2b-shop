@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AgbRouteImport } from './routes/agb'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
 import { Route as BestellungenRouteImport } from './routes/bestellungen'
+import { Route as DatenschutzRouteImport } from './routes/datenschutz'
+import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as KontoRouteImport } from './routes/konto'
 import { Route as KundenanfrageRouteImport } from './routes/kundenanfrage'
 import { Route as PasswortSetzenRouteImport } from './routes/passwort-setzen'
@@ -37,6 +39,16 @@ const AnmeldenRoute = AnmeldenRouteImport.update({
 const BestellungenRoute = BestellungenRouteImport.update({
   id: '/bestellungen',
   path: '/bestellungen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatenschutzRoute = DatenschutzRouteImport.update({
+  id: '/datenschutz',
+  path: '/datenschutz',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ImpressumRoute = ImpressumRouteImport.update({
+  id: '/impressum',
+  path: '/impressum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KontoRoute = KontoRouteImport.update({
@@ -71,6 +83,8 @@ export interface FileRoutesByFullPath {
   '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
+  '/datenschutz': typeof DatenschutzRoute
+  '/impressum': typeof ImpressumRoute
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
@@ -82,6 +96,8 @@ export interface FileRoutesByTo {
   '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
+  '/datenschutz': typeof DatenschutzRoute
+  '/impressum': typeof ImpressumRoute
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
@@ -94,6 +110,8 @@ export interface FileRoutesById {
   '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
+  '/datenschutz': typeof DatenschutzRoute
+  '/impressum': typeof ImpressumRoute
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
@@ -107,6 +125,8 @@ export interface FileRouteTypes {
     | '/agb'
     | '/anmelden'
     | '/bestellungen'
+    | '/datenschutz'
+    | '/impressum'
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
@@ -118,6 +138,8 @@ export interface FileRouteTypes {
     | '/agb'
     | '/anmelden'
     | '/bestellungen'
+    | '/datenschutz'
+    | '/impressum'
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
@@ -129,6 +151,8 @@ export interface FileRouteTypes {
     | '/agb'
     | '/anmelden'
     | '/bestellungen'
+    | '/datenschutz'
+    | '/impressum'
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
@@ -141,6 +165,8 @@ export interface RootRouteChildren {
   AgbRoute: typeof AgbRoute
   AnmeldenRoute: typeof AnmeldenRoute
   BestellungenRoute: typeof BestellungenRoute
+  DatenschutzRoute: typeof DatenschutzRoute
+  ImpressumRoute: typeof ImpressumRoute
   KontoRoute: typeof KontoRoute
   KundenanfrageRoute: typeof KundenanfrageRoute
   PasswortSetzenRoute: typeof PasswortSetzenRoute
@@ -176,6 +202,20 @@ declare module '@tanstack/react-router' {
       path: '/bestellungen'
       fullPath: '/bestellungen'
       preLoaderRoute: typeof BestellungenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/datenschutz': {
+      id: '/datenschutz'
+      path: '/datenschutz'
+      fullPath: '/datenschutz'
+      preLoaderRoute: typeof DatenschutzRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/impressum': {
+      id: '/impressum'
+      path: '/impressum'
+      fullPath: '/impressum'
+      preLoaderRoute: typeof ImpressumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/konto': {
@@ -221,6 +261,8 @@ const rootRouteChildren: RootRouteChildren = {
   AgbRoute: AgbRoute,
   AnmeldenRoute: AnmeldenRoute,
   BestellungenRoute: BestellungenRoute,
+  DatenschutzRoute: DatenschutzRoute,
+  ImpressumRoute: ImpressumRoute,
   KontoRoute: KontoRoute,
   KundenanfrageRoute: KundenanfrageRoute,
   PasswortSetzenRoute: PasswortSetzenRoute,
