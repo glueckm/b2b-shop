@@ -121,10 +121,11 @@ function LoginPage() {
           // die Adresse und lädt den Katalog ein zweites Mal.
           search: {
             channel: "NET1",
-            category: "Wärmebild & Nachtsicht",
+            category: "",
             subcategory: "",
             subsubcategory: "",
             q: "",
+            ansicht: "highlights",
           },
         });
         return;
