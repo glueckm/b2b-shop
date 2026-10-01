@@ -50,29 +50,25 @@ function DocLink({ orderId, doc }: { orderId: string; doc: OrderDocument }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   async function open() {
-    // Fenster sofort öffnen, sonst blockiert der Browser das Pop-up.
-    const win = window.open("", "_blank");
+    // Direkter Download: Brave blockiert blob-Adressen in neuen Tabs (ERR_BLOCKED_BY_CLIENT).
     setBusy(true);
     setError(null);
     try {
       const r = await getOrderDocumentPdf({ data: { orderId, kind: doc.kind, id: doc.id } });
       if (!r.ok) {
-        win?.close();
         setError(r.error);
         return;
       }
       const bytes = Uint8Array.from(atob(r.base64), (c) => c.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes], { type: r.contentType }));
-      if (win) win.location.href = url;
-      else {
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `${label}.pdf`;
-        link.click();
-      }
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${label.replace(/[^\w\-. äöüÄÖÜß]/g, "_")}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 60_000);
     } catch {
-      win?.close();
       setError("Beleg derzeit nicht verfügbar");
     } finally {
       setBusy(false);
