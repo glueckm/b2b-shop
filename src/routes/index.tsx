@@ -49,7 +49,6 @@ import { SHOP_VERSION } from "@/lib/version";
 
 
 const searchSchema = z.object({
-  channel: z.string().default("NET1"),
   category: z.string().default("Wärmebild & Nachtsicht"),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
@@ -71,7 +70,6 @@ export const Route = createFileRoute("/")({
   loader: async ({ deps }) => {
     const catalog = await getCatalog({
       data: {
-        channel: deps.channel,
         category: deps.category,
         subcategory: deps.subcategory,
         subsubcategory: deps.subsubcategory,

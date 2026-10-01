@@ -124,7 +124,6 @@ export type CatalogPayload = {
 
 
 const inputSchema = z.object({
-  channel: z.string().default("NET1"),
   category: z.string().default(""),
   subcategory: z.string().default(""),
   subsubcategory: z.string().default(""),
