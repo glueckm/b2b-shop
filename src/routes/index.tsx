@@ -2412,8 +2412,7 @@ function Shop() {
                     </div>
                     {(accessories[a.sku]?.length ?? 0) > 0 && (
                       <div className="xl:order-4 xl:col-span-2">
-                        <h2 className="text-xl font-bold tracking-tight">Passendes Zubehör</h2>
-                        <p className="text-[13px] text-muted-foreground">Kunden, die diesen Artikel gekauft haben, kauften auch</p>
+                        <h2 className="text-xl font-bold tracking-tight">Kunden, die diesen Artikel gekauft haben, kauften auch</h2>
                         <div className="mt-3 grid grid-cols-2 gap-4 lg:grid-cols-4">
                           {accessories[a.sku]!.map((acc) => {
                             const t = thumbMap[acc.id] ?? imagesOf(acc)[0];
