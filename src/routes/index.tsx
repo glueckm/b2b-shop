@@ -382,9 +382,10 @@ function Shop() {
     const remote = imageMap[article.id] ?? [];
     return remote.length > 0 ? remote : articleImages(article.id, article.sku);
   };
-  /** Lädt alle Artikelbilder als Dateien herunter. */
+  /** Lädt alle Artikelbilder gebündelt als ZIP-Datei herunter. */
   const downloadPhotos = async (article: { id: string; sku: string }) => {
     const urls = imagesOf(article);
+    const files: Record<string, Uint8Array> = {};
     for (let index = 0; index < urls.length; index += 1) {
       try {
         const resolved = await loadAuthenticatedImage(urls[index]!);
@@ -393,18 +394,22 @@ function Shop() {
         if (!response.ok) continue;
         const blob = await response.blob();
         const extension = (blob.type.split("/")[1] ?? "jpg").replace("jpeg", "jpg");
-        const href = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = href;
-        anchor.download = `${article.sku}_${index + 1}.${extension}`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        URL.revokeObjectURL(href);
+        files[`${article.sku}_${index + 1}.${extension}`] = new Uint8Array(await blob.arrayBuffer());
       } catch {
         // einzelnes Bild überspringen
       }
     }
+    if (Object.keys(files).length === 0) return;
+    const { zipSync } = await import("fflate");
+    const zipped = zipSync(files, { level: 0 });
+    const href = URL.createObjectURL(new Blob([zipped as BlobPart], { type: "application/zip" }));
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `${article.sku}_Fotos.zip`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(href), 60_000);
   };
   const [qty, setQty] = useState<Record<string, number>>({});
   const [localLines, setLocalLines] = useState<Line[]>([]);
