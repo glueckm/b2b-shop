@@ -30,7 +30,7 @@ const day = (v: string | null) => (v ? new Date(v).toLocaleDateString("de-AT") :
 function Badge({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   return (
     <span
-      className={`rounded-sm px-2 py-0.5 text-[11px] font-semibold ${
+      className={`rounded-sm px-2.5 py-1 text-sm font-semibold ${
         ok ? "bg-stock/15 text-stock" : "bg-muted text-muted-foreground"
       }`}
     >
@@ -126,7 +126,7 @@ function OrderCard({ order }: { order: CustomerOrder }) {
             <Badge ok={!inWork} yes="Angelegt" no="In Erfassung" />
           )}
           {!order.shipped && order.items.some((i) => i.shipped > 0) ? (
-            <span className="rounded-sm bg-low/15 px-2 py-0.5 text-[11px] font-semibold text-low">Teillieferung</span>
+            <span className="rounded-sm bg-low/15 px-2.5 py-1 text-sm font-semibold text-low">Teillieferung</span>
           ) : (
             <Badge ok={order.shipped} yes="Geliefert" no="Nicht geliefert" />
           )}
@@ -265,7 +265,6 @@ function OrdersPage() {
                   <th className="py-1">Artikel</th>
                   <th className="py-1 text-right">Bestellt</th>
                   <th className="py-1 text-right">Offen</th>
-                  <th className="py-1 text-right">Voraussichtlich</th>
                 </tr>
               </thead>
               <tbody>
@@ -280,7 +279,6 @@ function OrdersPage() {
                     </td>
                     <td className="py-1.5 text-right">{item.quantity}</td>
                     <td className="py-1.5 text-right font-semibold text-accent">{item.open}</td>
-                    <td className="py-1.5 text-right">{day(item.plannedDelivery)}</td>
                   </tr>
                 ))}
               </tbody>
