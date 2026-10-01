@@ -2432,6 +2432,11 @@ function Shop() {
                 </button>
               </p>
             )}
+            {search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q && (
+              <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
+                <strong>Unsere Highlights</strong> – wählen Sie oben eine Kategorie für das gesamte Sortiment.
+              </p>
+            )}
             {searchFallback && !search.category && search.q.trim() === searchFallback.q && (
               <p className="mb-4 rounded-lg border border-accent bg-accent/10 px-4 py-3 text-sm">
                 Im Bereich <strong>{searchFallback.from}</strong> wurde für „{searchFallback.q}“ nichts gefunden.{" "}
