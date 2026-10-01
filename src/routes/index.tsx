@@ -2745,7 +2745,7 @@ function HighlightHero({
           {paused ? "▶ Weiter" : "❚❚ Pause"}
         </button>
       </div>
-      <div className="grid gap-8 px-8 py-10 md:grid-cols-2">
+      <div className="grid gap-8 px-8 py-10 md:grid-cols-[2fr_3fr]">
         <div className="flex flex-col justify-center">
           <p className="text-lg font-bold">{a.manufacturer}</p>
           <h3 className="mt-3 text-4xl font-bold tracking-tight">{a.name}</h3>
@@ -2782,14 +2782,14 @@ function HighlightHero({
             </button>
           </div>
         </div>
-        <button type="button" onClick={() => onOpen(a)} className="relative grid min-h-[320px] place-items-center">
+        <button type="button" onClick={() => onOpen(a)} className="relative grid min-h-[460px] place-items-center">
           {a.promo && (
             <span className="absolute left-0 top-0 rounded-sm bg-accent px-2 py-0.5 text-[11px] font-bold uppercase text-accent-foreground">
               Aktion
             </span>
           )}
           {img ? (
-            <ArticleImage src={img} alt={a.name} className="max-h-[340px] max-w-full object-contain" />
+            <ArticleImage src={img} alt={a.name} className="h-[480px] max-h-[480px] w-full object-contain" />
           ) : (
             <span className="label-mono text-primary-foreground/50">Produktbild</span>
           )}
