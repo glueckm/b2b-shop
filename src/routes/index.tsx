@@ -658,6 +658,7 @@ function Shop() {
         groupName: "",
         specs: {},
         promo: false,
+        highlight: false,
         isPrimary: false,
         eol: false,
         manufacturer: "",
