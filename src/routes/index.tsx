@@ -1402,6 +1402,8 @@ function Shop() {
   );
 
   const detailArticle = detailSku ? articleForSku(detailSku) : undefined;
+  const highlightView =
+    search.ansicht === "highlights" && !favOnly && !promoOnly && !brandPick && !search.q && !cartView && !detailArticle;
 
 
 
@@ -1760,8 +1762,8 @@ function Shop() {
       })()}
 
 
-      <div className="mx-auto grid max-w-[1600px] gap-6 px-5 py-7 lg:grid-cols-[220px_minmax(0,1fr)_330px]">
-        <aside className="space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto">
+      <div className={`mx-auto grid max-w-[1600px] gap-6 px-5 py-7 ${highlightView ? "" : "lg:grid-cols-[220px_minmax(0,1fr)_330px]"}`}>
+        <aside className={`${highlightView ? "hidden" : ""} space-y-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto`}>
           {(() => {
             const block = (
               title: string,
@@ -2415,6 +2417,19 @@ function Shop() {
                 );
               })()}
             </div>
+          ) : highlightView ? (
+            <HighlightHero
+              items={articles.filter((x) => x.highlight)}
+              imageFor={(x) => thumbMap[x.id] ?? imagesOf(x)[0]}
+              requestImages={requestImages}
+              eur={eur}
+              describe={(x) => specText(x.spec) || x.category}
+              onAdd={(x) => addLine(x.sku, Math.max(1, x.moq))}
+              onOpen={(x) => {
+                requestImages(x.id);
+                setDetailSku(x.sku);
+              }}
+            />
           ) : (
           <div className="relative mt-4">
             {navPending && (
@@ -2498,7 +2513,7 @@ function Shop() {
           )}
         </main>
 
-        <aside id="order" className="lg:sticky lg:top-36 lg:self-start">
+        <aside id="order" className={`${highlightView ? "hidden" : ""} lg:sticky lg:top-36 lg:self-start`}>
           <div className="rounded-lg border border-border bg-panel">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <span className="label-mono text-muted-foreground">Warenkorb</span>
@@ -2669,5 +2684,132 @@ function Shop() {
       </footer>
 
     </div>
+  );
+}
+
+/** Startansicht nach dem Login: Highlight-Geräte als automatisch wechselnde Bühne. */
+function HighlightHero({
+  items,
+  imageFor,
+  requestImages,
+  eur,
+  describe,
+  onAdd,
+  onOpen,
+}: {
+  items: CatalogArticle[];
+  imageFor: (article: CatalogArticle) => string | undefined;
+  requestImages: (id: string) => void;
+  eur: (value: number) => string;
+  describe: (article: CatalogArticle) => string;
+  onAdd: (article: CatalogArticle) => void;
+  onOpen: (article: CatalogArticle) => void;
+}) {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  useEffect(() => {
+    items.forEach((a) => requestImages(a.id));
+  }, [items, requestImages]);
+  useEffect(() => {
+    if (paused || items.length < 2) return;
+    const t = window.setInterval(() => setIndex((i) => (i + 1) % items.length), 6000);
+    return () => window.clearInterval(t);
+  }, [paused, items.length]);
+  if (items.length === 0) {
+    return <p className="mt-6 text-sm text-muted-foreground">Derzeit sind keine Highlights hinterlegt.</p>;
+  }
+  const a = items[Math.min(index, items.length - 1)]!;
+  const img = imageFor(a);
+  const chips = (
+    [
+      ["Sensor", a.specs["sensor"]],
+      ["NETD", a.specs["netd"] && `≤${a.specs["netd"]} mK`],
+      ["Objektiv", a.specs["lens"] && `${a.specs["lens"]} mm`],
+      ["LRF", a.specs["lrf"] && "Ja"],
+      ["Akku", a.specs["battery"] && `${a.specs["battery"]} h`],
+    ] as [string, string | undefined][]
+  ).filter(([, v]) => v);
+  const unit = priceForQty(a, Math.max(1, a.moq));
+  return (
+    <section className="mt-4 overflow-hidden rounded-xl bg-primary text-primary-foreground shadow-lg">
+      <div className="flex items-start justify-between border-b border-primary-foreground/10 px-8 py-6">
+        <div>
+          <p className="label-mono text-accent">Willkommen</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight">Highlights & Aktionen</h2>
+        </div>
+        <button
+          type="button"
+          onClick={() => setPaused((p) => !p)}
+          className="text-sm text-primary-foreground/75 hover:text-primary-foreground"
+        >
+          {paused ? "▶ Weiter" : "❚❚ Pause"}
+        </button>
+      </div>
+      <div className="grid gap-8 px-8 py-10 md:grid-cols-2">
+        <div className="flex flex-col justify-center">
+          <p className="text-lg font-bold">{a.manufacturer}</p>
+          <h3 className="mt-3 text-4xl font-bold tracking-tight">{a.name}</h3>
+          {chips.length > 0 && (
+            <div className="mt-5 flex flex-wrap gap-2">
+              {chips.map(([k, v]) => (
+                <span key={k} className="rounded-md border border-primary-foreground/15 px-3 py-1.5 text-sm text-primary-foreground/70">
+                  {k} <strong className="text-primary-foreground">{v}</strong>
+                </span>
+              ))}
+            </div>
+          )}
+          <p className="mt-6 line-clamp-3 text-sm text-primary-foreground/85">{describe(a)}</p>
+          <div className="mt-8 flex items-baseline gap-3">
+            <span className="font-mono text-4xl font-bold">{eur(unit)}</span>
+            <span className="text-xs text-primary-foreground/60">
+              EK netto{a.uvp != null ? ` · UVP ${formatEur(a.uvp)}` : ""}
+            </span>
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={() => onAdd(a)}
+              className="rounded-md bg-accent px-5 py-3 text-sm font-bold text-accent-foreground hover:bg-accent/90"
+            >
+              In den Warenkorb
+            </button>
+            <button
+              type="button"
+              onClick={() => onOpen(a)}
+              className="rounded-md border border-primary-foreground/25 px-5 py-3 text-sm font-bold hover:bg-primary-foreground/10"
+            >
+              Zum Produkt
+            </button>
+          </div>
+        </div>
+        <button type="button" onClick={() => onOpen(a)} className="relative grid min-h-[320px] place-items-center">
+          {a.promo && (
+            <span className="absolute left-0 top-0 rounded-sm bg-accent px-2 py-0.5 text-[11px] font-bold uppercase text-accent-foreground">
+              Aktion
+            </span>
+          )}
+          {img ? (
+            <ArticleImage src={img} alt={a.name} className="max-h-[340px] max-w-full object-contain" />
+          ) : (
+            <span className="label-mono text-primary-foreground/50">Produktbild</span>
+          )}
+        </button>
+      </div>
+      <div className="grid border-t border-primary-foreground/10" style={{ gridTemplateColumns: `repeat(${Math.min(items.length, 8)}, minmax(0, 1fr))` }}>
+        {items.map((it, i) => (
+          <button
+            key={it.sku}
+            type="button"
+            onClick={() => setIndex(i)}
+            className={`border-t-2 px-4 py-4 text-left ${i === index ? "border-accent" : "border-transparent hover:bg-primary-foreground/5"}`}
+          >
+            <p className="truncate text-sm font-bold">{it.name}</p>
+            <p className="truncate text-xs text-primary-foreground/60">
+              {it.manufacturer.toUpperCase()} · {it.onHand > 0 ? "Auf Lager" : "Bestellbar"}
+            </p>
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }
