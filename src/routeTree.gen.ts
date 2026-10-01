@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AgbRouteImport } from './routes/agb'
 import { Route as AnmeldenRouteImport } from './routes/anmelden'
 import { Route as BestellungenRouteImport } from './routes/bestellungen'
 import { Route as KontoRouteImport } from './routes/konto'
@@ -21,6 +22,11 @@ import { Route as ApiBelegOrderIdKindIdRouteImport } from './routes/api/beleg.$o
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AgbRoute = AgbRouteImport.update({
+  id: '/agb',
+  path: '/agb',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnmeldenRoute = AnmeldenRouteImport.update({
@@ -62,6 +68,7 @@ const ApiBelegOrderIdKindIdRoute = ApiBelegOrderIdKindIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
   '/konto': typeof KontoRoute
@@ -72,6 +79,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
   '/konto': typeof KontoRoute
@@ -83,6 +91,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/agb': typeof AgbRoute
   '/anmelden': typeof AnmeldenRoute
   '/bestellungen': typeof BestellungenRoute
   '/konto': typeof KontoRoute
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/agb'
     | '/anmelden'
     | '/bestellungen'
     | '/konto'
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/agb'
     | '/anmelden'
     | '/bestellungen'
     | '/konto'
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/agb'
     | '/anmelden'
     | '/bestellungen'
     | '/konto'
@@ -126,6 +138,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AgbRoute: typeof AgbRoute
   AnmeldenRoute: typeof AnmeldenRoute
   BestellungenRoute: typeof BestellungenRoute
   KontoRoute: typeof KontoRoute
@@ -142,6 +155,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/agb': {
+      id: '/agb'
+      path: '/agb'
+      fullPath: '/agb'
+      preLoaderRoute: typeof AgbRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/anmelden': {
@@ -198,6 +218,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AgbRoute: AgbRoute,
   AnmeldenRoute: AnmeldenRoute,
   BestellungenRoute: BestellungenRoute,
   KontoRoute: KontoRoute,
