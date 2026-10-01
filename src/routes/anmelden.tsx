@@ -120,7 +120,6 @@ function LoginPage() {
           // Alle Parameter vollständig setzen, sonst normalisiert der Router
           // die Adresse und lädt den Katalog ein zweites Mal.
           search: {
-            channel: "NET1",
             category: "",
             subcategory: "",
             subsubcategory: "",
