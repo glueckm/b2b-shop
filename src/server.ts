@@ -51,6 +51,11 @@ export default {
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
+      const e = error as { name?: string; message?: string; cause?: { message?: string } };
+      // Vom Browser abgebrochene Anfragen nicht als Absturz melden.
+      if (e?.name === "AbortError" || e?.message === "aborted" || e?.cause?.message === "aborted") {
+        return new Response(null, { status: 499 });
+      }
       console.error(error);
       return new Response(renderErrorPage(), {
         status: 500,

@@ -53,7 +53,18 @@ function isErrorLike(value: unknown): value is Error {
 // unhandled-error logging, which this file cannot hook directly — are both
 // recorded for consumeLastCapturedError and expanded before serialization.
 const originalConsoleError = console.error.bind(console);
+function isClientAbort(value: unknown): boolean {
+  for (let e: unknown = value, i = 0; e && i < CAUSE_DEPTH_LIMIT; i++) {
+    const err = e as { name?: string; message?: string; code?: string; cause?: unknown };
+    if (err.name === "AbortError" || err.code === "ECONNRESET" || err.message === "aborted") return true;
+    e = err.cause;
+  }
+  return false;
+}
+
 console.error = (...args: unknown[]) => {
+  // Vom Browser abgebrochene Anfragen (Neuladen, Seitenwechsel) sind kein Absturz.
+  if (args.some((arg) => isErrorLike(arg) && isClientAbort(arg))) return;
   const expanded = args.map((arg) => {
     if (!isErrorLike(arg)) return arg;
     record(arg);
@@ -64,9 +75,10 @@ console.error = (...args: unknown[]) => {
 
 if (typeof globalThis.addEventListener === "function") {
   globalThis.addEventListener("error", (event) => record((event as ErrorEvent).error ?? event));
-  globalThis.addEventListener("unhandledrejection", (event) =>
-    record((event as PromiseRejectionEvent).reason),
-  );
+  globalThis.addEventListener("unhandledrejection", (event) => {
+    const reason = (event as PromiseRejectionEvent).reason;
+    if (!isClientAbort(reason)) record(reason);
+  });
 }
 
 export function consumeLastCapturedError(): unknown {
