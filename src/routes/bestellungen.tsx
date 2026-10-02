@@ -29,7 +29,7 @@ const day = (v: string | null) => (v ? new Date(v).toLocaleDateString("de-AT") :
 
 /** Gemeinsame Spalten für Überschrift und Auftragszeilen. */
 const ROW_GRID =
-  "flex flex-wrap items-center gap-3 md:grid md:grid-cols-[8rem_6rem_minmax(0,1fr)_minmax(0,1.2fr)_auto_7rem]";
+  "flex flex-wrap items-center gap-3 md:grid md:grid-cols-[8rem_6rem_minmax(0,1fr)_minmax(0,1.2fr)_23rem_7rem]";
 
 function Badge({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   return (
