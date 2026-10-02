@@ -27,6 +27,10 @@ const money = (v: number, cur = "EUR") =>
   new Intl.NumberFormat("de-AT", { style: "currency", currency: cur || "EUR" }).format(v);
 const day = (v: string | null) => (v ? new Date(v).toLocaleDateString("de-AT") : "–");
 
+/** Gemeinsame Spalten für Überschrift und Auftragszeilen. */
+const ROW_GRID =
+  "flex flex-wrap items-center gap-3 md:grid md:grid-cols-[8rem_6rem_minmax(0,1fr)_minmax(0,1.2fr)_auto_7rem]";
+
 function Badge({ ok, yes, no }: { ok: boolean; yes: string; no: string }) {
   return (
     <span
@@ -104,22 +108,17 @@ function OrderCard({ order }: { order: CustomerOrder }) {
     <div className="rounded-sm border border-border bg-card">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full flex-wrap items-center gap-3 px-4 py-3 text-left"
+        className={`${ROW_GRID} w-full px-4 py-3 text-left`}
       >
         <span className="font-mono text-sm font-semibold">
           {pending ? (order.number ? `AB ${order.number}` : "Abgeschickt") : order.number}
         </span>
         <span className="text-sm text-muted-foreground">{day(order.date)}</span>
-        {order.customerRef && (
-          <span className="text-xs text-muted-foreground">Ihre Ref.: {order.customerRef}</span>
-        )}
-        {order.invoices.some((i) => i.transportRef) && (
-          <span className="text-xs">
-            <strong className="font-semibold">Sendungsnr.:</strong>{" "}
-            <span className="font-mono">{order.invoices.map((i) => i.transportRef).filter(Boolean).join(", ")}</span>
-          </span>
-        )}
-        <span className="ml-auto flex flex-wrap gap-1.5">
+        <span className="truncate text-xs text-muted-foreground">{order.customerRef ?? ""}</span>
+        <span className="truncate font-mono text-xs">
+          {order.invoices.map((i) => i.transportRef).filter(Boolean).join(", ")}
+        </span>
+        <span className="flex flex-wrap gap-1.5">
           {pending ? (
             <Badge ok={false} yes="" no="Nicht bestätigt" />
           ) : (
@@ -132,7 +131,7 @@ function OrderCard({ order }: { order: CustomerOrder }) {
           )}
           <Badge ok={order.paid} yes="Bezahlt" no="Offen" />
         </span>
-        <span className="w-28 text-right font-mono text-sm">{money(order.net, order.currency)}</span>
+        <span className="text-right font-mono text-sm">{money(order.net, order.currency)}</span>
       </button>
       {open && (
         <div className="border-t border-border px-4 py-3">
@@ -249,6 +248,16 @@ function OrdersPage() {
       {tab === "orders" ? (
         <div className="mt-4 space-y-2">
           {orders.length === 0 && <p className="text-sm text-muted-foreground">Noch keine Aufträge vorhanden.</p>}
+          {orders.length > 0 && (
+            <div className={`${ROW_GRID} label-mono hidden px-4 pb-1 text-muted-foreground md:grid`}>
+              <span>Auftrag</span>
+              <span>Datum</span>
+              <span>Ihre Referenz</span>
+              <span>Sendungsnummer</span>
+              <span>Status</span>
+              <span className="text-right">Betrag netto</span>
+            </div>
+          )}
           {orders.map((o) => (
             <OrderCard key={o.id} order={o} />
           ))}
