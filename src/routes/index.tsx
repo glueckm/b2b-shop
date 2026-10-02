@@ -320,6 +320,7 @@ function Shop() {
           return loadBatch(batch, false);
         }
         batch.forEach((id) => loadingIds.current.delete(id));
+        setImageLookupDone((prev) => new Set([...prev, ...batch]));
         return;
       }
       batch.forEach((id) => {
@@ -336,6 +337,7 @@ function Shop() {
     } catch {
       // Fehlgeschlagene Portionen bleiben erneut abrufbar.
       batch.forEach((id) => loadingIds.current.delete(id));
+      setImageLookupDone((prev) => new Set([...prev, ...batch]));
     }
   }, []);
 
@@ -1102,7 +1104,7 @@ function Shop() {
                 <ArticleImage src={thumb} alt={article.name} className="max-h-24 max-w-[70%] object-contain" />
               ) : (
                 <span className="label-mono text-muted-foreground">
-                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Produktbild"}
+                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Bild lädt…"}
                 </span>
               )}
             </button>
