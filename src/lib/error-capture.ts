@@ -56,7 +56,8 @@ const originalConsoleError = console.error.bind(console);
 function isClientAbort(value: unknown): boolean {
   for (let e: unknown = value, i = 0; e && i < CAUSE_DEPTH_LIMIT; i++) {
     const err = e as { name?: string; message?: string; code?: string; cause?: unknown };
-    if (err.name === "AbortError" || err.code === "ECONNRESET" || err.message === "aborted") return true;
+    // Nur echte Browser-Abbrüche; ECONNRESET kann auch ein Datenbank-/Backend-Abbruch sein und wird protokolliert.
+    if (err.name === "AbortError" || err.message === "aborted") return true;
     e = err.cause;
   }
   return false;

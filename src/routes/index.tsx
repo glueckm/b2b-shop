@@ -106,6 +106,37 @@ export const Route = createFileRoute("/")({
   component: Shop,
 });
 
+/** Fehlerseite des Katalogs: meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer. */
+function CatalogError({ error }: { error: unknown }) {
+  const [ref] = useState(() => `K-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`);
+  useEffect(() => {
+    const e = error as { name?: string; message?: string; stack?: string } | undefined;
+    const body = JSON.stringify({
+      ref,
+      event: "catalog_unreachable",
+      name: String(e?.name ?? "").slice(0, 80),
+      message: String(e?.message ?? error ?? "").slice(0, 500),
+      stack: String(e?.stack ?? "").slice(0, 1500),
+      url: window.location.href.slice(0, 500),
+      online: navigator.onLine,
+      version: SHOP_VERSION,
+    });
+    console.error("[mawa] Katalog nicht erreichbar", ref, error);
+    // sendBeacon funktioniert auch, wenn der Kunde sofort neu lädt.
+    const sent = navigator.sendBeacon?.("/api/public/client-log", new Blob([body], { type: "application/json" }));
+    if (!sent) void fetch("/api/public/client-log", { method: "POST", body, keepalive: true }).catch(() => undefined);
+  }, [error, ref]);
+  return (
+    <div className="mx-auto max-w-xl px-5 py-24 text-center">
+      <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Die Verbindung zur Artikeldatenbank ist fehlgeschlagen. Bitte Seite neu laden.
+      </p>
+      <p className="mt-4 font-mono text-xs text-muted-foreground">Fehlernummer: {ref}</p>
+    </div>
+  );
+}
+
 type Line = { sku: string; qty: number };
 
 const formatEur = (value: number) =>
