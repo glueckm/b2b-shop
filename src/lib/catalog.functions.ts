@@ -702,9 +702,23 @@ export async function catalogSnapshot(
 export const getCatalog = createServerFn({ method: "GET" })
   .inputValidator((data: unknown) => inputSchema.parse(data ?? {}))
   .handler(async ({ data }): Promise<CatalogPayload> => {
-    const { withDbSession } = await import("./db.server");
-    // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
-    return withDbSession((session) => buildPayload(data, session.query));
+    const { withDbSession, logEvent } = await import("./db.server");
+    const started = Date.now();
+    try {
+      // Alle Datenbankabfragen dieser Anfrage teilen eine Verbindung.
+      const payload = await withDbSession((session) => buildPayload(data, session.query));
+      const ms = Date.now() - started;
+      if (ms > 8_000) logEvent("warn", "catalog.slow", { ms, category: data.category, search: data.search });
+      return payload;
+    } catch (error) {
+      logEvent("error", "catalog.failed", {
+        ms: Date.now() - started,
+        category: data.category,
+        subcategory: data.subcategory,
+        search: data.search,
+      }, error);
+      throw error;
+    }
   });
 
 async function buildPayload(

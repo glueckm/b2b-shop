@@ -101,14 +101,7 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  errorComponent: () => (
-    <div className="mx-auto max-w-xl px-5 py-24 text-center">
-      <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Die Verbindung zur Artikeldatenbank ist fehlgeschlagen. Bitte Seite neu laden.
-      </p>
-    </div>
-  ),
+  errorComponent: CatalogError,
   notFoundComponent: () => <div className="px-5 py-24 text-center">Nicht gefunden</div>,
   component: Shop,
 });
