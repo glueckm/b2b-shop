@@ -18,6 +18,7 @@ import { Route as ImpressumRouteImport } from './routes/impressum'
 import { Route as KontoRouteImport } from './routes/konto'
 import { Route as KundenanfrageRouteImport } from './routes/kundenanfrage'
 import { Route as PasswortSetzenRouteImport } from './routes/passwort-setzen'
+import { Route as ApiPublicClientLogRouteImport } from './routes/api/public/client-log'
 import { Route as ApiPublicArtikelBildFileIdRouteImport } from './routes/api/public/artikel-bild.$fileId'
 import { Route as ApiBelegOrderIdKindIdRouteImport } from './routes/api/beleg.$orderId.$kind.$id'
 
@@ -66,6 +67,11 @@ const PasswortSetzenRoute = PasswortSetzenRouteImport.update({
   path: '/passwort-setzen',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicClientLogRoute = ApiPublicClientLogRouteImport.update({
+  id: '/api/public/client-log',
+  path: '/api/public/client-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicArtikelBildFileIdRoute =
   ApiPublicArtikelBildFileIdRouteImport.update({
     id: '/api/public/artikel-bild/$fileId',
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
+  '/api/public/client-log': typeof ApiPublicClientLogRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
   '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
+  '/api/public/client-log': typeof ApiPublicClientLogRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
   '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/konto': typeof KontoRoute
   '/kundenanfrage': typeof KundenanfrageRoute
   '/passwort-setzen': typeof PasswortSetzenRoute
+  '/api/public/client-log': typeof ApiPublicClientLogRoute
   '/api/public/artikel-bild/$fileId': typeof ApiPublicArtikelBildFileIdRoute
   '/api/beleg/$orderId/$kind/$id': typeof ApiBelegOrderIdKindIdRoute
 }
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
+    | '/api/public/client-log'
     | '/api/public/artikel-bild/$fileId'
     | '/api/beleg/$orderId/$kind/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
+    | '/api/public/client-log'
     | '/api/public/artikel-bild/$fileId'
     | '/api/beleg/$orderId/$kind/$id'
   id:
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/konto'
     | '/kundenanfrage'
     | '/passwort-setzen'
+    | '/api/public/client-log'
     | '/api/public/artikel-bild/$fileId'
     | '/api/beleg/$orderId/$kind/$id'
   fileRoutesById: FileRoutesById
@@ -170,6 +182,7 @@ export interface RootRouteChildren {
   KontoRoute: typeof KontoRoute
   KundenanfrageRoute: typeof KundenanfrageRoute
   PasswortSetzenRoute: typeof PasswortSetzenRoute
+  ApiPublicClientLogRoute: typeof ApiPublicClientLogRoute
   ApiPublicArtikelBildFileIdRoute: typeof ApiPublicArtikelBildFileIdRoute
   ApiBelegOrderIdKindIdRoute: typeof ApiBelegOrderIdKindIdRoute
 }
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PasswortSetzenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/client-log': {
+      id: '/api/public/client-log'
+      path: '/api/public/client-log'
+      fullPath: '/api/public/client-log'
+      preLoaderRoute: typeof ApiPublicClientLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/artikel-bild/$fileId': {
       id: '/api/public/artikel-bild/$fileId'
       path: '/api/public/artikel-bild/$fileId'
@@ -266,6 +286,7 @@ const rootRouteChildren: RootRouteChildren = {
   KontoRoute: KontoRoute,
   KundenanfrageRoute: KundenanfrageRoute,
   PasswortSetzenRoute: PasswortSetzenRoute,
+  ApiPublicClientLogRoute: ApiPublicClientLogRoute,
   ApiPublicArtikelBildFileIdRoute: ApiPublicArtikelBildFileIdRoute,
   ApiBelegOrderIdKindIdRoute: ApiBelegOrderIdKindIdRoute,
 }
