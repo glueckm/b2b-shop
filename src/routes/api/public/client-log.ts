@@ -32,6 +32,7 @@ export const Route = createFileRoute("/api/public/client-log")({
         const { logEvent } = await import("@/lib/db.server");
         logEvent("error", `client.${parsed.event}`, {
           ...parsed,
+          event: `client.${parsed.event}`,
           userAgent: request.headers.get("user-agent")?.slice(0, 200),
         });
         return new Response(null, { status: 204 });
