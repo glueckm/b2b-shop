@@ -45,7 +45,7 @@ export function logEvent(
       : {}),
   });
   // Direkt über die Originalausgabe, damit kein Filter die Zeile verschluckt.
-  (level === "error" ? console.warn : level === "warn" ? console.warn : console.log)(`[mawa] ${line}`);
+  (level === "error" ? console.error : level === "warn" ? console.warn : console.log)(`[mawa] ${line}`);
 }
 
 function isTooManyConnections(error: unknown): boolean {
