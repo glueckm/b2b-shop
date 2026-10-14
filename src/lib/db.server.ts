@@ -45,7 +45,7 @@ export function logEvent(
       : {}),
   });
   // Direkt über die Originalausgabe, damit kein Filter die Zeile verschluckt.
-  (level === "error" ? console.warn : level === "warn" ? console.warn : console.log)(`[mawa] ${line}`);
+  (level === "error" ? console.error : level === "warn" ? console.warn : console.log)(`[mawa] ${line}`);
 }
 
 function isTooManyConnections(error: unknown): boolean {
@@ -59,31 +59,51 @@ function connectionString(): string {
   return url;
 }
 
+/** Zielserver der Datenbank für das Protokoll – ohne Benutzer und Passwort. */
+function dbTarget(): Record<string, unknown> {
+  try {
+    const u = new URL(process.env["DATABASE_URL"] ?? "");
+    return { dbHost: u.hostname, dbPort: u.port || "5432", dbName: u.pathname.replace(/^\//, "") };
+  } catch {
+    return { dbHost: "(DATABASE_URL fehlt oder ungültig)" };
+  }
+}
+
 async function openClient(): Promise<Client> {
   let lastError: unknown;
   const started = Date.now();
   for (let attempt = 0; attempt < 6; attempt += 1) {
-    const client = new Client({
-      connectionString: connectionString(),
-      ssl: { rejectUnauthorized: false },
-      connectionTimeoutMillis: 15_000,
-    });
-    // Ohne Listener würde ein Verbindungsabbruch unbemerkt bleiben.
-    client.on("error", (error) => logEvent("error", "db.client_error", {}, error));
+    let client: Client | undefined;
     try {
+      // Auch Konfigurationsfehler (fehlende DATABASE_URL) landen im Protokoll.
+      client = new Client({
+        connectionString: connectionString(),
+        ssl: { rejectUnauthorized: false },
+        connectionTimeoutMillis: 15_000,
+      });
+      // Ohne Listener würde ein Verbindungsabbruch unbemerkt bleiben.
+      client.on("error", (error) => logEvent("error", "db.client_error", dbTarget(), error));
       await client.connect();
       const ms = Date.now() - started;
-      if (attempt > 0 || ms > 3_000) logEvent("warn", "db.connect_slow", { ms, attempts: attempt + 1 });
+      if (attempt > 0 || ms > 3_000) {
+        logEvent("warn", "db.connect_slow", { ms, attempts: attempt + 1, ...dbTarget() });
+      }
       return client;
     } catch (error) {
       lastError = error;
-      await client.end().catch(() => undefined);
-      logEvent("warn", "db.connect_failed", { attempt: attempt + 1, ms: Date.now() - started }, error);
+      await client?.end().catch(() => undefined);
+      const retry = isTooManyConnections(error) && attempt < 5;
+      logEvent(retry ? "warn" : "error", "db.connect_failed", {
+        attempt: attempt + 1,
+        willRetry: retry,
+        ms: Date.now() - started,
+        ...dbTarget(),
+      }, error);
       if (!isTooManyConnections(error)) throw error;
       await sleep(200 * (attempt + 1));
     }
   }
-  logEvent("error", "db.connect_gave_up", { ms: Date.now() - started }, lastError);
+  logEvent("error", "db.connect_gave_up", { ms: Date.now() - started, ...dbTarget() }, lastError);
   throw lastError;
 }
 
