@@ -127,7 +127,13 @@ export async function apiLogin(customerNumber: string, password: string): Promis
 
     signal: AbortSignal.timeout(20_000),
   });
-  if (!res.ok) throw new Error(await detailMessage(res, "LOGIN_BAD_CREDENTIALS"));
+  if (!res.ok) {
+    // 400/401/403/404/422 = falsche Kundennummer oder falsches Passwort
+    if (res.status >= 400 && res.status < 500 && res.status !== 429) {
+      throw new Error("LOGIN_BAD_CREDENTIALS");
+    }
+    throw new Error(await detailMessage(res, "LOGIN_FAILED"));
+  }
   const body = (await res.json()) as { access_token?: string };
   if (!body.access_token) throw new Error("LOGIN_FAILED");
   return body.access_token;
