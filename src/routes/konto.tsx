@@ -22,7 +22,7 @@ export const Route = createFileRoute("/konto")({
     ],
   }),
   loader: async () => {
-    const user = await getShopUser().catch(() => null);
+    const user = await getShopUser();
     if (!user) throw redirect({ to: "/anmelden" });
     const profile = await getCustomerProfile().catch(() => null);
     return { user, profile };
