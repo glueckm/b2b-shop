@@ -3,6 +3,7 @@
  * Das Token liegt ausschließlich in einem httpOnly-Cookie, nie im Browser-JS.
  */
 import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
+import { logEvent } from "./db.server";
 
 export type ShopUser = {
   id: string;
@@ -151,18 +152,35 @@ export async function apiCurrentUser(): Promise<ShopUser | null> {
   const cache = (userCacheRef.__mawaShopUserCache ??= new Map());
   const hit = cache.get(token);
   if (hit && Date.now() - hit.at < USER_TTL) return hit.value;
-  try {
-    const res = await fetch(`${apiBase()}/v1/shop/auth/logins/me`, {
-      headers: { authorization: `Bearer ${token}`, origin: appOrigin() },
-      signal: AbortSignal.timeout(8_000),
-    });
-    if (!res.ok) return null;
-    const value = mapAccount((await res.json()) as Record<string, unknown>);
-    cache.set(token, { at: Date.now(), value });
-    return value;
-  } catch {
-    return null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const started = Date.now();
+    let status: number | undefined;
+    try {
+      const res = await fetch(`${apiBase()}/v1/shop/auth/logins/me`, {
+        headers: { authorization: `Bearer ${token}`, origin: appOrigin() },
+        signal: AbortSignal.timeout(8_000),
+      });
+      status = res.status;
+      // Only an explicit rejection invalidates the session, including its cache.
+      if (res.status === 401) {
+        clearToken();
+        return null;
+      }
+      if (!res.ok) throw new Error(`Account check returned HTTP ${res.status}`);
+      const value = mapAccount((await res.json()) as Record<string, unknown>);
+      cache.set(token, { at: Date.now(), value });
+      return value;
+    } catch (error) {
+      logEvent(attempt === 1 ? "warn" : "error", "auth.me_failed", {
+        ms: Date.now() - started,
+        attempt,
+        retry: attempt === 1,
+        ...(status === undefined ? {} : { status }),
+      }, error);
+    }
   }
+  // A temporary outage must propagate, not produce a logged-out catalogue.
+  throw new Error("Kundenkonto derzeit nicht erreichbar. Bitte erneut versuchen.");
 }
 
 /** Passwort und/oder Anzeigename des angemeldeten Kontos ändern. */
