@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Log account-check failures and retry once without converting timeouts to guest sessions; cover with regression tests.
+
 - [x] Katalog live aus weclapp-Datenbank (read-only)
 - [x] Fuzzy-Suche, Lagerstand max. 10+, HTML-Beschreibungen
 - [x] Artikelbilder über bestehendes MAWA-Backend (/v1/files, entity=article)

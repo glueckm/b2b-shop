@@ -16,7 +16,7 @@ export const Route = createFileRoute("/bestellungen")({
     ],
   }),
   loader: async () => {
-    const orders = await getMyOrders().catch(() => null);
+    const orders = await getMyOrders();
     if (!orders) throw redirect({ to: "/anmelden" });
     return { orders };
   },
