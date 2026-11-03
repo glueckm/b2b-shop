@@ -106,32 +106,71 @@ export const Route = createFileRoute("/")({
   component: Shop,
 });
 
-/** Fehlerseite des Katalogs: meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer. */
+/**
+ * Fehlerseite des Katalogs. Unterscheidet echte Verbindungsfehler von Abstürzen
+ * der Seitendarstellung (z. B. DOM-Änderungen durch Browser-Übersetzung oder
+ * Erweiterungen), meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer.
+ */
+export function classifyClientError(error: unknown): "network" | "render" {
+  const e = error as { name?: string; message?: string; status?: number } | undefined;
+  if (typeof Response !== "undefined" && error instanceof Response) return "network";
+  const text = `${e?.name ?? ""} ${e?.message ?? String(error ?? "")}`;
+  if (/failed to fetch|load failed|networkerror|network request failed|forbidden|unauthorized|timeout|timed out|econn|fetch failed|service unavailable|bad gateway|gateway|\b5\d\d\b|\b40[13]\b/i.test(text)) {
+    return "network";
+  }
+  return "render";
+}
+
 function CatalogError({ error }: { error: unknown }) {
   const [ref] = useState(() => `K-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`);
+  const kind = classifyClientError(error);
   useEffect(() => {
     const e = error as { name?: string; message?: string; stack?: string } | undefined;
+    const html = document.documentElement;
     const body = JSON.stringify({
       ref,
-      event: "catalog_unreachable",
+      event: kind === "network" ? "catalog_unreachable" : "render_crash",
       name: String(e?.name ?? "").slice(0, 80),
       message: String(e?.message ?? error ?? "").slice(0, 500),
       stack: String(e?.stack ?? "").slice(0, 1500),
       url: window.location.href.slice(0, 500),
       online: navigator.onLine,
       version: SHOP_VERSION,
+      language: String(navigator.language ?? "").slice(0, 20),
+      languages: (navigator.languages ?? []).join(",").slice(0, 100),
+      pageLang: String(html.lang ?? "").slice(0, 20),
+      // Chrome/Edge-Übersetzung setzt Klassen wie "translated-ltr" auf <html>.
+      translated: /translated/i.test(html.className) || (!!html.lang && !/^de/i.test(html.lang)),
     });
-    console.error("[mawa] Katalog nicht erreichbar", ref, error);
+    console.error(`[mawa] ${kind === "network" ? "Katalog nicht erreichbar" : "Darstellungsfehler"}`, ref, error);
     // sendBeacon funktioniert auch, wenn der Kunde sofort neu lädt.
     const sent = navigator.sendBeacon?.("/api/public/client-log", new Blob([body], { type: "application/json" }));
     if (!sent) void fetch("/api/public/client-log", { method: "POST", body, keepalive: true }).catch(() => undefined);
-  }, [error, ref]);
+  }, [error, ref, kind]);
   return (
     <div className="mx-auto max-w-xl px-5 py-24 text-center">
-      <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Die Verbindung zur Artikeldatenbank ist fehlgeschlagen. Bitte Seite neu laden.
-      </p>
+      {kind === "network" ? (
+        <>
+          <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Die Verbindung zum Shop ist fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und laden Sie die Seite neu.
+          </p>
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold">Bitte Seite neu laden</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Die Anzeige wurde unterbrochen. Ist die automatische Übersetzung Ihres Browsers aktiv, schalten Sie sie für diese Seite bitte aus.
+          </p>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Seite neu laden
+      </button>
       <p className="mt-4 font-mono text-xs text-muted-foreground">Fehlernummer: {ref}</p>
     </div>
   );
