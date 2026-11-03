@@ -1128,7 +1128,7 @@ function Shop() {
                 <ArticleImage src={thumb} alt={article.name} className="max-h-24 max-w-[70%] object-contain" />
               ) : (
                 <span className="label-mono text-muted-foreground">
-                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Bild lädt…"}
+                  <span>{imageLookupDone.has(article.id) ? "Kein Bild" : "Bild lädt…"}</span>
                 </span>
               )}
             </button>
@@ -1371,7 +1371,7 @@ function Shop() {
                 >
                   Lieferumfang anzeigen
                   <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
-                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                    <span>{article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}</span>
                   </span>
                 </button>
                 <button
@@ -2064,7 +2064,7 @@ function Shop() {
                             <img src={img} alt={line.article.name} className="max-h-full max-w-full object-contain" loading="lazy" />
                           ) : (
                             <span className="text-[11px] text-muted-foreground">
-                              {imageLookupDone.has(line.article.id) ? "Kein Bild" : "Bild lädt…"}
+                              <span>{imageLookupDone.has(line.article.id) ? "Kein Bild" : "Bild lädt…"}</span>
                             </span>
                           )}
                           </ThumbSlot>
@@ -2333,7 +2333,7 @@ function Shop() {
                         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-accent">
                           <button onClick={() => toggleFavourite(a)} className="flex items-center gap-1 hover:underline">
                             <Heart className="size-4" {...(fav ? { fill: "currentColor" } : {})} />
-                            {fav ? "Von der Merkliste entfernen" : "Auf die Merkliste"}
+                            <span>{fav ? "Von der Merkliste entfernen" : "Auf die Merkliste"}</span>
                           </button>
                           <button onClick={() => setScopeArticle(a)} disabled={!a.scope} className="hover:underline disabled:opacity-40">
                             Lieferumfang
@@ -2719,7 +2719,7 @@ function Shop() {
                 disabled={basketBusy || !activeBasket || lines.length === 0}
                 className="mt-2 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
+                <span>{basketBusy ? "Wird gesendet …" : "Bestellung absenden"}</span>
               </button>
               <p className="mt-2 text-center text-[12px] text-muted-foreground">
                 Mit dem Absenden Ihrer Bestellung gelten die
@@ -2824,7 +2824,7 @@ function HighlightHero({
           onClick={() => setPaused((p) => !p)}
           className="text-sm text-primary-foreground/75 hover:text-primary-foreground"
         >
-          {paused ? "▶ Weiter" : "❚❚ Pause"}
+          <span>{paused ? "▶ Weiter" : "❚❚ Pause"}</span>
         </button>
       </div>
       <div className="grid gap-8 px-8 py-10 md:grid-cols-[2fr_3fr]">
@@ -2893,7 +2893,7 @@ function HighlightHero({
           >
             <p className="truncate text-sm font-bold">{it.name}</p>
             <p className="truncate text-xs text-primary-foreground/60">
-              {it.manufacturer.toUpperCase()} · {it.onHand > 0 ? "Auf Lager" : "Bestellbar"}
+              <span>{it.manufacturer.toUpperCase()}</span><span> · </span><span>{it.onHand > 0 ? "Auf Lager" : "Bestellbar"}</span>
             </p>
           </button>
         ))}

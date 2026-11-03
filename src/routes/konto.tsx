@@ -234,7 +234,7 @@ function AccountPage() {
           disabled={busy}
           className="mt-5 w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
         >
-          {busy ? "Speichern …" : "Speichern"}
+          <span>{busy ? "Speichern …" : "Speichern"}</span>
         </button>
       </form>
     </main>
