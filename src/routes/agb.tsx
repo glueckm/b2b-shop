@@ -63,7 +63,7 @@ function AgbPage() {
             onClick={() => setLand(c)}
             className={`-mb-px rounded-t-sm border border-border px-5 py-2 text-sm font-semibold ${land === c ? "border-b-background bg-background text-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}
           >
-            {c === "AT" ? "Österreich" : "Deutschland"}
+            <span>{c === "AT" ? "Österreich" : "Deutschland"}</span>
           </button>
         ))}
       </div>

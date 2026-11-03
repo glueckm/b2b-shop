@@ -15,6 +15,10 @@ const schema = z.object({
   url: z.string().max(500).optional(),
   online: z.boolean().optional(),
   version: z.string().max(40).optional(),
+  language: z.string().max(20).optional(),
+  languages: z.string().max(100).optional(),
+  pageLang: z.string().max(20).optional(),
+  translated: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/api/public/client-log")({

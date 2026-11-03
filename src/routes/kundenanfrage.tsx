@@ -125,7 +125,7 @@ function LeadPage() {
     return (
       <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {LABELS[key]}
-        {options?.required === false ? " (optional)" : " *"}
+        <span>{options?.required === false ? " (optional)" : " *"}</span>
         <input
           type={options?.type ?? "text"}
           value={form[key] ?? ""}
@@ -234,7 +234,7 @@ function LeadPage() {
           disabled={busy}
           className="w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-60"
         >
-          {busy ? "Anfrage wird gesendet …" : "Anfrage senden"}
+          <span>{busy ? "Anfrage wird gesendet …" : "Anfrage senden"}</span>
         </button>
         <p className="text-center text-xs text-muted-foreground">
           Eine Bestätigung geht an Ihre angegebene E-Mail-Adresse.

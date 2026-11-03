@@ -211,7 +211,7 @@ function LoginPage() {
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {t === "login" ? "Anmelden" : "Zugang anfordern"}
+                <span>{t === "login" ? "Anmelden" : "Zugang anfordern"}</span>
               </button>
             ))}
           </div>
@@ -252,7 +252,7 @@ function LoginPage() {
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 mt-1 -translate-y-1/2 text-xs font-semibold text-muted-foreground hover:text-foreground"
                   >
-                    {showPassword ? "Verbergen" : "Anzeigen"}
+                    <span>{showPassword ? "Verbergen" : "Anzeigen"}</span>
                   </button>
                 </div>
               </div>
@@ -281,7 +281,7 @@ function LoginPage() {
                 {busy && (
                   <span className="size-4 animate-spin rounded-full border-2 border-accent-foreground/40 border-t-accent-foreground" />
                 )}
-                {loadingCatalog ? "Katalog wird geladen …" : busy ? "Anmelden …" : "Anmelden"}
+                <span>{loadingCatalog ? "Katalog wird geladen …" : busy ? "Anmelden …" : "Anmelden"}</span>
               </button>
             </form>
           ) : (
@@ -312,7 +312,7 @@ function LoginPage() {
                   disabled={signupBusy}
                   className="w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground hover:bg-accent/90 disabled:opacity-60"
                 >
-                  {signupBusy ? "Wird geprüft …" : "Zugang anfordern"}
+                  <span>{signupBusy ? "Wird geprüft …" : "Zugang anfordern"}</span>
                 </button>
               </form>
               <div className="mt-8 border-t border-border pt-5 text-sm">
@@ -375,7 +375,7 @@ function LoginPage() {
                 disabled={resetBusy}
                 className="w-full rounded-sm border border-border px-4 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-60"
               >
-                {resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}
+                <span>{resetBusy ? "Wird gesendet …" : "Link zum Passwortsetzen senden"}</span>
               </button>
             </form>
           </div>

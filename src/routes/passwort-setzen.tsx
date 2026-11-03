@@ -137,7 +137,7 @@ function SetPasswordPage() {
               disabled={busy}
               className="w-full rounded-sm bg-accent px-4 py-2.5 text-sm font-semibold text-accent-foreground disabled:opacity-60"
             >
-              {busy ? "Passwort wird gesetzt …" : "Passwort setzen"}
+              <span>{busy ? "Passwort wird gesetzt …" : "Passwort setzen"}</span>
             </button>
           </form>
         </>

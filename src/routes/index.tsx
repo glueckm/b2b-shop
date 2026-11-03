@@ -68,14 +68,21 @@ export const Route = createFileRoute("/")({
   // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
   staleTime: 120_000,
   loader: async ({ deps }) => {
-    const catalog = await getCatalog({
-      data: {
-        category: deps.category,
-        subcategory: deps.subcategory,
-        subsubcategory: deps.subsubcategory,
-        search: deps.q,
-      },
-    });
+    let catalog;
+    try {
+      catalog = await getCatalog({
+        data: {
+          category: deps.category,
+          subcategory: deps.subcategory,
+          subsubcategory: deps.subsubcategory,
+          search: deps.q,
+        },
+      });
+    } catch (error) {
+      // Fehler beim Laden der Daten (nicht der Darstellung) für die Fehlerseite markieren.
+      if (error && typeof error === "object") (error as { mawaKind?: string }).mawaKind = "network";
+      throw error;
+    }
     if (!catalog.user) {
       throw redirect({ to: "/anmelden" });
     }
@@ -106,32 +113,72 @@ export const Route = createFileRoute("/")({
   component: Shop,
 });
 
-/** Fehlerseite des Katalogs: meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer. */
+/**
+ * Fehlerseite des Katalogs. Unterscheidet echte Verbindungsfehler von Abstürzen
+ * der Seitendarstellung (z. B. DOM-Änderungen durch Browser-Übersetzung oder
+ * Erweiterungen), meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer.
+ */
+function classifyClientError(error: unknown): "network" | "render" {
+  const e = error as { name?: string; message?: string; mawaKind?: string } | undefined;
+  if (e?.mawaKind === "network") return "network";
+  if (typeof Response !== "undefined" && error instanceof Response) return "network";
+  const text = `${e?.name ?? ""} ${e?.message ?? String(error ?? "")}`;
+  if (/failed to fetch|load failed|networkerror|network request failed|forbidden|unauthorized|timeout|timed out|econn|fetch failed|service unavailable|bad gateway|gateway|\b5\d\d\b|\b40[13]\b/i.test(text)) {
+    return "network";
+  }
+  return "render";
+}
+
 function CatalogError({ error }: { error: unknown }) {
   const [ref] = useState(() => `K-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`);
+  const kind = classifyClientError(error);
   useEffect(() => {
     const e = error as { name?: string; message?: string; stack?: string } | undefined;
+    const html = document.documentElement;
     const body = JSON.stringify({
       ref,
-      event: "catalog_unreachable",
+      event: kind === "network" ? "catalog_unreachable" : "render_crash",
       name: String(e?.name ?? "").slice(0, 80),
       message: String(e?.message ?? error ?? "").slice(0, 500),
       stack: String(e?.stack ?? "").slice(0, 1500),
       url: window.location.href.slice(0, 500),
       online: navigator.onLine,
       version: SHOP_VERSION,
+      language: String(navigator.language ?? "").slice(0, 20),
+      languages: (navigator.languages ?? []).join(",").slice(0, 100),
+      pageLang: String(html.lang ?? "").slice(0, 20),
+      // Chrome/Edge-Übersetzung setzt Klassen wie "translated-ltr" auf <html>.
+      translated: /translated/i.test(html.className) || (!!html.lang && !/^de/i.test(html.lang)),
     });
-    console.error("[mawa] Katalog nicht erreichbar", ref, error);
+    console.error(`[mawa] ${kind === "network" ? "Katalog nicht erreichbar" : "Darstellungsfehler"}`, ref, error);
     // sendBeacon funktioniert auch, wenn der Kunde sofort neu lädt.
     const sent = navigator.sendBeacon?.("/api/public/client-log", new Blob([body], { type: "application/json" }));
     if (!sent) void fetch("/api/public/client-log", { method: "POST", body, keepalive: true }).catch(() => undefined);
-  }, [error, ref]);
+  }, [error, ref, kind]);
   return (
     <div className="mx-auto max-w-xl px-5 py-24 text-center">
-      <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Die Verbindung zur Artikeldatenbank ist fehlgeschlagen. Bitte Seite neu laden.
-      </p>
+      {kind === "network" ? (
+        <>
+          <h1 className="text-2xl font-semibold">Katalog nicht erreichbar</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Die Verbindung zum Shop ist fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung und laden Sie die Seite neu.
+          </p>
+        </>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold">Bitte Seite neu laden</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Die Anzeige wurde unterbrochen. Ist die automatische Übersetzung Ihres Browsers aktiv, schalten Sie sie für diese Seite bitte aus.
+          </p>
+        </>
+      )}
+      <button
+        type="button"
+        onClick={() => window.location.reload()}
+        className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+      >
+        Seite neu laden
+      </button>
       <p className="mt-4 font-mono text-xs text-muted-foreground">Fehlernummer: {ref}</p>
     </div>
   );
@@ -1128,7 +1175,7 @@ function Shop() {
                 <ArticleImage src={thumb} alt={article.name} className="max-h-24 max-w-[70%] object-contain" />
               ) : (
                 <span className="label-mono text-muted-foreground">
-                  {imageLookupDone.has(article.id) ? "Kein Bild" : "Bild lädt…"}
+                  <span>{imageLookupDone.has(article.id) ? "Kein Bild" : "Bild lädt…"}</span>
                 </span>
               )}
             </button>
@@ -1371,7 +1418,7 @@ function Shop() {
                 >
                   Lieferumfang anzeigen
                   <span className="mt-0.5 block text-[11px] font-normal text-accent-foreground/75">
-                    {article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}
+                    <span>{article.scope ? "Details im Pop-up" : "Kein Langtext hinterlegt"}</span>
                   </span>
                 </button>
                 <button
@@ -2064,7 +2111,7 @@ function Shop() {
                             <img src={img} alt={line.article.name} className="max-h-full max-w-full object-contain" loading="lazy" />
                           ) : (
                             <span className="text-[11px] text-muted-foreground">
-                              {imageLookupDone.has(line.article.id) ? "Kein Bild" : "Bild lädt…"}
+                              <span>{imageLookupDone.has(line.article.id) ? "Kein Bild" : "Bild lädt…"}</span>
                             </span>
                           )}
                           </ThumbSlot>
@@ -2333,7 +2380,7 @@ function Shop() {
                         <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-accent">
                           <button onClick={() => toggleFavourite(a)} className="flex items-center gap-1 hover:underline">
                             <Heart className="size-4" {...(fav ? { fill: "currentColor" } : {})} />
-                            {fav ? "Von der Merkliste entfernen" : "Auf die Merkliste"}
+                            <span>{fav ? "Von der Merkliste entfernen" : "Auf die Merkliste"}</span>
                           </button>
                           <button onClick={() => setScopeArticle(a)} disabled={!a.scope} className="hover:underline disabled:opacity-40">
                             Lieferumfang
@@ -2719,7 +2766,7 @@ function Shop() {
                 disabled={basketBusy || !activeBasket || lines.length === 0}
                 className="mt-2 w-full rounded-sm bg-accent px-4 py-3 text-sm font-semibold text-accent-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {basketBusy ? "Wird gesendet …" : "Bestellung absenden"}
+                <span>{basketBusy ? "Wird gesendet …" : "Bestellung absenden"}</span>
               </button>
               <p className="mt-2 text-center text-[12px] text-muted-foreground">
                 Mit dem Absenden Ihrer Bestellung gelten die
@@ -2824,7 +2871,7 @@ function HighlightHero({
           onClick={() => setPaused((p) => !p)}
           className="text-sm text-primary-foreground/75 hover:text-primary-foreground"
         >
-          {paused ? "▶ Weiter" : "❚❚ Pause"}
+          <span>{paused ? "▶ Weiter" : "❚❚ Pause"}</span>
         </button>
       </div>
       <div className="grid gap-8 px-8 py-10 md:grid-cols-[2fr_3fr]">
@@ -2893,7 +2940,7 @@ function HighlightHero({
           >
             <p className="truncate text-sm font-bold">{it.name}</p>
             <p className="truncate text-xs text-primary-foreground/60">
-              {it.manufacturer.toUpperCase()} · {it.onHand > 0 ? "Auf Lager" : "Bestellbar"}
+              <span>{it.manufacturer.toUpperCase()}</span><span> · </span><span>{it.onHand > 0 ? "Auf Lager" : "Bestellbar"}</span>
             </p>
           </button>
         ))}
