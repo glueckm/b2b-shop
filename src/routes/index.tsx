@@ -111,7 +111,7 @@ export const Route = createFileRoute("/")({
  * der Seitendarstellung (z. B. DOM-Änderungen durch Browser-Übersetzung oder
  * Erweiterungen), meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer.
  */
-export function classifyClientError(error: unknown): "network" | "render" {
+function classifyClientError(error: unknown): "network" | "render" {
   const e = error as { name?: string; message?: string; status?: number } | undefined;
   if (typeof Response !== "undefined" && error instanceof Response) return "network";
   const text = `${e?.name ?? ""} ${e?.message ?? String(error ?? "")}`;
