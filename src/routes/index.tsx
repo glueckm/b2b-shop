@@ -68,14 +68,21 @@ export const Route = createFileRoute("/")({
   // Gleiche Filter = keine erneute Abfrage (verhindert doppelten Katalogaufbau).
   staleTime: 120_000,
   loader: async ({ deps }) => {
-    const catalog = await getCatalog({
-      data: {
-        category: deps.category,
-        subcategory: deps.subcategory,
-        subsubcategory: deps.subsubcategory,
-        search: deps.q,
-      },
-    });
+    let catalog;
+    try {
+      catalog = await getCatalog({
+        data: {
+          category: deps.category,
+          subcategory: deps.subcategory,
+          subsubcategory: deps.subsubcategory,
+          search: deps.q,
+        },
+      });
+    } catch (error) {
+      // Fehler beim Laden der Daten (nicht der Darstellung) für die Fehlerseite markieren.
+      if (error && typeof error === "object") (error as { mawaKind?: string }).mawaKind = "network";
+      throw error;
+    }
     if (!catalog.user) {
       throw redirect({ to: "/anmelden" });
     }
@@ -112,7 +119,8 @@ export const Route = createFileRoute("/")({
  * Erweiterungen), meldet den Fehler an das Server-Protokoll und zeigt eine Fehlernummer.
  */
 function classifyClientError(error: unknown): "network" | "render" {
-  const e = error as { name?: string; message?: string; status?: number } | undefined;
+  const e = error as { name?: string; message?: string; mawaKind?: string } | undefined;
+  if (e?.mawaKind === "network") return "network";
   if (typeof Response !== "undefined" && error instanceof Response) return "network";
   const text = `${e?.name ?? ""} ${e?.message ?? String(error ?? "")}`;
   if (/failed to fetch|load failed|networkerror|network request failed|forbidden|unauthorized|timeout|timed out|econn|fetch failed|service unavailable|bad gateway|gateway|\b5\d\d\b|\b40[13]\b/i.test(text)) {
