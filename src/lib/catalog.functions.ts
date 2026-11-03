@@ -669,6 +669,9 @@ async function buildSnapshot(
   return { ...list, ...meta };
 }
 
+/** Wie lange ein abgelaufener Katalog noch sofort ausgeliefert werden darf, während er im Hintergrund neu geladen wird. */
+const SNAPSHOT_MAX_STALE = 1_800_000;
+
 export async function catalogSnapshot(
   priceChannel: string,
   filter: CatalogFilter,
@@ -679,10 +682,11 @@ export async function catalogSnapshot(
   const inflight = (cacheRef.__mawaCatalogInflight ??= new Map());
   const key = [de ? "DE" : "ALL", priceChannel, filter.category, filter.subcategory, filter.subsubcategory].join("|");
   const hit = cache.get(key);
-  const fresh = hit && Date.now() - hit.at < SNAPSHOT_TTL;
+  const age = hit ? Date.now() - hit.at : Infinity;
+  if (hit && age < SNAPSHOT_TTL) return hit.value;
 
-  if (!fresh && !inflight.has(key)) {
-    const task = buildSnapshot(priceChannel, filter, query, de)
+  const start = (run: (q: DbQuery) => Promise<CatalogSnapshot>) => {
+    const task = run(query)
       .then((value) => {
         cache.set(key, { at: Date.now(), value });
         return value;
@@ -691,10 +695,27 @@ export async function catalogSnapshot(
         inflight.delete(key);
       });
     inflight.set(key, task);
+    return task;
+  };
+
+  // Abgelaufen, aber noch brauchbar: sofort ausliefern und im Hintergrund mit
+  // eigener Datenbankverbindung erneuern (die Verbindung dieser Anfrage wird danach geschlossen).
+  if (hit && age < SNAPSHOT_MAX_STALE) {
+    if (!inflight.has(key)) {
+      const { withDbSession, logEvent } = await import("./db.server");
+      const started = Date.now();
+      start(() => withDbSession((session) => buildSnapshot(priceChannel, filter, session.query, de))).then(
+        () => {
+          const ms = Date.now() - started;
+          if (ms > 8_000) logEvent("warn", "catalog.refresh_slow", { ms, category: filter.category });
+        },
+        (error) => logEvent("error", "catalog.refresh_failed", { ms: Date.now() - started, category: filter.category }, error),
+      );
+    }
+    return hit.value;
   }
 
-  if (fresh && hit) return hit.value;
-  return inflight.get(key)!;
+  return inflight.get(key) ?? start((q) => buildSnapshot(priceChannel, filter, q, de));
 }
 
 
