@@ -4,13 +4,13 @@ import { describe, expect, it } from "vitest";
 
 const source = readFileSync(new URL("./catalog.functions.ts", import.meta.url), "utf8");
 
-describe.skipIf(!process.env.DATABASE_URL)("shop stock scope", () => {
+describe.skipIf(!process.env["DATABASE_URL"])("shop stock scope", () => {
   it("counts only the main storage place in article stock, EOL checks and statistics", async () => {
     const predicates = [...source.matchAll(/(?:w\.)?warehouse_id = '3566'[^\n)]*/g)]
-      .map(([predicate]) => predicate.split("--")[0].replaceAll("w.", "").trim());
+      .map(([predicate]) => (predicate.split("--")[0] ?? "").replaceAll("w.", "").trim());
     expect(predicates).toHaveLength(3);
     const client = new Client({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: process.env["DATABASE_URL"],
       ssl: { rejectUnauthorized: false },
       connectionTimeoutMillis: 15_000,
     });
