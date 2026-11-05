@@ -200,7 +200,7 @@ with tier as (
 stock as (
   select article_id, sum(quantity) as qty
   from weclapp.warehouse_stock
-  where warehouse_id = '3566' -- nur Hauptlager
+  where warehouse_id = '3566' and storage_place_id = '3568' -- nur Hauptlager → Hauptlagerplatz
   group by article_id
 ),
 -- Variantenartikel (Mutter) je Einzelartikel
@@ -310,7 +310,7 @@ limit 15000
 
 const MAIN_STOCK_EXISTS = `
   coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
-    where w.article_id = a.id and w.warehouse_id = '3566'), 0) > 0
+    where w.article_id = a.id and w.warehouse_id = '3566' and w.storage_place_id = '3568'), 0) > 0
 `;
 
 /** Ebene 1, 2 und 3 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
@@ -348,7 +348,7 @@ select (select count(*)::int from weclapp.article a where a.active and a.availab
            and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as categories,
        (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
          join weclapp.article a on a.id = w.article_id
-         where a.active and a.available_in_sale and w.warehouse_id = '3566'
+         where a.active and a.available_in_sale and w.warehouse_id = '3566' and w.storage_place_id = '3568'
            and __WEBSHOP__) as on_hand
 `;
 

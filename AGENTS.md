@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Keep account-check retries and failure classification in the shared shop auth server helper so all consumers use the same session semantics.
+- Cover every catalog stock SQL predicate with a database-executed fixture regression test so article quantities, EOL visibility and aggregate statistics use the same storage scope.
