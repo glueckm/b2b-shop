@@ -1,1 +1,1 @@
-export const SHOP_VERSION = "1.4.7";
+export const SHOP_VERSION = "1.4.8";
