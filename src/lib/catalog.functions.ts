@@ -185,6 +185,17 @@ const EFF_L3 = `coalesce(a.ca_level3, '')`;
 
 
 
+/**
+ * Reservierte Menge je Artikel: offene Auftragsmengen (bestellt − verschickt) aus
+ * Aufträgen des Hauptlagers, die weder abgeschlossen, manuell abgeschlossen noch storniert sind.
+ * Wird vom Hauptlagerplatz-Bestand abgezogen (nie unter 0).
+ */
+export const RESERVED_QTY = (articleRef: string) => `coalesce((select sum(greatest(i.quantity - coalesce(i.shipped_quantity, 0), 0))
+    from weclapp.sales_order_item i
+    join weclapp.sales_order o on o.id = i.sales_order_id
+    where i.article_id = ${articleRef} and o.warehouse_id in ('3566')
+      and o.status not in ('CLOSED', 'MANUALLY_CLOSED', 'CANCELLED')), 0)`;
+
 const ARTICLES_SQL = `
 with tier as (
   select article_id,
@@ -198,10 +209,11 @@ with tier as (
   group by article_id
 ),
 stock as (
-  select article_id, sum(quantity) as qty
-  from weclapp.warehouse_stock
-  where warehouse_id = '3566' and storage_place_id = '3568' -- nur Hauptlager → Hauptlagerplatz
-  group by article_id
+  select ws.article_id, greatest(ws.qty - ${RESERVED_QTY("ws.article_id")}, 0) as qty
+  from (select article_id, sum(quantity) as qty
+    from weclapp.warehouse_stock
+    where warehouse_id = '3566' and storage_place_id = '3568' -- nur Hauptlager → Hauptlagerplatz
+    group by article_id) ws
 ),
 -- Variantenartikel (Mutter) je Einzelartikel
 variant as (
@@ -310,7 +322,7 @@ limit 15000
 
 const MAIN_STOCK_EXISTS = `
   coalesce((select sum(w.quantity) from weclapp.warehouse_stock w
-    where w.article_id = a.id and w.warehouse_id = '3566' and w.storage_place_id = '3568'), 0) > 0
+    where w.article_id = a.id and w.warehouse_id = '3566' and w.storage_place_id = '3568'), 0) - ${RESERVED_QTY("a.id")} > 0
 `;
 
 /** Ebene 1, 2 und 3 mit Artikelzahlen (nur Artikel mit Hauptlager-Bestand). */
@@ -346,10 +358,12 @@ select (select count(*)::int from weclapp.article a where a.active and a.availab
          where a.active and a.available_in_sale and a.article_category_id is not null
            and __WEBSHOP__
            and (a.status_id is distinct from '888015' or ${MAIN_STOCK_EXISTS})) as categories,
-       (select coalesce(sum(w.quantity), 0)::float8 from weclapp.warehouse_stock w
-         join weclapp.article a on a.id = w.article_id
-         where a.active and a.available_in_sale and w.warehouse_id = '3566' and w.storage_place_id = '3568'
-           and __WEBSHOP__) as on_hand
+       (select coalesce(sum(greatest(x.qty - ${RESERVED_QTY("x.article_id")}, 0)), 0)::float8
+         from (select w.article_id, sum(w.quantity) as qty from weclapp.warehouse_stock w
+           join weclapp.article a on a.id = w.article_id
+           where a.active and a.available_in_sale and w.warehouse_id = '3566' and w.storage_place_id = '3568'
+             and __WEBSHOP__
+           group by w.article_id) x) as on_hand
 `;
 
 
