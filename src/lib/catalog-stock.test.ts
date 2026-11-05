@@ -45,19 +45,17 @@ describe.skipIf(!process.env["DATABASE_URL"])("reserved quantity", () => {
     });
     try {
       await client.connect();
-      await client.query("BEGIN");
-      await client.query(`
-        create temp table sales_order (id text, warehouse_id text, status text) on commit drop;
-        create temp table sales_order_item (sales_order_id text, article_id text, quantity int, shipped_quantity int) on commit drop;
-        insert into sales_order values
-          ('o1', '3566', 'ORDER_CONFIRMATION_PRINTED'), ('o2', '3566', 'ORDER_CONFIRMATION_PRINTED'),
-          ('o3', '3566', 'CLOSED'), ('o4', '3566', 'CANCELLED'), ('o5', '3566', 'MANUALLY_CLOSED'),
-          ('o6', '105915', 'ORDER_CONFIRMATION_PRINTED'), ('o7', '3566', 'ORDER_CONFIRMATION_PRINTED');
-        insert into sales_order_item values
-          ('o1', 'A', 1, 0), ('o2', 'A', 1, 0), ('o3', 'A', 5, 0), ('o4', 'A', 5, 0),
-          ('o5', 'A', 5, 0), ('o6', 'A', 5, 0), ('o7', 'A', 3, 3);
-      `);
-      const expr = RESERVED_QTY("'A'").replaceAll("weclapp.", "pg_temp.");
+      await client.query("BEGIN READ ONLY");
+      const orders = `(values ('o1','3566','ORDER_CONFIRMATION_PRINTED'), ('o2','3566','ORDER_CONFIRMATION_PRINTED'),
+        ('o3','3566','CLOSED'), ('o4','3566','CANCELLED'), ('o5','3566','MANUALLY_CLOSED'),
+        ('o6','105915','ORDER_CONFIRMATION_PRINTED'), ('o7','3566','ORDER_CONFIRMATION_PRINTED'))
+        as so(id, warehouse_id, status)`;
+      const items = `(values ('o1','A',1,0), ('o2','A',1,0), ('o3','A',5,0), ('o4','A',5,0),
+        ('o5','A',5,0), ('o6','A',5,0), ('o7','A',3,3))
+        as soi(sales_order_id, article_id, quantity, shipped_quantity)`;
+      const expr = RESERVED_QTY("'A'")
+        .replace("weclapp.sales_order_item i", `${items.replace("as soi", "as i")}`)
+        .replace("weclapp.sales_order o", `${orders.replace("as so", "as o")}`);
       const r = await client.query(`select (19 - ${expr})::int as available`);
       expect(r.rows[0]?.available).toBe(17);
     } finally {
