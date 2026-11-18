@@ -1,4 +1,5 @@
 import manifest from "@/data/article-images.json";
+import { articleImageSku } from "./article-image-source";
 
 const images = manifest as Record<string, string[]>;
 
@@ -7,5 +8,6 @@ const images = manifest as Record<string, string[]>;
  * Dateien liegen in public/artikel-bilder/, Verzeichnis via scripts/index-article-images.mjs.
  */
 export function articleImages(articleId: string, sku: string): string[] {
-  return images[articleId] ?? images[sku] ?? [];
+  const sourceSku = articleImageSku(sku);
+  return (sourceSku !== sku ? images[sourceSku] : undefined) ?? images[articleId] ?? images[sku] ?? [];
 }

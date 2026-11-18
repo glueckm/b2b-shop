@@ -11,3 +11,4 @@
 
 - Keep account-check retries and failure classification in the shared shop auth server helper so all consumers use the same session semantics.
 - Cover every catalog stock SQL predicate with a database-executed fixture regression test so article quantities, EOL visibility and aggregate statistics use the same storage scope.
+- Resolve BW/SA photo sources centrally by the unprefixed SKU in the database, then return photos under the requested article ID so thumbnails, galleries and ZIP downloads share the same source even outside the current catalog.
