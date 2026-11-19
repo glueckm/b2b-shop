@@ -34,7 +34,7 @@ const CUSTOMER_SQL = `
   select c.customer_number,
          coalesce(nullif(c.company, ''), trim(coalesce(c.first_name, '') || ' ' || coalesce(c.last_name, ''))) as company,
          nullif(c.customer_category_name, '') as category,
-         nullif(trim(pe.to_addresses), '') as email,
+         coalesce(nullif(trim(pe.to_addresses), ''), nullif(trim(c.email), '')) as email,
          c.blocked
     from weclapp.customer c
     left join weclapp.party_email_address pe
